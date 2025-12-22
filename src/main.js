@@ -23,6 +23,7 @@ import { bindUi } from "./app/app-ui.js";
 import { fetchBackgroundDataUrl } from "./app/app-exporter.js";
 import { initWalletUi } from "./wallet/wallet-ui.js";
 import { Buffer } from "buffer";
+import { initNftPickerUi } from "./nft/picker-ui.js";
 
 if (!globalThis.Buffer) {
   globalThis.Buffer = Buffer;
@@ -45,6 +46,7 @@ window.setup = function setup() {
   state.faceTextures = fillFaceTextures(state.defaultTextures);
   bindUi();
   initWalletUi();
+  initNftPickerUi();
   fetchBackgroundDataUrl();
 };
 
