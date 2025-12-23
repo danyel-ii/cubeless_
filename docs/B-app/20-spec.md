@@ -125,3 +125,13 @@ type MintMetadata = {
   }>;
 };
 ```
+
+## Mint Economics (v0)
+
+- Mint price: `0.0027 ETH`
+- Mint royalty: `10%` of mint price, charged on top.
+- Mint royalty split:
+  - `20%` creator
+  - `20%` $Less treasury (placeholder)
+  - `60%` split equally per referenced NFT (uses ERC-2981 `royaltyInfo` receiver)
+- If a referenced NFT does not implement ERC-2981, its royalty slice is skipped.

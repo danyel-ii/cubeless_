@@ -6,6 +6,8 @@ import { state } from "../app/app-state.js";
 import { buildTokenUri } from "./token-uri-provider.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
+const MINT_PRICE = 0.0027;
+const MINT_ROYALTY_BPS = 1000;
 
 function formatError(error) {
   if (error instanceof Error) {
@@ -143,6 +145,11 @@ export function initMintUi() {
       updateEligibility();
     }
   });
+
+  if (!amountInput.value) {
+    const maxRoyalty = (MINT_PRICE * MINT_ROYALTY_BPS) / 10000;
+    amountInput.value = (MINT_PRICE + maxRoyalty).toFixed(6);
+  }
 
   updateEligibility();
 }

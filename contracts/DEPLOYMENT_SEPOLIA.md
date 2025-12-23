@@ -18,7 +18,9 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
-- No on-chain mint price is enforced; `msg.value` is split according to the royalty policy.
+- Mint price is fixed at 0.0027 ETH.
+- Mint royalty is 10% of the mint price (0.00027 ETH) and is added on top.
+- If an NFT does not support ERC-2981, its royalty slice is skipped and not charged.
 - If any royalty receiver reverts, the mint reverts (no partial transfers).
 
 ## Gating Rules
@@ -31,15 +33,14 @@ struct NftRef {
 
 - Mint-time split of `msg.value`:
   - 20% `creator`
-  - 40% `$Less` treasury
-  - 20% `$PNKSTR` treasury
-  - 20% `poolTreasury` placeholder
-- Resale royalties use ERC-2981 with default 5% BPS, paid to `poolTreasury`.
+  - 20% `$Less` treasury (placeholder for buy)
+  - 60% split equally per referenced NFT contract (ERC-2981 receiver)
+- Resale royalties use ERC-2981 with default 5% BPS, paid to `resaleSplitter`.
   - Mint uses a reentrancy guard around the payable split.
 
 ## Admin Controls
 
-- `setRoyaltyReceivers(creator, lessTreasury, pnkstrTreasury, poolTreasury)`
+- `setRoyaltyReceivers(creator, lessTreasury, resaleSplitter)`
 - `setResaleRoyalty(bps, receiver)`
 
 ## Deployment Inputs
@@ -48,6 +49,5 @@ Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 
 - `ICECUBE_CREATOR`
 - `ICECUBE_LESS_TREASURY`
-- `ICECUBE_PNKSTR_TREASURY`
-- `ICECUBE_POOL_TREASURY`
+- `ICECUBE_RESALE_SPLITTER`
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)

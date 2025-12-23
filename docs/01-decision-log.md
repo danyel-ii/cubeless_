@@ -13,3 +13,8 @@
 
 - Token URI is emitted as a data URI for fast iteration.
 - A `tokenUriProvider` abstraction isolates the encoding step for future IPFS/Arweave.
+
+## 2025-12-23 — Mint Economics (dev_tight)
+
+- Mint price is fixed at `0.0027 ETH` with a `+10%` royalty.
+- $Less buy is represented by a treasury placeholder (replace before production).

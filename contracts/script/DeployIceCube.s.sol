@@ -8,16 +8,14 @@ contract DeployIceCube is Script {
     function run() external {
         address creator = vm.envAddress("ICECUBE_CREATOR");
         address lessTreasury = vm.envAddress("ICECUBE_LESS_TREASURY");
-        address pnkstrTreasury = vm.envAddress("ICECUBE_PNKSTR_TREASURY");
-        address poolTreasury = vm.envAddress("ICECUBE_POOL_TREASURY");
+        address resaleSplitter = vm.envAddress("ICECUBE_RESALE_SPLITTER");
         uint96 resaleRoyaltyBps = uint96(vm.envOr("ICECUBE_RESALE_BPS", uint256(500)));
 
         vm.startBroadcast();
         IceCubeMinter minter = new IceCubeMinter(
             creator,
             lessTreasury,
-            pnkstrTreasury,
-            poolTreasury,
+            resaleSplitter,
             resaleRoyaltyBps
         );
         vm.stopBroadcast();

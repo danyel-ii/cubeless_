@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. It implements a 10% mint-time royalty split (20% creator, 40% $Less treasury, 20% $PNKSTR treasury, 20% pool placeholder) and a 5% resale royalty via ERC-2981, currently paid to a pool treasury address. The on-chain logic is intentionally minimal: it verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the miniapp and passed as a data URI.
+IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0027 ETH plus a 10% royalty. Mint royalties split 20% to the creator, 20% to the $Less treasury (placeholder), and 60% across the referenced NFT contracts (per NFT). Resale royalties are 5% via ERC-2981 and routed to an on-chain splitter. The on-chain logic verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the miniapp and passed as a data URI.
 
 ## Contract Overview
 
@@ -13,7 +13,7 @@ Contract: `contracts/src/IceCubeMinter.sol`
   - `ERC2981` for resale royalties.
   - `Ownable` for admin updates.
 - Constructor sets:
-  - `creator`, `lessTreasury`, `pnkstrTreasury`, `poolTreasury`
+  - `creator`, `lessTreasury`, `resaleSplitter`
   - default resale royalty receiver + bps (default 5% = 500 bps)
 
 ## Mint Flow
@@ -28,28 +28,30 @@ Key steps:
 
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
-3. **Mint + metadata**: mint new token ID and store `tokenURI`.
-4. **Mint royalty split**: if `msg.value > 0`, split by:
+3. **Pricing**: requires `0.0027 ETH` plus royalty (10% of mint price).
+4. **Mint + metadata**: mint new token ID and store `tokenURI`.
+5. **Mint royalty split**: for each referenced NFT, query `royaltyInfo(tokenId, MINT_PRICE)` to find the receiver and split by:
    - 20% to `creator`
-   - 40% to `lessTreasury`
-   - 20% to `pnkstrTreasury`
-   - 20% to `poolTreasury` (placeholder for pool logic)
+   - 20% to `lessTreasury` (placeholder for $Less buy)
+   - 60% split per NFT across referenced contracts (equal per NFT)
 
 The split is a direct ETH transfer. Token purchases and pool creation are not yet implemented on-chain.
 If any receiver reverts during the split, the mint reverts and no partial transfers occur.
+If a referenced NFT contract does not implement ERC-2981, that NFT’s royalty slice is skipped and not charged.
+If the sender overpays, the contract refunds the excess after processing the split.
 
 ## Royalty Logic
 
 - **Mint-time split**: encoded in `_splitMintRoyalty`.
-- **Resale royalty**: `_setDefaultRoyalty(poolTreasury, bps)` uses ERC-2981.
+- **Resale royalty**: `_setDefaultRoyalty(resaleSplitter, bps)` uses ERC-2981.
   - Default is 5% bps on deployments unless overridden.
   - `setResaleRoyalty(bps, receiver)` allows owner to update.
 
 ## Admin Controls
 
-- `setRoyaltyReceivers(...)` updates the 4 treasury addresses.
+- `setRoyaltyReceivers(...)` updates `creator`, `lessTreasury`, and `resaleSplitter`.
 - `setResaleRoyalty(bps, receiver)` updates ERC-2981 receiver + rate.
- - Mint uses a `nonReentrant` guard to protect the payable split.
+- Mint uses a `nonReentrant` guard to protect the payable split.
 
 ## Tests
 
@@ -67,8 +69,7 @@ File: `contracts/test/IceCubeMinter.t.sol`
   - Reads:
     - `ICECUBE_CREATOR`
     - `ICECUBE_LESS_TREASURY`
-    - `ICECUBE_PNKSTR_TREASURY`
-    - `ICECUBE_POOL_TREASURY`
+    - `ICECUBE_RESALE_SPLITTER`
     - `ICECUBE_RESALE_BPS` (optional)
   - Writes deployment to `contracts/deployments/sepolia.json`.
 

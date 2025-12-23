@@ -11,6 +11,7 @@ This list captures items still needed from you to complete v0.
   - Select 1–6 NFTs
   - Mint transaction succeeds
   - Token URI decodes to metadata JSON with provenance
+  - Confirm $Less treasury placeholder address is set before production
 
 ## M1 — Manifest Finalization
 
@@ -30,6 +31,9 @@ This list captures items still needed from you to complete v0.
 - (Optional) Etherscan verification for Sepolia deployment.
 - Confirm treasury addresses:
   - Creator address
-  - $Less treasury
-  - $PNKSTR treasury
-  - Pool treasury placeholder
+  - $Less treasury (placeholder for buy)
+  - Resale splitter contract
+- Confirm deploy script env vars:
+  - `ICECUBE_CREATOR`
+  - `ICECUBE_LESS_TREASURY`
+  - `ICECUBE_RESALE_SPLITTER`
