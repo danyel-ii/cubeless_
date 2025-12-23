@@ -19,6 +19,7 @@ struct NftRef {
 
 - `mint` is payable.
 - No on-chain mint price is enforced; `msg.value` is split according to the royalty policy.
+- If any royalty receiver reverts, the mint reverts (no partial transfers).
 
 ## Gating Rules
 
@@ -34,6 +35,7 @@ struct NftRef {
   - 20% `$PNKSTR` treasury
   - 20% `poolTreasury` placeholder
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `poolTreasury`.
+  - Mint uses a reentrancy guard around the payable split.
 
 ## Admin Controls
 

@@ -123,4 +123,33 @@ contract IceCubeMinterTest is Test {
         vm.expectRevert("Invalid reference count");
         minter.mint("ipfs://token", refs);
     }
+
+    function testMintRevertsOnTransferFailure() public {
+        RevertingReceiver receiver = new RevertingReceiver();
+        IceCubeMinter failingMinter = new IceCubeMinter(
+            creator,
+            address(receiver),
+            pnkstrTreasury,
+            poolTreasury,
+            500
+        );
+
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+
+        vm.deal(minterAddr, 1 ether);
+        vm.prank(minterAddr);
+        vm.expectRevert("Transfer failed");
+        failingMinter.mint{ value: 1 ether }("ipfs://token", refs);
+    }
+}
+
+contract RevertingReceiver {
+    receive() external payable {
+        revert("Nope");
+    }
 }

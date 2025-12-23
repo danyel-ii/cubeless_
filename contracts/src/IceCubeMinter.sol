@@ -6,8 +6,9 @@ import { ERC721URIStorage } from "@openzeppelin/contracts/token/ERC721/extension
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable {
+contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     struct NftRef {
         address contractAddress;
         uint256 tokenId;
@@ -62,7 +63,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable {
     function mint(
         string calldata tokenURI,
         NftRef[] calldata refs
-    ) external payable returns (uint256 tokenId) {
+    ) external payable nonReentrant returns (uint256 tokenId) {
         require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
         _validateOwnership(msg.sender, refs);
 

@@ -36,6 +36,7 @@ Key steps:
    - 20% to `poolTreasury` (placeholder for pool logic)
 
 The split is a direct ETH transfer. Token purchases and pool creation are not yet implemented on-chain.
+If any receiver reverts during the split, the mint reverts and no partial transfers occur.
 
 ## Royalty Logic
 
@@ -48,6 +49,7 @@ The split is a direct ETH transfer. Token purchases and pool creation are not ye
 
 - `setRoyaltyReceivers(...)` updates the 4 treasury addresses.
 - `setResaleRoyalty(bps, receiver)` updates ERC-2981 receiver + rate.
+ - Mint uses a `nonReentrant` guard to protect the payable split.
 
 ## Tests
 
