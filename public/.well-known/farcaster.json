@@ -7,8 +7,25 @@
   "miniapp": {
     "name": "cubeless",
     "version": "1",
+    "iconUrl": "https://cubeless-red.vercel.app/icon.png",
     "homeUrl": "https://cubeless-red.vercel.app",
-    "iconUrl": "https://cubeless-red.vercel.app/assets/cube_icon_1.png"
+    "imageUrl": "https://cubeless-red.vercel.app/image.png",
+    "splashImageUrl": "https://cubeless-red.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
+    "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
+    "subtitle": "realm of provenance",
+    "description": "cubeless is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
+    "primaryCategory": "art-creativity",
+    "tagline": "quick, shareable, remixable",
+    "tags": [
+      "nft",
+      "art",
+      "remix",
+      "community",
+      "token"
+    ],
+    "ogTitle": "cubeless",
+    "ogDescription": "mint the cube, cube your ownership"
   },
   "frame": {
     "name": "cubeless",
@@ -20,7 +37,7 @@
     "splashBackgroundColor": "#000000",
     "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
     "subtitle": "realm of provenance",
-    "description": "quick, shareable, identity-linked, remixable. cubeless is an ownership-gated minting miniapp: connect your wallet, select 1–6 NFTs you own, and mint a new NFT that embeds those selections as provenance while pointing to an IPFS-hosted interactive p5.js piece.",
+    "description": "cubeless is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "primaryCategory": "art-creativity",
     "tagline": "quick, shareable, remixable",
     "tags": [
