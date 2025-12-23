@@ -3,11 +3,16 @@ import { ICECUBE_CONTRACT } from "../config/contracts";
 import { buildProvenanceBundle } from "../nft/indexer";
 import { subscribeWallet } from "../wallet/wallet";
 import { state } from "../app/app-state.js";
+import {
+  buildMintMetadata,
+  getMintAnimationUrl,
+} from "./mint-metadata.js";
 import { buildTokenUri } from "./token-uri-provider.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const MINT_PRICE = 0.0027;
 const MINT_ROYALTY_BPS = 1000;
+const IS_DEV = Boolean(import.meta?.env?.DEV);
 
 function formatError(error) {
   if (error instanceof Error) {
@@ -30,6 +35,7 @@ export function initMintUi() {
   }
 
   let walletState = null;
+  const devChecklist = IS_DEV ? initDevChecklist(statusEl.parentElement) : null;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -60,6 +66,11 @@ export function initMintUi() {
     }
     if (!ICECUBE_CONTRACT.abi || ICECUBE_CONTRACT.abi.length === 0) {
       setStatus("ABI missing. Run export-abi before minting.", "error");
+      setDisabled(true);
+      return;
+    }
+    if (!getMintAnimationUrl()) {
+      setStatus("Set VITE_APP_ANIMATION_URL before minting.", "error");
       setDisabled(true);
       return;
     }
@@ -104,28 +115,18 @@ export function initMintUi() {
         walletState.address,
         SEPOLIA_CHAIN_ID
       );
-      const primaryImage = state.nftSelection[0]?.image?.resolved ?? null;
-      const referenceSummary = state.nftSelection.map((nft) => {
-        const raw = BigInt(nft.tokenId);
-        const safe =
-          raw <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(raw) : null;
-        return {
-          chainId: nft.chainId,
-          contractAddress: nft.contractAddress,
-          tokenId: nft.tokenId,
-          tokenIdNumber: safe,
-          image: nft.image,
-        };
-      });
-      const metadata = {
-        schemaVersion: 1,
-        name: "IceCube",
-        description: "IceCube mint gated by 1 to 6 NFTs.",
-        image: primaryImage,
-        provenanceBundle: bundle,
-        references: referenceSummary,
-      };
+      const metadata = buildMintMetadata(state.nftSelection, bundle);
       const tokenUri = buildTokenUri(metadata);
+      if (devChecklist) {
+        const diagnostics = buildDiagnostics({
+          selection: state.nftSelection,
+          metadata,
+          tokenUri,
+          amountInput: amountInput.value,
+          walletAddress: walletState.address,
+        });
+        logDiagnostics(diagnostics, devChecklist);
+      }
       const refs = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
         tokenId: BigInt(nft.tokenId),
@@ -152,4 +153,133 @@ export function initMintUi() {
   }
 
   updateEligibility();
+}
+
+function buildDiagnostics({ selection, metadata, tokenUri, amountInput, walletAddress }) {
+  const royaltyTopup = (MINT_PRICE * MINT_ROYALTY_BPS) / 10000;
+  const requiredTotal = MINT_PRICE + royaltyTopup;
+  const selectionCount = selection.length;
+  const perRefRoyalty =
+    selectionCount > 0 ? (royaltyTopup * 0.6) / selectionCount : 0;
+
+  return {
+    walletAddress,
+    selectionCount,
+    economics: {
+      mintPriceEth: MINT_PRICE,
+      royaltyBps: MINT_ROYALTY_BPS,
+      royaltyTopupEth: royaltyTopup,
+      requiredTotalEth: requiredTotal,
+      creatorShareEth: royaltyTopup * 0.2,
+      lessTreasuryShareEth: royaltyTopup * 0.2,
+      perRefShareEth: perRefRoyalty,
+      amountInputEth: amountInput ? Number(amountInput) : null,
+      assumesAllRefsImplementErc2981: true,
+    },
+    uris: {
+      animationUrl: metadata.animation_url || null,
+      image: metadata.image || null,
+      tokenUri,
+    },
+  };
+}
+
+function logDiagnostics(diagnostics, devChecklist) {
+  console.info("[icecube][mint] economics", diagnostics.economics);
+  devChecklist.mark("economics");
+  console.info("[icecube][mint] uris", diagnostics.uris);
+  devChecklist.mark("uris");
+  devChecklist.setPayload(diagnostics);
+}
+
+function initDevChecklist(container) {
+  if (!container) {
+    return {
+      mark: () => {},
+      setPayload: () => {},
+    };
+  }
+
+  const section = document.createElement("div");
+  section.className = "ui-section";
+
+  const title = document.createElement("div");
+  title.className = "ui-section-title";
+  title.textContent = "Dev checklist";
+  section.appendChild(title);
+
+  const list = document.createElement("ul");
+  list.style.margin = "8px 0 0";
+  list.style.padding = "0 0 0 18px";
+
+  const items = [
+    { id: "economics", label: "Economics breakdown logged" },
+    { id: "uris", label: "Final URIs logged" },
+    { id: "copy", label: "Diagnostics copied" },
+  ];
+
+  const itemMap = new Map();
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    li.appendChild(label);
+    list.appendChild(li);
+    itemMap.set(item.id, li);
+  });
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ui-button is-ghost";
+  button.textContent = "Copy diagnostics";
+  button.style.marginTop = "10px";
+
+  section.appendChild(list);
+  section.appendChild(button);
+  container.appendChild(section);
+
+  let payload = null;
+
+  function mark(id) {
+    const item = itemMap.get(id);
+    if (item && item.dataset.done !== "true") {
+      item.textContent = `${item.textContent} (done)`;
+      item.dataset.done = "true";
+    }
+  }
+
+  async function copyDiagnostics() {
+    if (!payload) {
+      return;
+    }
+    const text = JSON.stringify(payload, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      mark("copy");
+    } catch (error) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        mark("copy");
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  }
+
+  button.addEventListener("click", () => {
+    copyDiagnostics();
+  });
+
+  return {
+    mark,
+    setPayload(next) {
+      payload = next;
+    },
+  };
 }

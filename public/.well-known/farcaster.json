@@ -1,15 +1,12 @@
 {
   "accountAssociation": {
-    "header": "REPLACE_WITH_HEADER",
-    "payload": "REPLACE_WITH_PAYLOAD",
-    "signature": "REPLACE_WITH_SIGNATURE"
+    "header": "eyJmaWQiOjEwNzgyNDgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg1RDA5NTVGNjQ0MzZBNjg0MTNhOTQ3MTI1Y2Q1NzM3ZTk1NGZFNWI3In0",
+    "payload": "eyJkb21haW4iOiJjdWJlbGVzcy1yZWQudmVyY2VsLmFwcCJ9",
+    "signature": "nlQp0hWsi2L6kytZt7jkypWXBwGb79H41lJJOKJleuB9dGw3eGsb3GN0EvF/sr1fS4XQavbiG8DE6g32G07Q/hw="
   },
   "miniapp": {
-    "version": "1",
-    "name": "IceCube",
-    "iconUrl": "https://via.placeholder.com/256.png?text=IceCube",
-    "homeUrl": "https://cubeless-red.vercel.app/",
-    "requiredChains": ["eip155:1", "eip155:11155111"],
-    "requiredCapabilities": ["wallet.getEthereumProvider"]
+    "name": "cubeLess",
+    "homeUrl": "https://cubeless-red.vercel.app",
+    "iconUrl": "/assets/cube_icon_1.png"
   }
 }

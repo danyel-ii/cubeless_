@@ -1,5 +1,11 @@
 # IceCube Code Structure
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 This project uses lightweight, global modules attached to `window.App` to keep
 the p5.js sketch modular while still working with p5’s global callbacks.
 
@@ -21,12 +27,14 @@ the p5.js sketch modular while still working with p5’s global callbacks.
   - Wobbly ink edge generation and rendering.
 - `src/app/app-interaction.js`
   - Mouse/touch rotation and zoom handlers.
+- `src/app/app-lifecycle.js`
+  - p5 lifecycle callbacks (`preload`, `setup`, `draw`) plus event wiring.
 - `src/app/app-ui.js`
   - Image picker, local texture loading, and UI wiring.
 - `src/app/app-exporter.js`
   - Standalone HTML export, asset embedding, background data URL fetch.
 - `src/main.js`
-  - p5 entry points (`preload`, `setup`, `draw`, event handlers) that delegate to modules.
+  - Bootstraps the p5 lifecycle registration and browser polyfills.
 
 ## Rendering Flow
 

@@ -1,5 +1,11 @@
 # IceCubeMinter Deployment (Sepolia)
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 ## Mint Signature
 
 ```

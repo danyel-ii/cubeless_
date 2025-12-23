@@ -1,5 +1,11 @@
 # IceCube Miniapp v0 Spec — Provenance Shapes (Sepolia)
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 This document defines the required data shapes and normalization rules for
 wallet inventory and provenance objects in v0. These rules are mandatory for
 all downstream tasks (Alchemy indexer, picker UI, mint metadata).
@@ -109,13 +115,19 @@ v0 mapping order (fixed):
 
 ## Mint Metadata Schema (tokenURI JSON)
 
+Notes:
+- `animation_url` should point to the IPFS-hosted p5 miniapp entry (e.g. `ipfs://<appDirCID>/index.html`).
+- `image` is an optional static thumbnail for marketplaces.
+- `provenance` stores the full bundle for traceability.
+
 ```ts
 type MintMetadata = {
   schemaVersion: 1;
   name: string;
   description: string;
   image: string | null;
-  provenanceBundle: ProvenanceBundle;
+  animation_url: string | null;
+  provenance: ProvenanceBundle;
   references: Array<{
     chainId: 11155111;
     contractAddress: string;

@@ -1,5 +1,11 @@
 # IceCube Farcaster Miniapp Task Log
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 ## Status Legend
 - Done
 - In Progress
@@ -20,6 +26,6 @@
 | T9 — Face mapping rules | Done | Fixed +X,-X,+Y,-Y,+Z,-Z order + frosted fallback. |
 | T10 — Cube textures from provenance | Done | Apply selection textures with caching + downscale + frosted fallback. |
 | T11 — Contract spec | In Progress | Mint price 0.0027 + 10% royalty; ERC2981 per-NFT split; tests updated (forge test: 10 pass, 2025-12-23). |
-| T12 — Metadata builder | In Progress | Mint UI builds JSON data URI with provenance. |
-| T13 — Storage decision | Open | Decide where metadata/image live. |
+| T12 — Metadata builder | In Progress | Mint UI builds JSON metadata with `animation_url` + provenance (still data URI). |
+| T13 — Storage decision | Open | Pin p5 app directory + metadata JSON to IPFS and return hosted `tokenURI`. |
 | T14 — Direct mint call | In Progress | Mint UI added; awaiting deployed contract + ABI. |

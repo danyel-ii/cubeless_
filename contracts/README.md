@@ -1,3 +1,9 @@
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**

@@ -1,5 +1,11 @@
 # Decision Log
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 ## 2025-12-22 — T5 Spec Shapes
 
 - v0 chain is Sepolia only (`chainId: 11155111`).
@@ -18,3 +24,9 @@
 
 - Mint price is fixed at `0.0027 ETH` with a `+10%` royalty.
 - $Less buy is represented by a treasury placeholder (replace before production).
+
+## 2025-12-24 — Interactive Metadata (p5.js)
+
+- Mint metadata includes `animation_url` pointing to the IPFS-hosted p5 app entry.
+- `image` is treated as an optional thumbnail, not the primary work.
+- Provenance bundle is stored under `provenance` in the tokenURI JSON.

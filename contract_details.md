@@ -1,8 +1,14 @@
 # IceCubeMinter Contract Details
 
+## Review Status
+
+- Last reviewed: 2025-12-23
+- Review status: Needs confirmation
+- Owner: TBD
+
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0027 ETH plus a 10% royalty. Mint royalties split 20% to the creator, 20% to the $Less treasury (placeholder), and 60% across the referenced NFT contracts (per NFT). Resale royalties are 5% via ERC-2981 and routed to an on-chain splitter. The on-chain logic verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the miniapp and passed as a data URI.
+IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0027 ETH plus a 10% royalty. Mint royalties split 20% to the creator, 20% to the $Less treasury (placeholder), and 60% across the referenced NFT contracts (per NFT). Resale royalties are 5% via ERC-2981 and routed to an on-chain splitter. The on-chain logic verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
 
 ## Contract Overview
 
@@ -84,11 +90,12 @@ File: `src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `src/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` and `provenance`.
-- Encodes metadata as a data URI and calls `mint(tokenURI, refs)` on Sepolia.
+- Creates a JSON metadata object with `image`, `animation_url`, and `provenance`.
+- Encodes metadata as a data URI for now and calls `mint(tokenURI, refs)` on Sepolia.
+- The intended production flow is to pin the metadata JSON to IPFS and pass `ipfs://<metaCID>` as `tokenURI`.
 
 ## Known Placeholders / TODOs
 
 - On-chain swaps and pool position management are not implemented.
 - ERC-2981 receiver currently points to `poolTreasury` as a placeholder.
-- Metadata storage is currently data URI; storage decision is still open (T13).
+- Metadata storage is currently a data URI; production should pin metadata to IPFS and reference the p5 app via `animation_url`.
