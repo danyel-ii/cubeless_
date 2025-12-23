@@ -31,5 +31,5 @@ export type ProvenanceBundle = {
   chainId: 11155111;
   selectedBy: string;
   retrievedAt: string;
-  nfts: [ProvenanceNft, ProvenanceNft, ProvenanceNft];
+  nfts: ProvenanceNft[];
 };

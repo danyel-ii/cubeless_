@@ -57,8 +57,8 @@ export function initMintUi() {
       setDisabled(true);
       return;
     }
-    if (state.nftSelection.length !== 3) {
-      setStatus("Select exactly 3 NFTs to mint.");
+    if (state.nftSelection.length < 1 || state.nftSelection.length > 6) {
+      setStatus("Select 1 to 6 NFTs to mint.");
       setDisabled(true);
       return;
     }
@@ -85,8 +85,8 @@ export function initMintUi() {
       setStatus("Connect your wallet to mint.", "error");
       return;
     }
-    if (state.nftSelection.length !== 3) {
-      setStatus("Select exactly 3 NFTs to mint.", "error");
+    if (state.nftSelection.length < 1 || state.nftSelection.length > 6) {
+      setStatus("Select 1 to 6 NFTs to mint.", "error");
       return;
     }
     setDisabled(true);
@@ -111,7 +111,7 @@ export function initMintUi() {
       const primaryImage = state.nftSelection[0]?.image?.resolved ?? null;
       const metadata = {
         name: "IceCube",
-        description: "IceCube mint gated by 3 NFTs.",
+        description: "IceCube mint gated by 1 to 6 NFTs.",
         image: primaryImage,
         provenance: bundle,
       };

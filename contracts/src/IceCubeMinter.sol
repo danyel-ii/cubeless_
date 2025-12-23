@@ -61,8 +61,9 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable {
 
     function mint(
         string calldata tokenURI,
-        NftRef[3] calldata refs
+        NftRef[] calldata refs
     ) external payable returns (uint256 tokenId) {
+        require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
         _validateOwnership(msg.sender, refs);
 
         tokenId = _nextTokenId;
@@ -107,8 +108,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
-    function _validateOwnership(address owner, NftRef[3] calldata refs) internal view {
-        for (uint256 i = 0; i < 3; i += 1) {
+    function _validateOwnership(address owner, NftRef[] calldata refs) internal view {
+        for (uint256 i = 0; i < refs.length; i += 1) {
             address nftOwner = IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId);
             require(nftOwner == owner, "Not owner of referenced NFT");
         }

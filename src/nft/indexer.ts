@@ -151,8 +151,8 @@ export async function buildProvenanceBundle(
   chainId: number
 ): Promise<ProvenanceBundle> {
   assertSepolia(chainId);
-  if (selected.length !== 3) {
-    throw new Error("Provenance bundle requires exactly 3 NFTs.");
+  if (selected.length < 1 || selected.length > 6) {
+    throw new Error("Provenance bundle requires 1 to 6 NFTs.");
   }
   const selectedBy = getAddress(selectedByAddress);
   const provenanceList = await Promise.all(
@@ -162,6 +162,6 @@ export async function buildProvenanceBundle(
     chainId: 11155111,
     selectedBy,
     retrievedAt: new Date().toISOString(),
-    nfts: [provenanceList[0], provenanceList[1], provenanceList[2]],
+    nfts: provenanceList,
   };
 }

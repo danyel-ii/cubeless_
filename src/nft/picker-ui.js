@@ -4,7 +4,7 @@ import { state } from "../app/app-state.js";
 import { fillFaceTextures } from "../app/app-utils.js";
 
 const CHAIN_ID = 11155111;
-const MAX_SELECTION = 3;
+const MAX_SELECTION = 6;
 
 function buildKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
@@ -122,15 +122,15 @@ export function initNftPickerUi() {
         } else if (selectedKeys.size < MAX_SELECTION) {
           selectedKeys.add(key);
         } else {
-          setStatus("Selection is limited to 3 NFTs.", "error");
+          setStatus("Selection is limited to 6 NFTs.", "error");
           return;
         }
         updateSelection();
         renderInventory();
-        if (selectedKeys.size === MAX_SELECTION) {
+        if (selectedKeys.size >= 1) {
           setStatus("Selection ready.", "success");
         } else {
-          setStatus("Select exactly 3 NFTs to continue.");
+          setStatus("Select 1 to 6 NFTs to continue.");
         }
       });
 
@@ -155,7 +155,7 @@ export function initNftPickerUi() {
       if (!nfts.length) {
         setStatus("No Sepolia NFTs found for this wallet.");
       } else {
-        setStatus("Select exactly 3 NFTs to continue.");
+        setStatus("Select 1 to 6 NFTs to continue.");
       }
     } catch (error) {
       const message =
@@ -208,14 +208,14 @@ export function initNftPickerUi() {
     updateSelection();
     renderInventory();
     if (inventory.length) {
-      setStatus("Select exactly 3 NFTs to continue.");
+      setStatus("Select 1 to 6 NFTs to continue.");
     }
   });
 
   applyButton.addEventListener("click", async () => {
     const selection = inventory.filter((nft) => selectedKeys.has(buildKey(nft)));
-    if (selection.length !== MAX_SELECTION) {
-      setStatus("Select exactly 3 NFTs to continue.", "error");
+    if (selection.length < 1 || selection.length > MAX_SELECTION) {
+      setStatus("Select 1 to 6 NFTs to continue.", "error");
       return;
     }
     const imageUrls = resolveSelectedImages(selection);

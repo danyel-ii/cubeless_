@@ -76,7 +76,7 @@ type ProvenanceBundle = {
   chainId: 11155111;
   selectedBy: string; // EIP-55 checksum wallet address
   retrievedAt: string; // ISO timestamp
-  nfts: [ProvenanceNft, ProvenanceNft, ProvenanceNft];
+  nfts: ProvenanceNft[]; // length 1..6
 };
 ```
 
@@ -99,5 +99,5 @@ type ProvenanceBundle = {
 
 ## Face Mapping
 
-TODO (T9): define which faces receive the 3 selected NFTs and how remaining
+TODO (T9): define which faces receive the selected NFTs and how remaining
 faces are handled (repeat / blank / frosted).

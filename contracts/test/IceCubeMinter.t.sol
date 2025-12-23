@@ -49,7 +49,8 @@ contract IceCubeMinterTest is Test {
         uint256 tokenA,
         uint256 tokenB,
         uint256 tokenC
-    ) internal view returns (IceCubeMinter.NftRef[3] memory refs) {
+    ) internal view returns (IceCubeMinter.NftRef[] memory refs) {
+        refs = new IceCubeMinter.NftRef[](3);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
         refs[1] = IceCubeMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
         refs[2] = IceCubeMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
@@ -61,7 +62,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(address(0xBEEF));
 
-        IceCubeMinter.NftRef[3] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         vm.prank(minterAddr);
         vm.expectRevert("Not owner of referenced NFT");
@@ -74,7 +75,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[3] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         uint256 amount = 1 ether;
         vm.deal(minterAddr, amount);
@@ -94,7 +95,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[3] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         vm.prank(minterAddr);
         uint256 tokenId = minter.mint("ipfs://token", refs);
@@ -107,5 +108,19 @@ contract IceCubeMinterTest is Test {
         (address receiver, uint256 amount) = minter.royaltyInfo(1, 1 ether);
         assertEq(receiver, poolTreasury);
         assertEq(amount, 0.05 ether);
+    }
+
+    function testMintRejectsEmptyRefs() public {
+        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](0);
+
+        vm.expectRevert("Invalid reference count");
+        minter.mint("ipfs://token", refs);
+    }
+
+    function testMintRejectsTooManyRefs() public {
+        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](7);
+
+        vm.expectRevert("Invalid reference count");
+        minter.mint("ipfs://token", refs);
     }
 }
