@@ -50,4 +50,6 @@ export function initLeaderboardUi() {
 
   openButton.addEventListener("click", showLeaderboard);
   backButton.addEventListener("click", showMain);
+
+  document.addEventListener("open-leaderboard", showLeaderboard);
 }

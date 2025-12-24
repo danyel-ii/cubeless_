@@ -22,6 +22,7 @@ import {
   onTouchStarted,
   onTouchMoved,
   onTouchEnded,
+  applyRotationInertia,
 } from "./app-interaction.js";
 import { fetchBackgroundDataUrl } from "./app-exporter.js";
 import { initUiRoot } from "../ui/ui-root.js";
@@ -48,6 +49,7 @@ function setupApp() {
 
 function drawApp() {
   drawBackdrop();
+  applyRotationInertia();
   applyLights();
   camera(0, 0, state.zoom, 0, 0, 0, 0, 1, 0);
   rotateX(state.rotX);

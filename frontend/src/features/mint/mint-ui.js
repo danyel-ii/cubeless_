@@ -58,7 +58,7 @@ export function initMintUi() {
     return value.toFixed(4);
   }
 
-  async function refreshFloorSnapshot() {
+  async function refreshFloorSnapshot(capture = false) {
     if (!floorSummaryEl || !floorListEl) {
       return;
     }
@@ -66,6 +66,11 @@ export function initMintUi() {
     if (!selection.length) {
       floorSummaryEl.textContent = "Total floor (snapshot): 0.0000 ETH";
       floorListEl.textContent = "Select NFTs to view floor snapshot.";
+      state.sumFloorEth = 0;
+      if (capture) {
+        state.floorSnapshotAt = new Date().toISOString();
+      }
+      document.dispatchEvent(new CustomEvent("floor-snapshot-change"));
       return;
     }
 
@@ -113,6 +118,11 @@ export function initMintUi() {
     });
 
     floorSummaryEl.textContent = `Total floor (snapshot): ${formatEth(sumFloor)} ETH`;
+    state.sumFloorEth = sumFloor;
+    if (capture) {
+      state.floorSnapshotAt = new Date().toISOString();
+    }
+    document.dispatchEvent(new CustomEvent("floor-snapshot-change"));
   }
 
   function updateEligibility() {
@@ -167,7 +177,7 @@ export function initMintUi() {
     setDisabled(true);
     setStatus("Building provenance bundle...");
     try {
-      await refreshFloorSnapshot();
+      await refreshFloorSnapshot(true);
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
@@ -208,6 +218,7 @@ export function initMintUi() {
       setStatus("Waiting for confirmation...");
       await tx.wait();
       setStatus("Mint confirmed.", "success");
+      document.dispatchEvent(new CustomEvent("mint-complete"));
     } catch (error) {
       setStatus(formatError(error), "error");
     } finally {
