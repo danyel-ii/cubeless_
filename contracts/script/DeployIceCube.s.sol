@@ -23,7 +23,11 @@ contract DeployIceCube is Script {
             router,
             swapCalldata
         );
-        IceCubeMinter minter = new IceCubeMinter(address(splitter), resaleRoyaltyBps);
+        IceCubeMinter minter = new IceCubeMinter(
+            address(splitter),
+            lessToken,
+            resaleRoyaltyBps
+        );
         if (owner != msg.sender) {
             minter.transferOwnership(owner);
         }

@@ -7,6 +7,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 
 contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     struct NftRef {
@@ -15,22 +16,27 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
-    uint256 public constant MINT_PRICE = 0.0017 ether;
+    uint256 public constant BASE_PRICE_WEI = 777_000_000_000_000;
+    uint256 public constant ONE_BILLION = 1_000_000_000e18;
+    uint256 public constant WAD = 1e18;
 
     uint256 private _nextTokenId = 1;
 
+    address public immutable lessToken;
     address public resaleSplitter;
 
     event Minted(address indexed minter, uint256 indexed tokenId, string tokenURI);
     event RoyaltyReceiverUpdated(address resaleSplitter);
 
-    constructor(address resaleSplitter_, uint96 resaleRoyaltyBps)
+    constructor(address resaleSplitter_, address lessToken_, uint96 resaleRoyaltyBps)
         ERC721("IceCube", "ICECUBE")
         Ownable(msg.sender)
     {
         require(resaleSplitter_ != address(0), "Resale splitter required");
+        require(lessToken_ != address(0), "LESS token required");
         require(resaleRoyaltyBps <= 1000, "Royalty too high");
         resaleSplitter = resaleSplitter_;
+        lessToken = lessToken_;
 
         _setDefaultRoyalty(resaleSplitter_, resaleRoyaltyBps);
     }
@@ -47,8 +53,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
             require(nftOwner == msg.sender, "Not owner of referenced NFT");
         }
 
-        // Revert if sender does not cover mint price.
-        require(msg.value >= MINT_PRICE, "Insufficient mint payment");
+        uint256 price = currentMintPrice();
+        require(msg.value >= price, "INSUFFICIENT_ETH");
 
         tokenId = _nextTokenId;
         _nextTokenId += 1;
@@ -58,11 +64,21 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
         emit Minted(msg.sender, tokenId, tokenURI);
 
-        _transferEth(owner(), MINT_PRICE);
+        _transferEth(owner(), price);
 
-        if (msg.value > MINT_PRICE) {
-            _transferEth(msg.sender, msg.value - MINT_PRICE);
+        if (msg.value > price) {
+            _transferEth(msg.sender, msg.value - price);
         }
+    }
+
+    function currentMintPrice() public view returns (uint256) {
+        uint256 supply = IERC20Minimal(lessToken).totalSupply();
+        if (supply > ONE_BILLION) {
+            supply = ONE_BILLION;
+        }
+        uint256 delta = ONE_BILLION - supply;
+        uint256 factorWad = WAD + (delta * WAD) / ONE_BILLION;
+        return (BASE_PRICE_WEI * factorWad) / WAD;
     }
 
     function setRoyaltyReceiver(address resaleSplitter_) external onlyOwner {

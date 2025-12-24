@@ -5,17 +5,25 @@ import { StdInvariant } from "forge-std/StdInvariant.sol";
 import { Test } from "forge-std/Test.sol";
 import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
+import { MockERC20 } from "../mocks/MockERC20.sol";
 
 contract MintHandler is Test {
     IceCubeMinter public minter;
     MockERC721Standard public nft;
+    MockERC20 public lessToken;
     uint256 public mintCount;
     uint256 public lastTokenId;
     uint256 public immutable mintPrice;
 
-    constructor(IceCubeMinter minter_, MockERC721Standard nft_, uint256 mintPrice_) {
+    constructor(
+        IceCubeMinter minter_,
+        MockERC721Standard nft_,
+        MockERC20 lessToken_,
+        uint256 mintPrice_
+    ) {
         minter = minter_;
         nft = nft_;
+        lessToken = lessToken_;
         mintPrice = mintPrice_;
         vm.deal(address(this), 100 ether);
     }
@@ -48,22 +56,25 @@ contract MintHandler is Test {
 contract IceCubeMinterInvariants is StdInvariant, Test {
     IceCubeMinter private minter;
     MockERC721Standard private nft;
+    MockERC20 private lessToken;
     MintHandler private handler;
 
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    uint256 private constant MINT_PRICE = 0.0017 ether;
 
     function setUp() public {
-        vm.prank(owner);
-        minter = new IceCubeMinter(resaleSplitter, 500);
+        vm.startPrank(owner);
+        lessToken = new MockERC20("LESS", "LESS");
+        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
+        vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
-        handler = new MintHandler(minter, nft, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        handler = new MintHandler(minter, nft, lessToken, price);
         targetContract(address(handler));
     }
 
     function invariant_ownerBalanceMatchesMintCount() public {
-        assertEq(owner.balance, handler.mintCount() * MINT_PRICE);
+        assertEq(owner.balance, handler.mintCount() * handler.mintPrice());
     }
 
     function invariant_tokenIdsMonotonic() public {

@@ -11,7 +11,9 @@ import {
 import { buildTokenUri } from "./token-uri-provider.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
-const MINT_PRICE = 0.0017;
+const FALLBACK_BASE_PRICE_WEI = 777_000_000_000_000n;
+const ONE_BILLION = 1_000_000_000n;
+const WAD = 1_000_000_000_000_000_000n;
 const IS_DEV = Boolean(import.meta?.env?.DEV);
 
 function formatError(error) {
@@ -29,6 +31,7 @@ export function initMintUi() {
   const statusEl = document.getElementById("mint-status");
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
+  const mintPriceEl = document.getElementById("mint-price");
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
 
@@ -39,6 +42,7 @@ export function initMintUi() {
   let walletState = null;
   const devChecklist = IS_DEV ? initDevChecklist(statusEl.parentElement) : null;
   const floorCache = new Map();
+  let currentMintPriceWei = null;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -56,6 +60,73 @@ export function initMintUi() {
       return "0.0000";
     }
     return value.toFixed(4);
+  }
+
+  function formatEthFromWei(wei) {
+    if (!wei) {
+      return "0.0000";
+    }
+    const value = Number(wei) / 1e18;
+    if (Number.isNaN(value)) {
+      return "0.0000";
+    }
+    return value.toFixed(6);
+  }
+
+  async function fetchMintPriceFromContract() {
+    if (!walletState || walletState.status !== "connected") {
+      return null;
+    }
+    if (isZeroAddress(ICECUBE_CONTRACT.address) || !ICECUBE_CONTRACT.abi?.length) {
+      return null;
+    }
+    try {
+      const provider = new BrowserProvider(walletState.provider);
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
+        return null;
+      }
+      const contract = new Contract(
+        ICECUBE_CONTRACT.address,
+        ICECUBE_CONTRACT.abi,
+        provider
+      );
+      const price = await contract.currentMintPrice();
+      return price;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function computeMintPriceFromSupply() {
+    if (state.lessTotalSupply === null || state.lessTotalSupply === undefined) {
+      return null;
+    }
+    const supply = BigInt(state.lessTotalSupply);
+    const oneBillionWad = ONE_BILLION * WAD;
+    const clamped = supply > oneBillionWad ? oneBillionWad : supply;
+    const delta = oneBillionWad - clamped;
+    const factorWad = WAD + (delta * WAD) / oneBillionWad;
+    return (FALLBACK_BASE_PRICE_WEI * factorWad) / WAD;
+  }
+
+  async function refreshMintPrice() {
+    const onchain = await fetchMintPriceFromContract();
+    if (onchain) {
+      currentMintPriceWei = BigInt(onchain);
+    } else {
+      const computed = computeMintPriceFromSupply();
+      currentMintPriceWei = computed;
+    }
+    state.mintPriceWei = currentMintPriceWei;
+    if (mintPriceEl) {
+      mintPriceEl.textContent = currentMintPriceWei
+        ? `Mint price: ${formatEthFromWei(currentMintPriceWei)} ETH.`
+        : "Mint price: —";
+    }
+    if (amountInput && currentMintPriceWei) {
+      amountInput.value = formatEthFromWei(currentMintPriceWei);
+    }
   }
 
   async function refreshFloorSnapshot(capture = false) {
@@ -158,11 +229,15 @@ export function initMintUi() {
   subscribeWallet((next) => {
     walletState = next;
     updateEligibility();
+    refreshMintPrice();
   });
 
   document.addEventListener("nft-selection-change", () => {
     updateEligibility();
     refreshFloorSnapshot();
+  });
+  document.addEventListener("less-supply-change", () => {
+    refreshMintPrice();
   });
 
   mintButton.addEventListener("click", async () => {
@@ -203,6 +278,7 @@ export function initMintUi() {
           tokenUri,
           amountInput: amountInput.value,
           walletAddress: walletState.address,
+          mintPriceWei: currentMintPriceWei,
         });
         logDiagnostics(diagnostics, devChecklist);
       }
@@ -211,7 +287,11 @@ export function initMintUi() {
         tokenId: BigInt(nft.tokenId),
       }));
       const valueRaw = amountInput.value.trim();
-      const overrides = valueRaw ? { value: parseEther(valueRaw) } : {};
+      const overrides = currentMintPriceWei
+        ? { value: currentMintPriceWei }
+        : valueRaw
+        ? { value: parseEther(valueRaw) }
+        : {};
 
       setStatus("Submitting mint transaction...");
       const tx = await contract.mint(tokenUri, refs, overrides);
@@ -227,15 +307,20 @@ export function initMintUi() {
     }
   });
 
-  if (!amountInput.value) {
-    amountInput.value = MINT_PRICE.toFixed(6);
-  }
+  refreshMintPrice();
 
   updateEligibility();
   refreshFloorSnapshot();
 }
 
-function buildDiagnostics({ selection, metadata, tokenUri, amountInput, walletAddress }) {
+function buildDiagnostics({
+  selection,
+  metadata,
+  tokenUri,
+  amountInput,
+  walletAddress,
+  mintPriceWei,
+}) {
   const sumFloorEth = selection.reduce((total, nft) => {
     if (typeof nft.collectionFloorEth !== "number" || Number.isNaN(nft.collectionFloorEth)) {
       return total;
@@ -247,7 +332,9 @@ function buildDiagnostics({ selection, metadata, tokenUri, amountInput, walletAd
     walletAddress,
     selectionCount: selection.length,
     economics: {
-      mintPriceEth: MINT_PRICE,
+      mintPriceEth: mintPriceWei
+        ? Number(mintPriceWei) / 1e18
+        : null,
       sumFloorEth,
       amountInputEth: amountInput ? Number(amountInput) : null,
     },

@@ -8,6 +8,7 @@ import {
     MockERC721RevertingOwnerOf,
     MockERC721ReturnsWrongOwner
 } from "./mocks/MockERC721s.sol";
+import { MockERC20 } from "./mocks/MockERC20.sol";
 import {
     ReceiverRevertsOnReceive,
     ReceiverConsumesGasOnReceive,
@@ -50,13 +51,14 @@ contract RefundRevertsOnReceive {
 contract IceCubeMinterEdgeTest is Test {
     IceCubeMinter private minter;
     MockERC721Standard private nft;
+    MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    uint256 private constant MINT_PRICE = 0.0017 ether;
 
     function setUp() public {
         vm.startPrank(owner);
-        minter = new IceCubeMinter(resaleSplitter, 500);
+        lessToken = new MockERC20("LESS", "LESS");
+        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
@@ -71,10 +73,11 @@ contract IceCubeMinterEdgeTest is Test {
         IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
 
-        vm.deal(minterAddr, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
         vm.prank(minterAddr);
         vm.expectRevert("Transfer failed");
-        minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
+        minter.mint{ value: price }("ipfs://token", refs);
     }
 
     function testMintRevertsWhenRefundFails() public {
@@ -83,10 +86,11 @@ contract IceCubeMinterEdgeTest is Test {
         uint256 tokenId = nft.mint(address(refundReverter));
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
         refundReverter.configure(refs);
-        vm.deal(address(refundReverter), MINT_PRICE + 1 wei);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(address(refundReverter), price + 1 wei);
 
         vm.expectRevert("Transfer failed");
-        refundReverter.mintWithOverpay{ value: MINT_PRICE + 1 wei }("ipfs://token");
+        refundReverter.mintWithOverpay{ value: price + 1 wei }("ipfs://token");
     }
 
     function testOwnerOfRevertBubbles() public {
@@ -115,11 +119,12 @@ contract IceCubeMinterEdgeTest is Test {
         IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenIdA });
 
-        vm.deal(minterAddr, MINT_PRICE * 2);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price * 2);
         vm.startPrank(minterAddr);
-        uint256 mintedA = minter.mint{ value: MINT_PRICE }("ipfs://a", refs);
+        uint256 mintedA = minter.mint{ value: price }("ipfs://a", refs);
         refs[0].tokenId = tokenIdB;
-        uint256 mintedB = minter.mint{ value: MINT_PRICE }("ipfs://b", refs);
+        uint256 mintedB = minter.mint{ value: price }("ipfs://b", refs);
         vm.stopPrank();
 
         assertEq(mintedB, mintedA + 1);
@@ -135,10 +140,11 @@ contract IceCubeMinterEdgeTest is Test {
         IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
 
-        vm.deal(minterAddr, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
-        assertEq(address(gasOwner).balance, MINT_PRICE);
+        minter.mint{ value: price }("ipfs://token", refs);
+        assertEq(address(gasOwner).balance, price);
     }
 
     function testMintRevertsOnReentrantOwnerReceive() public {
@@ -157,9 +163,10 @@ contract IceCubeMinterEdgeTest is Test {
         reenterTokenIds[0] = tokenId;
         malicious.configure(minter, reenterContracts, reenterTokenIds, "ipfs://reenter");
 
-        vm.deal(minterAddr, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        uint256 mintedId = minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
+        uint256 mintedId = minter.mint{ value: price }("ipfs://token", refs);
         assertEq(minter.ownerOf(mintedId), minterAddr);
     }
 }

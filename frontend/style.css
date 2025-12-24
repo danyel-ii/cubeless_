@@ -129,6 +129,40 @@ body {
   animation: eth-hud-drift 10s ease-in-out infinite;
 }
 
+.less-hud {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 2;
+  pointer-events: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(10, 12, 16, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  color: rgba(230, 233, 239, 0.75);
+}
+
+.less-hud-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(230, 233, 239, 0.5);
+}
+
+.less-hud-value {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.less-hud-time {
+  margin-top: 4px;
+  font-size: 10px;
+  color: rgba(230, 233, 239, 0.5);
+}
+
 .eth-hud-body {
   width: 140px;
   padding: 16px 14px;
@@ -438,6 +472,11 @@ body.is-minted .preview-bar {
 
   .eth-hud {
     right: 12px;
+    bottom: 12px;
+  }
+
+  .less-hud {
+    left: 12px;
     bottom: 12px;
   }
 }

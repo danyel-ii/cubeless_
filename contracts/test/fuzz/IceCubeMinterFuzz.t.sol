@@ -4,17 +4,20 @@ pragma solidity ^0.8.20;
 import { Test } from "forge-std/Test.sol";
 import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
+import { MockERC20 } from "../mocks/MockERC20.sol";
 
 contract IceCubeMinterFuzzTest is Test {
     IceCubeMinter private minter;
     MockERC721Standard private nft;
+    MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    uint256 private constant MINT_PRICE = 0.0017 ether;
 
     function setUp() public {
-        vm.prank(owner);
-        minter = new IceCubeMinter(resaleSplitter, 500);
+        vm.startPrank(owner);
+        lessToken = new MockERC20("LESS", "LESS");
+        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
+        vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
 
@@ -33,13 +36,14 @@ contract IceCubeMinterFuzzTest is Test {
         uint8 count = uint8(bound(countRaw, 1, 6));
         uint256 payment = bound(paymentRaw, 0, 1 ether);
         address minterAddr = makeAddr("minter");
+        uint256 price = minter.currentMintPrice();
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(minterAddr, count);
         vm.deal(minterAddr, payment);
 
         vm.prank(minterAddr);
-        if (payment < MINT_PRICE) {
-            vm.expectRevert("Insufficient mint payment");
+        if (payment < price) {
+            vm.expectRevert("INSUFFICIENT_ETH");
             minter.mint{ value: payment }("ipfs://token", refs);
             return;
         }
@@ -48,8 +52,8 @@ contract IceCubeMinterFuzzTest is Test {
         uint256 minterBefore = minterAddr.balance;
         minter.mint{ value: payment }("ipfs://token", refs);
 
-        assertEq(owner.balance, ownerBefore + MINT_PRICE);
-        assertEq(minterAddr.balance, minterBefore - MINT_PRICE);
+        assertEq(owner.balance, ownerBefore + price);
+        assertEq(minterAddr.balance, minterBefore - price);
     }
 
     function testFuzz_OwnershipGate(uint8 countRaw, bool injectWrongOwner) public {
@@ -62,13 +66,14 @@ contract IceCubeMinterFuzzTest is Test {
             refs[count - 1].tokenId = nft.mint(other);
         }
 
-        vm.deal(minterAddr, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
         vm.prank(minterAddr);
         if (injectWrongOwner) {
             vm.expectRevert("Not owner of referenced NFT");
-            minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
+            minter.mint{ value: price }("ipfs://token", refs);
         } else {
-            minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
+            minter.mint{ value: price }("ipfs://token", refs);
         }
     }
 }

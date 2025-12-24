@@ -4,6 +4,7 @@ import { initExportUi } from "./export-ui.js";
 import { initLeaderboardUi } from "./leaderboard.js";
 import { initEthHud } from "./eth-hud.js";
 import { initPreviewUi } from "./preview.js";
+import { initLessSupplyHud } from "./less-hud.js";
 import { initWalletUi } from "../features/wallet/wallet-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
@@ -17,6 +18,7 @@ export function initUiRoot() {
   initMintUi();
   initLeaderboardUi();
   initEthHud();
+  initLessSupplyHud();
   initPreviewUi();
   initUiTouchGuards();
 }

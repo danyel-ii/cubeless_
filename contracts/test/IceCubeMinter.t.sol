@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { Test } from "forge-std/Test.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { IceCubeMinter } from "../src/icecube/IceCubeMinter.sol";
+import { MockERC20 } from "./mocks/MockERC20.sol";
 
 contract MockERC721 is ERC721 {
     uint256 private _nextId = 1;
@@ -22,14 +23,17 @@ contract IceCubeMinterTest is Test {
     MockERC721 private nftA;
     MockERC721 private nftB;
     MockERC721 private nftC;
+    MockERC20 private lessToken;
 
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    uint256 private constant MINT_PRICE = 0.0017 ether;
+    uint256 private constant ONE_BILLION = 1_000_000_000e18;
+    uint256 private constant BASE_PRICE = 777_000_000_000_000;
 
     function setUp() public {
         vm.startPrank(owner);
-        minter = new IceCubeMinter(resaleSplitter, 500);
+        lessToken = new MockERC20("LESS", "LESS");
+        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
         vm.stopPrank();
 
         nftA = new MockERC721("NFT A", "NFTA");
@@ -68,13 +72,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenC = nftC.mint(minterAddr);
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
-        uint256 amount = MINT_PRICE;
+        uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
         vm.prank(minterAddr);
         minter.mint{ value: amount }("ipfs://token", refs);
 
-        assertEq(owner.balance, MINT_PRICE);
+        assertEq(owner.balance, amount);
     }
 
     function testMintSetsTokenUri() public {
@@ -85,9 +89,10 @@ contract IceCubeMinterTest is Test {
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
-        vm.deal(minterAddr, MINT_PRICE);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: MINT_PRICE }("ipfs://token", refs);
+        uint256 tokenId = minter.mint{ value: price }("ipfs://token", refs);
 
         assertEq(minter.ownerOf(tokenId), minterAddr);
         assertEq(minter.tokenURI(tokenId), "ipfs://token");
@@ -121,10 +126,11 @@ contract IceCubeMinterTest is Test {
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
-        vm.deal(minterAddr, MINT_PRICE - 1);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price - 1);
         vm.prank(minterAddr);
-        vm.expectRevert("Insufficient mint payment");
-        minter.mint{ value: MINT_PRICE - 1 }("ipfs://token", refs);
+        vm.expectRevert("INSUFFICIENT_ETH");
+        minter.mint{ value: price - 1 }("ipfs://token", refs);
     }
 
     function testMintRefundsExcessPayment() public {
@@ -138,7 +144,7 @@ contract IceCubeMinterTest is Test {
         refs[1] = IceCubeMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
         refs[2] = IceCubeMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
 
-        uint256 required = MINT_PRICE;
+        uint256 required = minter.currentMintPrice();
         uint256 amount = required + 0.001 ether;
         vm.deal(minterAddr, amount);
 
@@ -146,5 +152,28 @@ contract IceCubeMinterTest is Test {
         minter.mint{ value: amount }("ipfs://token", refs);
 
         assertEq(minterAddr.balance, amount - required);
+    }
+
+    function testCurrentMintPriceSupplyZero() public {
+        uint256 price = minter.currentMintPrice();
+        assertEq(price, BASE_PRICE * 2);
+    }
+
+    function testCurrentMintPriceHalfSupply() public {
+        lessToken.mint(address(this), ONE_BILLION / 2);
+        uint256 price = minter.currentMintPrice();
+        assertEq(price, (BASE_PRICE * 15) / 10);
+    }
+
+    function testCurrentMintPriceFullSupply() public {
+        lessToken.mint(address(this), ONE_BILLION);
+        uint256 price = minter.currentMintPrice();
+        assertEq(price, BASE_PRICE);
+    }
+
+    function testCurrentMintPriceClamp() public {
+        lessToken.mint(address(this), ONE_BILLION + 1);
+        uint256 price = minter.currentMintPrice();
+        assertEq(price, BASE_PRICE);
     }
 }
