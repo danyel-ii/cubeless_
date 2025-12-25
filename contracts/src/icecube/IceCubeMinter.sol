@@ -16,7 +16,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
-    uint256 public constant BASE_PRICE_WEI = 777_000_000_000_000;
+    uint256 public constant BASE_PRICE_WEI = 1_500_000_000_000_000;
     uint256 public constant PRICE_STEP_WEI = 100_000_000_000_000;
     uint256 public constant ONE_BILLION = 1_000_000_000e18;
     uint256 public constant WAD = 1e18;

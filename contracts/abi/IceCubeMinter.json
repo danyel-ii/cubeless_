@@ -48,6 +48,19 @@
   },
   {
     "type": "function",
+    "name": "PRICE_STEP_WEI",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "RESALE_ROYALTY_BPS_DEFAULT",
     "inputs": [],
     "outputs": [

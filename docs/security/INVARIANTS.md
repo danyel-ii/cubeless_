@@ -27,7 +27,7 @@ For the minting handler address, `balanceOf(handler) == mintCount`.
 ## I-8: RoyaltySplitter fallback
 - Router unset → forwards 100% ETH to owner.
 - Router reverts → forwards 100% ETH to owner.
-- Router succeeds → forwards $LESS to owner, then remaining ETH to owner.
+- Router succeeds → splits $LESS 50% to burn address and 50% to owner, then remaining ETH to owner.
 
 ## I-9: Reentrancy safety
 Reentrancy via owner/refund/router calls must not mint extra tokens or corrupt state.

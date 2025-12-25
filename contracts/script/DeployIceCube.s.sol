@@ -12,6 +12,10 @@ contract DeployIceCube is Script {
             "ICECUBE_LESS_TOKEN",
             address(0x9C2CA573009F181EAc634C4d6e44A0977C24f335)
         );
+        address burnAddress = vm.envOr(
+            "ICECUBE_BURN_ADDRESS",
+            address(0x000000000000000000000000000000000000dEaD)
+        );
         address router = vm.envOr("ICECUBE_ROUTER", address(0));
         bytes memory swapCalldata = vm.envOr("ICECUBE_SWAP_CALLDATA", bytes(""));
         uint96 resaleRoyaltyBps = uint96(vm.envOr("ICECUBE_RESALE_BPS", uint256(500)));
@@ -21,7 +25,8 @@ contract DeployIceCube is Script {
             owner,
             lessToken,
             router,
-            swapCalldata
+            swapCalldata,
+            burnAddress
         );
         IceCubeMinter minter = new IceCubeMinter(
             address(splitter),

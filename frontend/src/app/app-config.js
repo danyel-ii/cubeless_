@@ -1,8 +1,11 @@
 export const config = {
   sourceUrls: [
-    "https://arweave.net/Vnrzdu5pLDRyQl62_NVpJppC25shpOaznj0ykZvPfzA",
-    "https://arweave.net/FkeOf8fynP9lSJ8wuLmuXMXP3hjxI_4tt__hAPA7mKo",
-    "ipfs://QmPAT7bVyQCr2qXGgNcL48UZLnvxXMkAwzo1A4tRpc3ubL/4568",
+    "https://arweave.net/whvEaj6v8B1jyR0jXzmtGyHxKm55GdienjjWlx38bpk",
+    "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
+    "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
+    "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
+    "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
+    "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
   ],
   ipfsGateway: "https://ipfs.io/ipfs/",
   backgroundUrl: "/bg_1.png",

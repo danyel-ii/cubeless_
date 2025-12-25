@@ -23,11 +23,11 @@
 ## 2025-12-23 → 2025-12-24 — Mint Economics + $LESS Metrics
 
 - Mint price is **dynamic**, derived from $LESS totalSupply:
-  - base price `0.000777 ETH`
+  - base price `0.0015 ETH`
   - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
-- RoyaltySplitter can attempt a $LESS buy, then forwards $LESS + remaining ETH to owner.
+- RoyaltySplitter can attempt a $LESS buy, then splits $LESS 50% burn / 50% owner and forwards remaining ETH to owner.
 - The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
 
 ## 2025-12-24 — Interactive Metadata (p5.js)

@@ -56,8 +56,8 @@ cd contracts
 forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv
 ```
 Result: PASS (2 tests)
-- `ownerOf` reverted on ENS token; logged as non-standard/restricted and test allowed.
-- `royaltyInfo` reverted on sampled contracts; logged and allowed.
+- `ownerOf` reverted (non-standard or restricted), logged and allowed.
+- `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
 ### Frontend tests
 Command:

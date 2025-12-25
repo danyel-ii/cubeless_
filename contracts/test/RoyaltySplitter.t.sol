@@ -36,9 +36,10 @@ contract SuccessfulRouter {
 
 contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
+    address private burn = address(0x000000000000000000000000000000000000dEaD);
 
     function testForwardsAllWhenRouterUnset() public {
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "");
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
         vm.deal(address(this), 1 ether);
 
         (bool ok, ) = address(splitter).call{ value: 1 ether }("");
@@ -52,7 +53,8 @@ contract RoyaltySplitterTest is Test {
             owner,
             address(0),
             address(router),
-            hex"deadbeef"
+            hex"deadbeef",
+            burn
         );
 
         vm.deal(address(this), 2 ether);
@@ -68,14 +70,16 @@ contract RoyaltySplitterTest is Test {
             owner,
             address(less),
             address(router),
-            hex"deadbeef"
+            hex"deadbeef",
+            burn
         );
 
         vm.deal(address(this), 2 ether);
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
         assertEq(owner.balance, 1 ether);
-        assertEq(less.balanceOf(owner), 250 ether);
+        assertEq(less.balanceOf(owner), 125 ether);
+        assertEq(less.balanceOf(burn), 125 ether);
     }
 
     function testRevertsWhenOwnerCannotReceiveEth() public {
@@ -84,7 +88,8 @@ contract RoyaltySplitterTest is Test {
             address(receiver),
             address(0),
             address(0),
-            ""
+            "",
+            burn
         );
 
         vm.deal(address(this), 1 ether);

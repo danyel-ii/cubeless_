@@ -171,11 +171,11 @@ type MintMetadata = {
 ## Mint Economics (v0)
 
 - Mint price is **dynamic** based on $LESS totalSupply:
-  - base price `0.000777 ETH`
+  - base price `0.0015 ETH`
   - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
-- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter.
+- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (splits $LESS 50% burn / 50% owner on successful swap).
 
 ## Deterministic TokenId
 

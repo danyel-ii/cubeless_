@@ -66,7 +66,7 @@ This plan defines the tests needed to trust the system end-to-end:
 **E. RoyaltySplitter behavior**
 - when router unset → forwards 100% ETH to owner
 - when swap reverts → forwards 100% ETH to owner (does not revert)
-- when swap succeeds → forwards $LESS to owner, then remaining ETH to owner
+- when swap succeeds → splits $LESS 50% to burn address and 50% to owner, then remaining ETH to owner
 
 **F. ERC-2981 resale royalty**
 - `royaltyInfo(ourTokenId, salePrice)` returns `(splitter, expectedAmount)`

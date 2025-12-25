@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.000777 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), pays the contract owner directly, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally calls a router with half the royalty; on successful swap, any $LESS tokens are forwarded to the owner and remaining ETH is forwarded to the owner, and if the router is unset or the call fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
+IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), pays the contract owner directly, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally calls a router with half the royalty; on successful swap, any $LESS tokens are split 50/50 between the burn address and the owner, and remaining ETH is forwarded to the owner, and if the router is unset or the call fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
 
 ## Contract Overview
 
@@ -35,7 +35,7 @@ Key steps:
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
-   - `base = 0.000777 ETH`
+   - `base = 0.0015 ETH`
    - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
@@ -115,5 +115,5 @@ Mint UI: `frontend/src/features/mint/mint-ui.js`
 - On-chain swaps and pool position management are not implemented.
 - RoyaltySplitter uses a router call if configured; otherwise it forwards ETH to owner.
 - When the router call fails, all ETH is forwarded to owner.
-- When the router call succeeds, any $LESS received is transferred to owner, then any remaining ETH balance is forwarded to owner.
+- When the router call succeeds, any $LESS received is split 50% to burn address and 50% to owner, then any remaining ETH balance is forwarded to owner.
 - Metadata storage is currently a data URI; production should pin metadata to IPFS and reference the p5 app via `animation_url`.

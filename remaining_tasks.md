@@ -12,7 +12,7 @@ This list captures items still needed from you to complete v0.
 
 These changes are implemented in code; verify on a Sepolia deployment.
 
-- Mint price is dynamic from $LESS totalSupply (base `0.000777 ETH`, clamped factor, rounded up to `0.0001 ETH`).
+- Mint price is dynamic from $LESS totalSupply (base `0.0015 ETH`, clamped factor, rounded up to `0.0001 ETH`).
 - Mint pays `currentMintPrice()` to `owner()` with refund on overpayment.
 - ERC-2981 royalties set to 5% with receiver = `RoyaltySplitter`.
 - RoyaltySplitter behavior:
@@ -43,6 +43,10 @@ These changes are implemented in code; verify in the UI.
 
 - Run `npm run coverage:contracts` and review `contracts/coverage_report.md` (90% minimum).
 - Current coverage is 80.93% (fail); add tests or exclude scripts to reach 90%.
+
+## T16 — Fork Tests (Verify)
+
+- Mainnet fork tests now pass using `MAINNET_RPC_URL`; keep re-running after contract changes.
   - Token URI decodes to metadata JSON with `animation_url` + provenance
 - Confirm $LESS token address is set before production
 - Confirm RoyaltySplitter forwards $LESS received from swaps to the owner

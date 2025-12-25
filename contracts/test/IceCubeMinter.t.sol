@@ -28,7 +28,7 @@ contract IceCubeMinterTest is Test {
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
     uint256 private constant ONE_BILLION = 1_000_000_000e18;
-    uint256 private constant BASE_PRICE = 777_000_000_000_000;
+    uint256 private constant BASE_PRICE = 1_500_000_000_000_000;
     uint256 private constant PRICE_STEP = 100_000_000_000_000;
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
 

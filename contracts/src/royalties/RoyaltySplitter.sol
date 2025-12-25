@@ -7,6 +7,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 contract RoyaltySplitter is Ownable, ReentrancyGuard {
     address public immutable lessToken;
+    address public immutable burnAddress;
     address public router;
     bytes public swapCalldata;
 
@@ -16,12 +17,15 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
         address owner_,
         address lessToken_,
         address router_,
-        bytes memory swapCalldata_
+        bytes memory swapCalldata_,
+        address burnAddress_
     ) Ownable(owner_) {
         require(owner_ != address(0), "Owner required");
+        require(burnAddress_ != address(0), "Burn address required");
         lessToken = lessToken_;
         router = router_;
         swapCalldata = swapCalldata_;
+        burnAddress = burnAddress_;
     }
 
     receive() external payable nonReentrant {
@@ -56,17 +60,25 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
             return;
         }
 
-        _forwardLessToOwner();
+        _forwardLess();
         _send(owner(), address(this).balance);
     }
 
-    function _forwardLessToOwner() internal {
+    function _forwardLess() internal {
         uint256 lessBalance = IERC20(lessToken).balanceOf(address(this));
         if (lessBalance == 0) {
             return;
         }
-        bool success = IERC20(lessToken).transfer(owner(), lessBalance);
-        require(success, "LESS transfer failed");
+        uint256 burnAmount = lessBalance / 2;
+        uint256 ownerAmount = lessBalance - burnAmount;
+        if (burnAmount > 0) {
+            bool burned = IERC20(lessToken).transfer(burnAddress, burnAmount);
+            require(burned, "LESS burn transfer failed");
+        }
+        if (ownerAmount > 0) {
+            bool success = IERC20(lessToken).transfer(owner(), ownerAmount);
+            require(success, "LESS transfer failed");
+        }
     }
 
     function _send(address recipient, uint256 amount) internal {
