@@ -1,19 +1,24 @@
 import { BrowserProvider, Contract, parseEther } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
-import {
-  buildMintMetadata,
-  getMintAnimationUrl,
-} from "./mint-metadata.js";
+import { buildMintMetadata } from "./mint-metadata.js";
 import { buildTokenUri } from "./token-uri-provider.js";
+import {
+  computeGifSeed,
+  computeVariantIndex,
+  decodeVariantIndex,
+  gifIpfsUrl,
+} from "../../gif/variant.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const FALLBACK_BASE_PRICE_WEI = 777_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
 const WAD = 1_000_000_000_000_000_000n;
+const PRICE_STEP_WEI = 100_000_000_000_000n;
 const IS_DEV = Boolean(import.meta?.env?.DEV);
 
 function formatError(error) {
@@ -27,11 +32,22 @@ function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
 }
 
+function generateSalt() {
+  if (typeof crypto === "undefined" || !crypto.getRandomValues) {
+    throw new Error("Secure random unavailable.");
+  }
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function initMintUi() {
   const statusEl = document.getElementById("mint-status");
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
   const mintPriceEl = document.getElementById("mint-price");
+  const shareButton = document.getElementById("mint-share-copy");
+  const shareLinkEl = document.getElementById("mint-share-link");
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
 
@@ -44,6 +60,10 @@ export function initMintUi() {
   const floorCache = new Map();
   let currentMintPriceWei = null;
 
+  if (shareLinkEl) {
+    shareLinkEl.textContent = "";
+  }
+
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", tone === "error");
@@ -53,6 +73,37 @@ export function initMintUi() {
   function setDisabled(disabled) {
     mintButton.disabled = disabled;
     amountInput.disabled = disabled;
+  }
+
+  function showShareLink(url) {
+    if (!shareLinkEl || !shareButton) {
+      return;
+    }
+    shareLinkEl.textContent = url;
+    shareLinkEl.dataset.url = url;
+    shareButton.classList.remove("is-hidden");
+  }
+
+  async function copyShareLink() {
+    if (!shareLinkEl) {
+      return;
+    }
+    const url = shareLinkEl.dataset.url;
+    if (!url) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setStatus("Share link copied.", "success");
+    } catch (error) {
+      setStatus("Copy failed. Select the URL manually.", "error");
+    }
+  }
+
+  if (shareButton) {
+    shareButton.addEventListener("click", () => {
+      copyShareLink();
+    });
   }
 
   function formatEth(value) {
@@ -107,7 +158,15 @@ export function initMintUi() {
     const clamped = supply > oneBillionWad ? oneBillionWad : supply;
     const delta = oneBillionWad - clamped;
     const factorWad = WAD + (delta * WAD) / oneBillionWad;
-    return (FALLBACK_BASE_PRICE_WEI * factorWad) / WAD;
+    const rawPrice = (FALLBACK_BASE_PRICE_WEI * factorWad) / WAD;
+    return roundUp(rawPrice, PRICE_STEP_WEI);
+  }
+
+  function roundUp(value, step) {
+    if (value === 0n) {
+      return 0n;
+    }
+    return ((value + step - 1n) / step) * step;
   }
 
   async function refreshMintPrice() {
@@ -217,13 +276,25 @@ export function initMintUi() {
       setDisabled(true);
       return;
     }
-    if (!getMintAnimationUrl()) {
-      setStatus("Set VITE_APP_ANIMATION_URL before minting.", "error");
-      setDisabled(true);
-      return;
-    }
     setStatus("Ready to mint.");
     setDisabled(false);
+  }
+
+  function extractMintedTokenId(receipt, contract) {
+    if (!receipt?.logs || !contract) {
+      return null;
+    }
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed?.name === "Minted") {
+          return parsed.args?.tokenId ?? null;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+    return null;
   }
 
   subscribeWallet((next) => {
@@ -250,6 +321,13 @@ export function initMintUi() {
       return;
     }
     setDisabled(true);
+    if (shareButton) {
+      shareButton.classList.add("is-hidden");
+    }
+    if (shareLinkEl) {
+      shareLinkEl.textContent = "";
+      shareLinkEl.dataset.url = "";
+    }
     setStatus("Building provenance bundle...");
     try {
       await refreshFloorSnapshot(true);
@@ -264,12 +342,46 @@ export function initMintUi() {
         ICECUBE_CONTRACT.abi,
         signer
       );
+      const salt = generateSalt();
       const bundle = await buildProvenanceBundle(
         state.nftSelection,
         walletState.address,
         SEPOLIA_CHAIN_ID
       );
-      const metadata = buildMintMetadata(state.nftSelection, bundle);
+      const refs = state.nftSelection.map((nft) => ({
+        contractAddress: nft.contractAddress,
+        tokenId: BigInt(nft.tokenId),
+      }));
+      const previewTokenId = await contract.previewTokenId(salt, refs);
+      const lessSupplyMint = await contract.lessSupplyNow();
+      const tokenId = BigInt(previewTokenId);
+      const selectionSeed = computeGifSeed({
+        tokenId,
+        minter: walletState.address,
+        lessSupplyMint,
+      });
+      const variantIndex = computeVariantIndex(selectionSeed);
+      const params = decodeVariantIndex(variantIndex);
+      const imageUrl = gifIpfsUrl(variantIndex);
+      const animationUrl = buildTokenViewUrl(tokenId.toString());
+      if (!animationUrl) {
+        throw new Error("Token viewer URL is not configured.");
+      }
+      const metadata = buildMintMetadata({
+        tokenId: tokenId.toString(),
+        minter: walletState.address,
+        chainId: SEPOLIA_CHAIN_ID,
+        selection: state.nftSelection,
+        provenanceBundle: bundle,
+        animationUrl,
+        imageUrl,
+        gif: {
+          variantIndex,
+          selectionSeed,
+          params,
+          lessSupplyMint: lessSupplyMint.toString(),
+        },
+      });
       const tokenUri = buildTokenUri(metadata);
       if (devChecklist) {
         const diagnostics = buildDiagnostics({
@@ -279,13 +391,12 @@ export function initMintUi() {
           amountInput: amountInput.value,
           walletAddress: walletState.address,
           mintPriceWei: currentMintPriceWei,
+          tokenId: tokenId.toString(),
         });
         logDiagnostics(diagnostics, devChecklist);
       }
-      const refs = state.nftSelection.map((nft) => ({
-        contractAddress: nft.contractAddress,
-        tokenId: BigInt(nft.tokenId),
-      }));
+      state.currentCubeTokenId = tokenId;
+      document.dispatchEvent(new CustomEvent("cube-token-change"));
       const valueRaw = amountInput.value.trim();
       const overrides = currentMintPriceWei
         ? { value: currentMintPriceWei }
@@ -294,9 +405,18 @@ export function initMintUi() {
         : {};
 
       setStatus("Submitting mint transaction...");
-      const tx = await contract.mint(tokenUri, refs, overrides);
+      const tx = await contract.mint(salt, tokenUri, refs, overrides);
       setStatus("Waiting for confirmation...");
-      await tx.wait();
+      const receipt = await tx.wait();
+      const mintedTokenId = extractMintedTokenId(receipt, contract);
+      if (mintedTokenId !== null && mintedTokenId !== undefined) {
+        state.currentCubeTokenId = BigInt(mintedTokenId);
+        document.dispatchEvent(new CustomEvent("cube-token-change"));
+        const shareUrl = buildTokenViewUrl(mintedTokenId.toString());
+        if (shareUrl) {
+          showShareLink(shareUrl);
+        }
+      }
       setStatus("Mint confirmed.", "success");
       document.dispatchEvent(new CustomEvent("mint-complete"));
     } catch (error) {
@@ -320,6 +440,7 @@ function buildDiagnostics({
   amountInput,
   walletAddress,
   mintPriceWei,
+  tokenId,
 }) {
   const sumFloorEth = selection.reduce((total, nft) => {
     if (typeof nft.collectionFloorEth !== "number" || Number.isNaN(nft.collectionFloorEth)) {
@@ -330,6 +451,7 @@ function buildDiagnostics({
 
   return {
     walletAddress,
+    tokenId,
     selectionCount: selection.length,
     economics: {
       mintPriceEth: mintPriceWei

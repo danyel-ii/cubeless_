@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo \"No frontend tests configured\""
+    "test": "echo \"No frontend tests configured\"",
+    "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py"
   },
   "devDependencies": {
     "vite": "^5.2.0",

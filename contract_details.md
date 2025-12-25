@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0017 ETH and pays the contract owner directly, with refunds for overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally calls a router with half the royalty; on successful swap, any $LESS tokens are forwarded to the owner and remaining ETH is forwarded to the owner, and if the router is unset or the call fails, all ETH is forwarded to the owner. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
+IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.000777 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), pays the contract owner directly, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally calls a router with half the royalty; on successful swap, any $LESS tokens are forwarded to the owner and remaining ETH is forwarded to the owner, and if the router is unset or the call fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
 
 ## Contract Overview
 
@@ -27,24 +27,43 @@ Contract: `contracts/src/icecube/IceCubeMinter.sol`
 Function signature:
 
 ```
-mint(string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
+mint(bytes32 salt, string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
 ```
 
 Key steps:
 
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
-3. **Pricing**: requires `0.0017 ETH` (fixed mint price).
-4. **Mint + metadata**: mint new token ID and store `tokenURI`.
-5. **Mint payout**: transfers `0.0017 ETH` to `owner()` and refunds any excess to `msg.sender`.
+3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
+   - `base = 0.000777 ETH`
+   - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
+   - `price = base * factor`
+   - `price` is rounded up to the nearest `0.0001 ETH`
+4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and `refsHash`.
+5. **Mint + metadata**: mint token and store `tokenURI`.
+6. **Mint payout**: transfers `currentMintPrice()` to `owner()` and refunds any excess to `msg.sender`.
 
 Mint payment uses a direct ETH transfer. If the owner transfer fails, the mint reverts. Overpayment is always refunded.
+
+## $LESS Supply Snapshots + Deltas
+
+- `mintSupplySnapshot(tokenId)` stores the $LESS totalSupply at mint.
+- `lastSupplySnapshot(tokenId)` updates on every non-mint transfer (sales and gifts are treated the same).
+- `lessSupplyNow()` exposes the current totalSupply (treated as remaining supply, including burns).
+- `deltaFromMint(tokenId)` and `deltaFromLast(tokenId)` return snapshot minus current supply (clamped to 0).
+
+These values power the in-app ΔLESS HUD and the leaderboard ranking (canonical metric: `deltaFromLast`).
+
+## Deterministic TokenId Preview
+
+- `previewTokenId(bytes32 salt, NftRef[] refs)` returns the exact tokenId the mint will use.
+- Clients should call `previewTokenId` before pinning metadata to build a token-specific `animation_url`.
 
 ## Royalty Logic
 
 Royalty splitter: `contracts/src/royalties/RoyaltySplitter.sol`
 
-- **Mint-time payout**: fixed mint price to `owner()`.
+- **Mint-time payout**: dynamic mint price to `owner()`.
 - **Resale royalty**: `_setDefaultRoyalty(resaleSplitter, bps)` uses ERC-2981.
   - Default is 5% bps on deployments unless overridden.
   - `setResaleRoyalty(bps, receiver)` allows owner to update (bps capped at 10%).
@@ -87,8 +106,8 @@ File: `frontend/src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `frontend/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image`, `animation_url`, and `provenance`.
-- Encodes metadata as a data URI for now and calls `mint(tokenURI, refs)` on Sepolia.
+- Creates a JSON metadata object with `image` (GIF), `animation_url` (`/m/<tokenId>`), `gif` traits, and `provenance.refs`.
+- Encodes metadata as a data URI for now and calls `mint(salt, tokenURI, refs)` on Sepolia.
 - The intended production flow is to pin the metadata JSON to IPFS and pass `ipfs://<metaCID>` as `tokenURI`.
 
 ## Known Placeholders / TODOs

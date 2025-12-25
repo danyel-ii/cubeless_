@@ -20,14 +20,25 @@
 - Token URI is emitted as a data URI for fast iteration.
 - A `tokenUriProvider` abstraction isolates the encoding step for future IPFS/Arweave.
 
-## 2025-12-23 — Mint Economics (simplified)
+## 2025-12-23 → 2025-12-24 — Mint Economics + $LESS Metrics
 
-- Mint price is fixed at `0.0017 ETH` with no mint-time royalty surcharge.
+- Mint price is **dynamic**, derived from $LESS totalSupply:
+  - base price `0.000777 ETH`
+  - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
+  - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
 - RoyaltySplitter can attempt a $LESS buy, then forwards $LESS + remaining ETH to owner.
+- The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
 
 - Mint metadata includes `animation_url` pointing to the IPFS-hosted p5 app entry.
 - `image` is treated as an optional thumbnail, not the primary work.
 - Provenance bundle is stored under `provenance` in the tokenURI JSON.
+
+## 2025-12-24 — Deterministic TokenId + Viewer Route
+
+- TokenId is derived from `msg.sender`, `salt`, and `refsHash` for safe pre-mint metadata.
+- `previewTokenId` is used client-side to build token-specific `animation_url`.
+- `animation_url` now points to `https://<domain>/m/<tokenId>` (Vercel viewer).
+- Metadata includes GIF traits (`gif.*`) and an `image` pointing to the GIF library.

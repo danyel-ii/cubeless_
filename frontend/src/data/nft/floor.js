@@ -1,4 +1,4 @@
-import { alchemyGet } from "../alchemy/client";
+import { alchemyGet } from "../chain/alchemy-client";
 
 const MAINNET_CHAIN_ID = 1;
 

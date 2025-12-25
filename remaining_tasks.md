@@ -8,25 +8,26 @@
 
 This list captures items still needed from you to complete v0.
 
-## C1 — Contracts: Simplified economics + splitter behavior (Verify)
+## C1 — Contracts: Economics + splitter behavior (Verify)
 
 These changes are implemented in code; verify on a Sepolia deployment.
 
-- Mint price fixed at `0.0017 ETH`, paid to `owner()` with refund on overpayment.
+- Mint price is dynamic from $LESS totalSupply (base `0.000777 ETH`, clamped factor, rounded up to `0.0001 ETH`).
+- Mint pays `currentMintPrice()` to `owner()` with refund on overpayment.
 - ERC-2981 royalties set to 5% with receiver = `RoyaltySplitter`.
 - RoyaltySplitter behavior:
   - If router unset, forwards 100% ETH to owner.
   - If router set and swap succeeds, forwards $LESS tokens to owner and remaining ETH to owner.
   - If swap reverts, forwards 100% ETH to owner without reverting.
 
-## C2 — Frontend: Floor snapshot + Leaderboard scaffold (Verify)
+## C2 — Frontend: Floor snapshot + Leaderboard (Verify)
 
 These changes are implemented in code; verify in the UI.
 
 - Per-NFT floor snapshot (ETH) in selection list.
 - Total floor snapshot (ETH) above mint button.
 - Floor defaults to `0` on Sepolia (chainId `11155111`).
-- Leaderboard placeholder view with navigation from main UI.
+- Leaderboard ranks tokens by ΔLESS (deltaFromLast) and shows current supply.
 - (Optional) Floor snapshot fields in metadata provenance.
 
 ## T14 — Direct Mint Call (Finish)
@@ -37,9 +38,13 @@ These changes are implemented in code; verify in the UI.
   - Connect wallet on Sepolia
   - Select 1–6 NFTs
   - Mint transaction succeeds
+
+## T15 — Coverage Gate (Verify)
+
+- Run `npm run coverage:contracts` and review `contracts/coverage_report.md` (90% minimum).
   - Token URI decodes to metadata JSON with `animation_url` + provenance
-  - Confirm $Less treasury placeholder address is set before production
-  - Confirm RoyaltySplitter forwards $LESS received from swaps to the owner
+- Confirm $LESS token address is set before production
+- Confirm RoyaltySplitter forwards $LESS received from swaps to the owner
 
 ## M1 — Manifest Finalization
 
@@ -52,8 +57,7 @@ These changes are implemented in code; verify in the UI.
 
 ## T13 — Storage Decision (Metadata)
 
-- Pin the p5 miniapp build artifacts as an IPFS directory.
-- Pin the metadata JSON (tokenURI) with `animation_url = ipfs://<appDirCID>/index.html`.
+- Pin the metadata JSON (tokenURI) with `animation_url = https://<domain>/m/<tokenId>`.
 - Decide on a thumbnail capture flow (optional) and update `image`.
 - Update `tokenUriProvider` to return the hosted `ipfs://<metaCID>` URL.
 

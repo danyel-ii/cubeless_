@@ -15,3 +15,6 @@
 
 5. **Fork tests require secrets**
    - Mainnet fork tests are skipped unless `MAINNET_RPC_URL` is set.
+
+6. **Sale detection is approximated**
+   - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.

@@ -6,7 +6,6 @@ const sourcePath = join(
   root,
   "contracts",
   "out",
-  "icecube",
   "IceCubeMinter.sol",
   "IceCubeMinter.json"
 );

@@ -3,6 +3,7 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
   root: "frontend",
+  envDir: "..",
   plugins: [
     nodePolyfills({
       include: ["buffer", "process"],

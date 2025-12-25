@@ -1,5 +1,5 @@
-import { state } from "../app/app-state.js";
-import { fillFaceTextures } from "../app/app-utils.js";
+import { state } from "../../app/app-state.js";
+import { fillFaceTextures } from "../../app/app-utils.js";
 
 export function initLocalTextureUi() {
   const input = document.getElementById("image-input");

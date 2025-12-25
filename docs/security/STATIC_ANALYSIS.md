@@ -15,6 +15,18 @@ npx solhint "src/**/*.sol"
 slither .
 ```
 
+## Related coverage gate
+Coverage is enforced separately via:
+```sh
+npm run coverage:contracts
+```
+
+If `slither` is not on PATH (common with user-local installs), run:
+
+```sh
+/Users/danyel-ii/Library/Python/3.9/bin/slither .
+```
+
 ## Triage policy
 - Any Slither finding must be fixed or documented in `docs/security/KNOWN_LIMITATIONS.md`.
 - If an issue is accepted, include rationale and severity.

@@ -1,4 +1,4 @@
-import { handleExport } from "../app/app-exporter.js";
+import { handleExport } from "../../app/app-exporter.js";
 
 export function initExportUi() {
   const exportButton = document.getElementById("export-html");

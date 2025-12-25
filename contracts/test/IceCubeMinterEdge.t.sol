@@ -18,6 +18,7 @@ import {
 contract RefundRevertsOnReceive {
     IceCubeMinter public minter;
     IceCubeMinter.NftRef[] public refs;
+    bytes32 public constant DEFAULT_SALT = keccak256("refund");
 
     constructor(IceCubeMinter minter_) {
         minter = minter_;
@@ -44,7 +45,7 @@ contract RefundRevertsOnReceive {
     }
 
     function mintWithOverpay(string calldata tokenUri) external payable {
-        minter.mint{ value: msg.value }(tokenUri, refs);
+        minter.mint{ value: msg.value }(DEFAULT_SALT, tokenUri, refs);
     }
 }
 
@@ -54,6 +55,7 @@ contract IceCubeMinterEdgeTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
+    bytes32 private constant DEFAULT_SALT = keccak256("salt");
 
     function setUp() public {
         vm.startPrank(owner);
@@ -77,7 +79,7 @@ contract IceCubeMinterEdgeTest is Test {
         vm.deal(minterAddr, price);
         vm.prank(minterAddr);
         vm.expectRevert("Transfer failed");
-        minter.mint{ value: price }("ipfs://token", refs);
+        minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testMintRevertsWhenRefundFails() public {
@@ -99,7 +101,7 @@ contract IceCubeMinterEdgeTest is Test {
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
         vm.expectRevert();
-        minter.mint("ipfs://token", refs);
+        minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testWrongOwnerReverts() public {
@@ -109,10 +111,10 @@ contract IceCubeMinterEdgeTest is Test {
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
         vm.expectRevert("Not owner of referenced NFT");
-        minter.mint("ipfs://token", refs);
+        minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
-    function testMintTokenIdMonotonic() public {
+    function testTokenIdDiffersForDifferentSalts() public {
         address minterAddr = makeAddr("minter");
         uint256 tokenIdA = nft.mint(minterAddr);
         uint256 tokenIdB = nft.mint(minterAddr);
@@ -122,12 +124,12 @@ contract IceCubeMinterEdgeTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price * 2);
         vm.startPrank(minterAddr);
-        uint256 mintedA = minter.mint{ value: price }("ipfs://a", refs);
+        uint256 mintedA = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://a", refs);
         refs[0].tokenId = tokenIdB;
-        uint256 mintedB = minter.mint{ value: price }("ipfs://b", refs);
+        uint256 mintedB = minter.mint{ value: price }(keccak256("salt-b"), "ipfs://b", refs);
         vm.stopPrank();
 
-        assertEq(mintedB, mintedA + 1);
+        assertTrue(mintedA != mintedB);
     }
 
     function testMintSucceedsWithGasHeavyOwner() public {
@@ -143,7 +145,7 @@ contract IceCubeMinterEdgeTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        minter.mint{ value: price }("ipfs://token", refs);
+        minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
         assertEq(address(gasOwner).balance, price);
     }
 
@@ -161,12 +163,18 @@ contract IceCubeMinterEdgeTest is Test {
         uint256[] memory reenterTokenIds = new uint256[](1);
         reenterContracts[0] = address(nft);
         reenterTokenIds[0] = tokenId;
-        malicious.configure(minter, reenterContracts, reenterTokenIds, "ipfs://reenter");
+        malicious.configure(
+            minter,
+            reenterContracts,
+            reenterTokenIds,
+            "ipfs://reenter",
+            DEFAULT_SALT
+        );
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        uint256 mintedId = minter.mint{ value: price }("ipfs://token", refs);
+        uint256 mintedId = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
         assertEq(minter.ownerOf(mintedId), minterAddr);
     }
 }

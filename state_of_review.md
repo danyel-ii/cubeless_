@@ -2,16 +2,18 @@
 
 ## Summary
 
-The repo is now aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url`. Frontend code is now under `frontend/` with modular UI/data/features layers. Contract tests pass locally, and the RoyaltySplitter forwards any $LESS received from swaps to the owner. The remaining work is primarily deployment setup (IPFS pinning, manifest assets, and onchain deployment wiring).
+The repo is aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contract tests pass locally, mint pricing is dynamic based on $LESS totalSupply (rounded up to the nearest `0.0001 ETH`), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The remaining work is primarily deployment setup (IPFS pinning, manifest assets, and onchain deployment wiring).
 
 ## What’s working
 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired.
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
-- **Mint UI**: builds metadata JSON (still data URI), includes `animation_url`, and logs dev diagnostics.
-- **Contracts**: Foundry tests pass (28 total); mint price is fixed at `0.0017 ETH` and royalties are routed to RoyaltySplitter.
-- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/`.
-- **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard scaffold are live.
+- **Mint UI**: builds metadata JSON (data URI), includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
+- **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
+- **Contracts**: Foundry tests pass (39 total); mint price is dynamic from $LESS supply (rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter. Onchain $LESS supply snapshots + delta views are live.
+- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/` (coverage gate 90% via `npm run coverage:contracts`).
+- **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
+- **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".
 
 ## Current manifest status
@@ -33,7 +35,7 @@ The repo is now aligned on the "cubeless" name, the Farcaster manifest includes 
 
 ## Tests
 
-- `forge test`: pass (28 tests).
+- `forge test`: pass (39 tests).
 - `npm test`: no frontend tests configured (placeholder script only).
 
 ## Open items (must finish before v0)
@@ -43,10 +45,9 @@ The repo is now aligned on the "cubeless" name, the Farcaster manifest includes 
 - Re-validate manifest on Farcaster after deploy.
 
 ### Storage / tokenURI
-- Pin p5 build as an IPFS directory.
-- Pin metadata JSON to IPFS with `animation_url = ipfs://<appDirCID>/index.html`.
-- Update `tokenUriProvider` to return `ipfs://<metaCID>` instead of data URI.
-- Add floor snapshot fields to metadata (`collectionFloorEth`, `collectionFloorRetrievedAt`, `sumFloorEth`).
+- Pin metadata JSON to IPFS and set `tokenURI = ipfs://<metaCID>`.
+- Use `animation_url = https://<domain>/m/<tokenId>` (Vercel token viewer).
+- Ensure metadata includes GIF traits + provenance refs.
 
 ### Onchain deployment
 - Deploy `IceCubeMinter` to Sepolia.

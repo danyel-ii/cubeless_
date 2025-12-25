@@ -33,7 +33,9 @@
         </div>
         <div class="overlay-section">
           <div class="overlay-section-title">Fees</div>
-          <p class="overlay-text">Mint: 0.0017 ETH · Resale royalty: 5% (ERC-2981)</p>
+          <p class="overlay-text">
+            Mint: dynamic (base 0.000777 ETH) · Resale royalty: 5% (ERC-2981)
+          </p>
         </div>
         <div class="overlay-section">
           <div class="overlay-section-title">Notes</div>
@@ -67,15 +69,18 @@
           <polygon points="60,0 115,90 60,125 5,90" />
           <polygon points="60,130 115,90 60,180 5,90" />
         </svg>
-        <div class="eth-hud-label">Σ floor</div>
-        <div id="eth-hud-value" class="eth-hud-value">0.0000 ETH</div>
-        <div id="eth-hud-time" class="eth-hud-time">snapshot: —</div>
+        <div class="eth-hud-label">ΔLESS</div>
+        <div id="eth-hud-value" class="eth-hud-value">ΔLESS —</div>
+        <div id="eth-hud-time" class="eth-hud-time">token: —</div>
       </div>
     </div>
     <div id="less-hud" class="less-hud" aria-hidden="true">
-      <div class="less-hud-label">$LESS supply</div>
+      <div class="less-hud-label">$LESS remaining</div>
       <div id="less-supply-value" class="less-hud-value">—</div>
       <div id="less-supply-time" class="less-hud-time">updated —</div>
+    </div>
+    <div id="token-view-status" class="token-view-status is-hidden">
+      Loading token...
     </div>
     <div id="ui" class="ui-panel">
       <div class="ui-title">cubeless</div>
@@ -136,6 +141,12 @@
           </button>
         </div>
         <div id="mint-price" class="ui-hint">Mint price: —</div>
+        <div class="ui-row">
+          <button id="mint-share-copy" class="ui-button is-ghost is-hidden" type="button">
+            Copy share link
+          </button>
+        </div>
+        <div id="mint-share-link" class="ui-hint"></div>
       </div>
       <div class="ui-row">
         <button id="ui-preview" class="ui-button is-ghost ui-preview-btn" type="button">
@@ -155,7 +166,13 @@
         <div class="ui-section-title">Contract</div>
         <div id="leaderboard-contract" class="ui-hint"></div>
         <div id="leaderboard-chain" class="ui-hint"></div>
+        <div id="leaderboard-supply" class="ui-hint"></div>
         <div id="leaderboard-updated" class="ui-hint"></div>
+      </div>
+      <div class="ui-section">
+        <div class="ui-section-title">Top ΔLESS</div>
+        <div id="leaderboard-status" class="ui-hint">Connect your wallet to load the leaderboard.</div>
+        <div id="leaderboard-list" class="ui-list"></div>
       </div>
       <div class="ui-row">
         <button id="leaderboard-back" class="ui-button is-ghost" type="button">

@@ -9,7 +9,7 @@
 ## Mint Signature
 
 ```
-mint(string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
+mint(bytes32 salt, string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
 ```
 
 `NftRef` shape:
@@ -24,7 +24,8 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
-- Mint price is fixed at 0.0017 ETH.
+- Mint price is dynamic and derived from $LESS totalSupply (base `0.000777 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
+- TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the owner directly and refunds any excess.
 - If the owner transfer fails, the mint reverts (no partial transfers).
 

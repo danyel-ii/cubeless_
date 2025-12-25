@@ -134,9 +134,25 @@ type MintMetadata = {
   schemaVersion: 1;
   name: string;
   description: string;
-  image: string | null;
-  animation_url: string | null;
-  provenance: ProvenanceBundle;
+  image: string | null; // pre-generated GIF thumbnail
+  animation_url: string | null; // https://<domain>/m/<tokenId>
+  gif: {
+    variantIndex: number;
+    selectionSeed: string;
+    params: {
+      rgb_sep_px: number;
+      band_shift_px: number;
+      grain_intensity: number;
+      contrast_flicker: number;
+      solarization_strength: number;
+    };
+  };
+  attributes: Array<{ trait_type: string; value: string | number }>;
+  provenance: ProvenanceBundle & {
+    schemaVersion: 1;
+    mintedBy: string;
+    refs: Array<{ contractAddress: string; tokenId: string }>;
+  };
   references: Array<{
     chainId: 11155111;
     contractAddress: string;
@@ -154,6 +170,24 @@ type MintMetadata = {
 
 ## Mint Economics (v0)
 
-- Mint price: `0.0017 ETH`
-- Mint accepts `msg.value >= mintPrice` and refunds overpayment.
+- Mint price is **dynamic** based on $LESS totalSupply:
+  - base price `0.000777 ETH`
+  - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
+  - rounded up to the nearest `0.0001 ETH`
+- Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter.
+
+## Deterministic TokenId
+
+- `tokenId = keccak256("cubeless:tokenid:v1", minter, salt, refsHash)`
+- Clients call `previewTokenId(salt, refs)` to build metadata before mint.
+
+## $LESS Delta Metric (UI/Leaderboard)
+
+- The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
+- The canonical UI/leaderboard metric is `deltaFromLast(tokenId)` (snapshot minus current supply, clamped to 0).
+
+## Token Viewer Route
+
+- `animation_url` resolves to `https://<domain>/m/<tokenId>`.
+- The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.

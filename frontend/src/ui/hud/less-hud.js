@@ -1,5 +1,5 @@
-import { state } from "../app/app-state.js";
-import { fetchLessTotalSupply } from "../data/less/less-supply.js";
+import { state } from "../../app/app-state.js";
+import { fetchLessTotalSupply } from "../../data/chain/less-supply.js";
 
 const WAD = 1_000_000_000_000_000_000n;
 const REFRESH_MS = 60000;

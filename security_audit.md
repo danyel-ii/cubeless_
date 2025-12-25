@@ -1,5 +1,5 @@
 # cubeLess — Security & Edge-Case Coverage Implementation Results
-Date: 2025-12-24
+Date: 2025-12-25
 
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`
@@ -19,7 +19,7 @@ Date: 2025-12-24
 ## Policy decisions captured
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
 - `ownerOf` revert or mismatch causes mint revert.
-- Refund exactness: `msg.value - MINT_PRICE` is returned to minter.
+- Refund exactness: `msg.value - currentMintPrice()` is returned to minter.
 - RoyaltySplitter forwards $LESS (if any) and remaining ETH to owner on swap success.
 
 ## Test results
@@ -29,8 +29,15 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (28 tests)
+Result: PASS (39 tests)
 - Fork tests executed but skipped because `MAINNET_RPC_URL` was not set.
+
+### Coverage (Solidity)
+Command:
+```sh
+npm run coverage:contracts
+```
+Result: Not run in this pass. Coverage gate is 90% minimum; report writes to `contracts/coverage_report.md`.
 
 ### Invariants (standalone run)
 Command:
@@ -60,7 +67,7 @@ Result: No frontend tests configured (placeholder script).
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 82 warnings (mostly missing NatSpec + gas lint warnings, plus import-path-check warnings for OpenZeppelin remappings).
+  - Result: 0 errors, 135 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run:
   - Command: `cd contracts && /Users/danyel-ii/Library/Python/3.9/bin/slither .`
   - Result: 9 findings (warnings):
@@ -69,7 +76,8 @@ Result: No frontend tests configured (placeholder script).
     - external calls inside loop: `ownerOf` in mint refs loop
     - low-level calls: `_transferEth`, router call, `_send`
   - Notes: findings reflect known design tradeoffs; triage pending.
+  - Note: `slither` is installed via user-local pip and not on PATH by default.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
-- CI includes `forge test`, `solhint`, and `slither` gates.
+- CI includes `forge test`, `solhint`, `slither`, and coverage (90% minimum) gates.

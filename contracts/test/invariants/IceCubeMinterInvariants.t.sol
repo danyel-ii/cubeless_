@@ -38,7 +38,8 @@ contract MintHandler is Test {
                 tokenId: mintedId
             });
         }
-        uint256 tokenId = minter.mint{ value: mintPrice }("ipfs://token", refs);
+        bytes32 salt = keccak256(abi.encodePacked("salt", mintCount, count));
+        uint256 tokenId = minter.mint{ value: mintPrice }(salt, "ipfs://token", refs);
         mintCount += 1;
         lastTokenId = tokenId;
     }
@@ -77,11 +78,8 @@ contract IceCubeMinterInvariants is StdInvariant, Test {
         assertEq(owner.balance, handler.mintCount() * handler.mintPrice());
     }
 
-    function invariant_tokenIdsMonotonic() public {
-        if (handler.mintCount() == 0) {
-            return;
-        }
-        assertEq(handler.lastTokenId(), handler.mintCount());
+    function invariant_balanceMatchesMintCount() public {
+        assertEq(minter.balanceOf(address(handler)), handler.mintCount());
     }
 
     function invariant_royaltyInfoReceiver() public {

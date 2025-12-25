@@ -16,6 +16,19 @@ jobs:
         run: forge test -vvv
         working-directory: contracts
 
+  forge-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Forge coverage
+        run: python3 scripts/check_coverage.py
+        working-directory: contracts
+        env:
+          COVERAGE_MIN: "90"
+
   solhint:
     runs-on: ubuntu-latest
     steps:

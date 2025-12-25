@@ -9,7 +9,7 @@
 This plan defines the tests needed to trust the system end-to-end:
 - Interactive p5-based NFT (`animation_url`)
 - Provenance refs (1–6 NFTs)
-- Economics (fixed mint price + ERC-2981 resale royalties)
+- Economics (dynamic mint price + ERC-2981 resale royalties)
 - Hosted tokenURI (IPFS via Pinata + Vercel endpoints)
 - Farcaster miniapp wallet connect + mint UX
 
@@ -20,11 +20,13 @@ This plan defines the tests needed to trust the system end-to-end:
 2. **Ref count**: `refs.length` in `[1..6]`.
 3. **TokenURI correctness**: stored tokenURI points to metadata JSON that:
    - includes provenance bundle (refs + full metadata gamut)
-   - includes `animation_url` to IPFS-hosted HTML (the p5 work)
-   - optionally includes `image` thumbnail (static) for wallets/markets
+   - includes `animation_url` pointing to `https://<domain>/m/<tokenId>`
+   - includes `image` pointing to the pre-generated GIF thumbnail
+   - includes `gif` params + `attributes` traits for wallets/markets
 4. **Economics**:
-   - mint requires `msg.value >= 0.0017 ETH`
-   - mint pays `0.0017 ETH` to owner and refunds any overpayment
+   - mint requires `msg.value >= currentMintPrice()`
+   - mint pays `currentMintPrice()` to owner and refunds any overpayment
+   - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`
    - ERC-2981 resale royalties route to RoyaltySplitter (bps = 500)
 5. **Resale royalties (ERC-2981)**:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
@@ -50,12 +52,16 @@ This plan defines the tests needed to trust the system end-to-end:
 
 **C. TokenURI storage**
 - tokenURI stored equals input string exactly
-- tokenId increments / uniqueness
+- tokenId is deterministic and unique per (minter, salt, refs)
+
+**C2. Deterministic tokenId**
+- `previewTokenId(salt, refs)` matches the minted tokenId
+- mint reverts on replay with the same salt + refs
 
 **D. Payment requirements**
-- mint reverts if `msg.value < 0.0017 ETH`
-- mint succeeds if `msg.value == 0.0017 ETH`
-- mint succeeds if `msg.value > 0.0017 ETH` and refunds delta
+- mint reverts if `msg.value < currentMintPrice()`
+- mint succeeds if `msg.value == currentMintPrice()`
+- mint succeeds if `msg.value > currentMintPrice()` and refunds delta
 
 **E. RoyaltySplitter behavior**
 - when router unset → forwards 100% ETH to owner
@@ -98,6 +104,7 @@ Use Foundry fuzzing to generate:
 ### Contract test “Definition of done”
 - `forge test` passes
 - Coverage includes economics + refund (not just gating)
+- Coverage report generated with ≥ 90% line coverage (`npm run coverage:contracts`)
 
 ## 2) Serverless tests (Vercel endpoints for Pinata) — required for hosted tokenURI
 
@@ -152,10 +159,11 @@ For `/api/pin-metadata`:
   - provenance fetched
 - floor snapshot computed for current selection
   - pinning succeeded (if option B)
-- mint payment autofill matches `0.0017 ETH`
+- mint payment autofill matches `currentMintPrice()`
 - floor snapshot UI shows per-NFT and total floor values
 - floor snapshot defaults to `0` on Sepolia
-- Leaderboard view opens and returns to main UI
+- ΔLESS HUD shows delta when tokenId is known
+- Leaderboard ranks tokens by ΔLESS and returns to main UI
 
 ## 4) End-to-end tests — required (at least one “golden path”)
 
@@ -189,9 +197,10 @@ This is the “ship gate” checklist:
 6. Confirm onchain:
    - transaction success
    - tokenURI resolves to metadata JSON
-   - metadata includes `animation_url` pointing to IPFS-hosted HTML
+   - metadata includes `animation_url` pointing to `/m/<tokenId>`
    - resale royalty points to splitter
    - balances reflect mint-time splits + refund
+7. Open `https://<domain>/m/<tokenId>` and verify the cube loads with the correct refs.
 
 ## 5) Observability / debugging hooks (recommended)
 Not tests, but they reduce time-to-fix:

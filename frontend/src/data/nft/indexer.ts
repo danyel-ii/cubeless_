@@ -1,5 +1,5 @@
 import { getAddress } from "ethers";
-import { alchemyGet } from "../alchemy/client";
+import { alchemyGet } from "../chain/alchemy-client";
 import type {
   NftItem,
   ProvenanceBundle,

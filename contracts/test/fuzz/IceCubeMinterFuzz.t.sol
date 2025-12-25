@@ -39,18 +39,19 @@ contract IceCubeMinterFuzzTest is Test {
         uint256 price = minter.currentMintPrice();
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(minterAddr, count);
+        bytes32 salt = keccak256(abi.encodePacked(minterAddr, count, payment));
         vm.deal(minterAddr, payment);
 
         vm.prank(minterAddr);
         if (payment < price) {
             vm.expectRevert("INSUFFICIENT_ETH");
-            minter.mint{ value: payment }("ipfs://token", refs);
+            minter.mint{ value: payment }(salt, "ipfs://token", refs);
             return;
         }
 
         uint256 ownerBefore = owner.balance;
         uint256 minterBefore = minterAddr.balance;
-        minter.mint{ value: payment }("ipfs://token", refs);
+        minter.mint{ value: payment }(salt, "ipfs://token", refs);
 
         assertEq(owner.balance, ownerBefore + price);
         assertEq(minterAddr.balance, minterBefore - price);
@@ -71,9 +72,9 @@ contract IceCubeMinterFuzzTest is Test {
         vm.prank(minterAddr);
         if (injectWrongOwner) {
             vm.expectRevert("Not owner of referenced NFT");
-            minter.mint{ value: price }("ipfs://token", refs);
+            minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
         } else {
-            minter.mint{ value: price }("ipfs://token", refs);
+            minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
         }
     }
 }

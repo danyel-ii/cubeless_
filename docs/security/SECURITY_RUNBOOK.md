@@ -10,6 +10,11 @@ forge test --match-path "test/fuzz/*" -vvv
 forge test --match-path "test/invariants/*" -vvv
 ```
 
+### Coverage (Solidity)
+```sh
+npm run coverage:contracts
+```
+
 ### Fork tests (optional)
 ```sh
 cd contracts
@@ -28,6 +33,7 @@ slither .
 - `forge test`
 - `solhint` (Solidity lint)
 - `slither` (static analysis)
+- `forge coverage` (minimum 90% line coverage; report at `contracts/coverage_report.md`)
 
 ## Incident response
 1. Freeze deployments if a critical issue is found.

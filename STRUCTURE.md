@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-23
+- Last reviewed: 2025-12-24
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -16,6 +16,8 @@ logic are split into smaller modules.
   - App shell with the main UI panels.
 - `frontend/src/main.js`
   - Bootstraps the p5 lifecycle registration and browser polyfills.
+- `frontend/src/config/links.js`
+  - Token-view URL + GIF library CID helpers.
 - `frontend/src/app/app-config.js`
   - Central constants (image URLs, cube size, zoom bounds, background file).
 - `frontend/src/app/app-state.js`
@@ -37,15 +39,23 @@ logic are split into smaller modules.
 - `frontend/src/app/app-exporter.js`
   - Standalone HTML export, asset embedding, background data URL fetch.
 - `frontend/src/ui/ui-root.js`
-  - UI entry point (overlay, wallet, picker, mint, leaderboard).
-- `frontend/src/ui/overlay.js`
+  - UI entry point (panels + HUDs).
+- `frontend/src/ui/panels/overlay.js`
   - First-run overlay behavior.
-- `frontend/src/ui/local-textures.js`
+- `frontend/src/ui/panels/local-textures.js`
   - Local image picker for manual cube textures.
-- `frontend/src/ui/export-ui.js`
+- `frontend/src/ui/panels/export-ui.js`
   - Export HTML button wiring.
-- `frontend/src/ui/leaderboard.js`
-  - Leaderboard placeholder panel.
+- `frontend/src/ui/panels/leaderboard.js`
+  - Leaderboard panel (ΔLESS ranking).
+- `frontend/src/ui/panels/preview.js`
+  - Mobile preview mode toggle.
+- `frontend/src/ui/hud/eth-hud.js`
+  - Bottom-right ΔLESS HUD display.
+- `frontend/src/ui/hud/less-hud.js`
+  - Bottom-left $LESS supply HUD display.
+- `frontend/src/ui/hud/less-delta.js`
+  - Wallet-driven ΔLESS tracking for the HUD.
 - `frontend/src/features/wallet/wallet.js`
   - Wallet connection state + provider handshake.
 - `frontend/src/features/wallet/wallet-ui.js`
@@ -58,12 +68,24 @@ logic are split into smaller modules.
   - Mint metadata + provenance shaping.
 - `frontend/src/features/mint/token-uri-provider.js`
   - Token URI encoding helper.
-- `frontend/src/data/alchemy/client.ts`
+- `frontend/src/data/chain/alchemy-client.ts`
   - Alchemy NFT API wrapper (mainnet + Sepolia).
+- `frontend/src/data/chain/icecube-reader.js`
+  - Reads tokenURI via JSON-RPC (no wallet required).
+- `frontend/src/data/chain/less-supply.js`
+  - Mainnet $LESS totalSupply fetcher (Alchemy JSON-RPC).
+- `frontend/src/data/chain/less-delta.js`
+  - Onchain ΔLESS fetcher (deltaFromLast/deltaFromMint).
 - `frontend/src/data/nft/indexer.ts`
   - Inventory + provenance fetchers.
 - `frontend/src/data/nft/floor.js`
   - Floor price snapshot helper (mainnet only).
+- `frontend/src/gif/params.js`
+  - GIF parameter lookup tables.
+- `frontend/src/gif/variant.js`
+  - Deterministic GIF variant selection + IPFS path builder.
+- `frontend/src/routes/token-view.js`
+  - `/m/<tokenId>` viewer route for animation_url rendering.
 - `frontend/src/shared/utils/uri.ts`
   - URI normalization and resolution helpers.
 - `frontend/src/types/provenance.ts`
@@ -114,3 +136,8 @@ logic are split into smaller modules.
 1. Pick up to 6 local images via the UI.
 2. Click “Export HTML” to save a single HTML file.
 3. The export embeds selected images and the current background as data URLs.
+
+## Debug Helpers
+
+- `scripts/gif-debug.mjs`
+  - Deterministic GIF variant sanity check for a fixed input.

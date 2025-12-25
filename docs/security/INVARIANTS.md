@@ -7,16 +7,19 @@ Mint must revert if any referenced NFT is not owned by `msg.sender` or if `owner
 `refs.length` must be in `[1..6]` or mint reverts.
 
 ## I-3: Payment boundary
-`msg.value < MINT_PRICE` must revert; `msg.value >= MINT_PRICE` must succeed (subject to receiver policy).
+`msg.value < currentMintPrice()` must revert; `msg.value >= currentMintPrice()` must succeed (subject to receiver policy).
 
 ## I-4: Refund exactness
-On success, refund equals `msg.value - MINT_PRICE` (if any).
+On success, refund equals `msg.value - currentMintPrice()` (if any).
 
 ## I-5: Mint payout exactness
-Owner receives exactly `MINT_PRICE` on each successful mint.
+Owner receives exactly `currentMintPrice()` on each successful mint.
 
-## I-6: TokenId monotonicity
-Each successful mint increments the tokenId by 1.
+## I-6: TokenId determinism
+TokenId is derived from `msg.sender`, `salt`, and `refsHash`, and mint must revert on replay collisions.
+
+## I-6b: Balance matches mint count
+For the minting handler address, `balanceOf(handler) == mintCount`.
 
 ## I-7: ERC-2981 receiver correctness
 `royaltyInfo(tokenId, salePrice)` always returns the configured receiver and `salePrice * bps / 10000`.

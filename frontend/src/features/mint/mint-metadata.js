@@ -1,20 +1,3 @@
-function readEnvValue(key) {
-  const raw = import.meta?.env?.[key];
-  if (typeof raw !== "string") {
-    return null;
-  }
-  const trimmed = raw.trim();
-  return trimmed ? trimmed : null;
-}
-
-export function getMintAnimationUrl() {
-  return readEnvValue("VITE_APP_ANIMATION_URL");
-}
-
-export function getMintThumbnailUrl() {
-  return readEnvValue("VITE_MINT_THUMBNAIL_URL");
-}
-
 function floorKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
 }
@@ -79,18 +62,51 @@ function enrichProvenance(provenanceBundle, selection) {
   };
 }
 
-export function buildMintMetadata(selection, provenanceBundle) {
-  const primaryImage = selection[0]?.image?.resolved ?? null;
-  const thumbnail = getMintThumbnailUrl() ?? primaryImage;
+export function buildMintMetadata({
+  tokenId,
+  minter,
+  chainId,
+  selection,
+  provenanceBundle,
+  animationUrl,
+  imageUrl,
+  gif,
+}) {
   const provenance = enrichProvenance(provenanceBundle, selection);
+  const refs = selection.map((nft) => ({
+    contractAddress: nft.contractAddress,
+    tokenId: nft.tokenId,
+  }));
+  const attributes = [
+    { trait_type: "variantIndex", value: gif.variantIndex },
+    { trait_type: "rgb_sep_px", value: gif.params.rgb_sep_px },
+    { trait_type: "band_shift_px", value: gif.params.band_shift_px },
+    { trait_type: "grain_intensity", value: gif.params.grain_intensity },
+    { trait_type: "contrast_flicker", value: gif.params.contrast_flicker },
+    { trait_type: "solarization_strength", value: gif.params.solarization_strength },
+  ];
 
   return {
     schemaVersion: 1,
-    name: "cubeless",
-    description: "cubeless mint gated by 1 to 6 NFTs.",
-    image: thumbnail,
-    animation_url: getMintAnimationUrl(),
-    provenance,
+    name: tokenId ? `cubeLess #${tokenId}` : "cubeLess",
+    description:
+      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
+    image: imageUrl,
+    animation_url: animationUrl,
+    gif: {
+      variantIndex: gif.variantIndex,
+      selectionSeed: gif.selectionSeed,
+      params: gif.params,
+      lessSupplyMint: gif.lessSupplyMint,
+    },
+    provenance: {
+      schemaVersion: 1,
+      ...provenance,
+      mintedBy: minter,
+      chainId,
+      refs,
+    },
+    attributes,
     references: buildReferenceSummary(selection),
     provenanceSummary: buildFloorSummary(selection),
   };
