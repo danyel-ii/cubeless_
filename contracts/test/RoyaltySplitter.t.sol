@@ -40,7 +40,8 @@ contract RoyaltySplitterTest is Test {
     event RouterUpdated(address router, bytes swapCalldata);
 
     function testForwardsAllWhenRouterUnset() public {
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
         vm.deal(address(this), 1 ether);
 
         (bool ok, ) = address(splitter).call{ value: 1 ether }("");
@@ -49,7 +50,8 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testFallbackWithCalldataForwardsWhenRouterUnset() public {
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
         vm.deal(address(this), 1 ether);
 
         (bool ok, ) = address(splitter).call{ value: 1 ether }(hex"1234");
@@ -58,7 +60,8 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSetRouterUpdatesStateAndEmits() public {
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
         bytes memory calldataBlob = hex"deadbeef";
 
         vm.prank(owner);
@@ -90,9 +93,10 @@ contract RoyaltySplitterTest is Test {
 
     function testForwardsAllWhenSwapReverts() public {
         RevertingRouter router = new RevertingRouter();
+        MockLess less = new MockLess();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
-            address(0),
+            address(less),
             address(router),
             hex"deadbeef",
             burn
@@ -125,16 +129,19 @@ contract RoyaltySplitterTest is Test {
 
     function testRevertsWhenOwnerCannotReceiveEth() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
+        MockLess less = new MockLess();
         RoyaltySplitter splitter = new RoyaltySplitter(
             address(receiver),
-            address(0),
+            address(less),
             address(0),
             "",
             burn
         );
 
         vm.deal(address(this), 1 ether);
-        vm.expectRevert("Transfer failed");
+        vm.expectRevert(
+            abi.encodeWithSelector(RoyaltySplitter.EthTransferFailed.selector, address(receiver), 1 ether)
+        );
         address(splitter).call{ value: 1 ether }("");
     }
 }

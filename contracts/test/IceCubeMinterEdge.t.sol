@@ -78,7 +78,9 @@ contract IceCubeMinterEdgeTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         vm.prank(minterAddr);
-        vm.expectRevert("Transfer failed");
+        vm.expectRevert(
+            abi.encodeWithSelector(IceCubeMinter.EthTransferFailed.selector, address(receiver), price)
+        );
         minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -91,7 +93,9 @@ contract IceCubeMinterEdgeTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(address(refundReverter), price + 1 wei);
 
-        vm.expectRevert("Transfer failed");
+        vm.expectRevert(
+            abi.encodeWithSelector(IceCubeMinter.EthTransferFailed.selector, address(refundReverter), 1)
+        );
         refundReverter.mintWithOverpay{ value: price + 1 wei }("ipfs://token");
     }
 

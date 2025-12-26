@@ -88,13 +88,12 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 147 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+  - Result: 0 errors, 145 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run:
   - Command: `cd contracts && python3 -m slither .`
-  - Result: 10 findings (warnings):
+  - Result: 7 findings (warnings):
     - divide-before-multiply: `_roundUp` math
     - dangerous strict equality: `lessBalance == 0`, `amount == 0`
-    - missing zero-address validation: `lessToken`, `router` (constructor + setRouter)
     - external calls inside loop: `ownerOf` in mint refs loop
     - low-level calls: `_transferEth`, router call, `_send`
   - Notes: findings reflect known design tradeoffs; triage pending.

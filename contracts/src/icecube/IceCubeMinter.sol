@@ -15,6 +15,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         uint256 tokenId;
     }
 
+    error EthTransferFailed(address recipient, uint256 amount);
+
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
     uint256 public constant BASE_PRICE_WEI = 1_500_000_000_000_000;
     uint256 public constant PRICE_STEP_WEI = 100_000_000_000_000;
@@ -170,7 +172,9 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
             return;
         }
         (bool success, ) = recipient.call{ value: amount }("");
-        require(success, "Transfer failed");
+        if (!success) {
+            revert EthTransferFailed(recipient, amount);
+        }
     }
 
     function _hashRefsCanonical(NftRef[] calldata refs) internal pure returns (bytes32) {

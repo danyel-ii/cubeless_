@@ -11,6 +11,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
     address public router;
     bytes public swapCalldata;
 
+    error LessTokenRequired();
+    error SwapCalldataRequiresRouter();
+    error EthTransferFailed(address recipient, uint256 amount);
+
     event RouterUpdated(address router, bytes swapCalldata);
 
     constructor(
@@ -22,6 +26,12 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
     ) Ownable(owner_) {
         require(owner_ != address(0), "Owner required");
         require(burnAddress_ != address(0), "Burn address required");
+        if (lessToken_ == address(0)) {
+            revert LessTokenRequired();
+        }
+        if (router_ == address(0) && swapCalldata_.length != 0) {
+            revert SwapCalldataRequiresRouter();
+        }
         lessToken = lessToken_;
         router = router_;
         swapCalldata = swapCalldata_;
@@ -37,6 +47,9 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
     }
 
     function setRouter(address router_, bytes calldata swapCalldata_) external onlyOwner {
+        if (router_ == address(0) && swapCalldata_.length != 0) {
+            revert SwapCalldataRequiresRouter();
+        }
         router = router_;
         swapCalldata = swapCalldata_;
         emit RouterUpdated(router_, swapCalldata_);
@@ -86,6 +99,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
             return;
         }
         (bool success, ) = recipient.call{ value: amount }("");
-        require(success, "Transfer failed");
+        if (!success) {
+            revert EthTransferFailed(recipient, amount);
+        }
     }
 }
