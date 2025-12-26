@@ -79,7 +79,7 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: Not run in this audit snapshot.
+Result: PASS (1 test, ~18.6s)
 
 ### Client secret scan
 Command:
