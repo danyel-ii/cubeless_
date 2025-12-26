@@ -171,6 +171,10 @@ For `/api/identity`:
 - ΔLESS HUD shows delta when tokenId is known
 - Leaderboard ranks tokens by ΔLESS and returns to main UI
 
+### 3.3 Automated smoke (Playwright)
+- Load `/` and assert overlay + UI controls render.
+- Use `npm run test:ui` (Playwright) for a minimal regression signal.
+
 ## 4) End-to-end tests — required (at least one “golden path”)
 
 Because Warpcast hosting is hard to automate, we split E2E into:
@@ -219,7 +223,7 @@ Not tests, but they reduce time-to-fix:
 
 ## 6) Commands / what to run
 - Contract: `forge test`
-- Frontend: `npm test` (unit) / `npm run test:e2e` (if Playwright)
+- Frontend: `npm run test:ui` (Playwright smoke)
 - Manual: Warpcast E2E gate (see 4.2)
 
 ## 7) Minimum acceptance threshold for v0

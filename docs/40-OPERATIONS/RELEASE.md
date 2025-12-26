@@ -12,9 +12,10 @@ Last updated: 2025-12-26
    - Optional `FORK_BLOCK_NUMBER` (defaults in test)
    - If on macOS, set `NO_PROXY="*"`, `HTTP_PROXY=""`, `HTTPS_PROXY=""`
    - Command: `npm run fork-test`
-2. Update `CHANGELOG.md` with release notes.
-3. Verify `docs/30-SECURITY/SECURITY_AUDIT.md` is current.
-4. Verify deployment artifacts and contract addresses.
+   - Release rule: do not ship if fork tests are skipped or fail.
+3. Update `CHANGELOG.md` with release notes.
+4. Verify `docs/30-SECURITY/SECURITY_AUDIT.md` is current.
+5. Verify deployment artifacts and contract addresses.
 
 ## Release steps
 1. Tag the commit: `git tag vX.Y.Z`.

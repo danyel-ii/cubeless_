@@ -8,11 +8,13 @@
     "build": "next build",
     "start": "next start",
     "test": "echo \"No frontend tests configured\"",
+    "test:ui": "playwright test",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
     "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs",
     "fork-test": "bash scripts/fork-test.sh"
   },
   "devDependencies": {
+    "@playwright/test": "1.49.1",
     "@types/react": "19.2.7",
     "next": "^14.2.5",
     "react": "^18.3.1",

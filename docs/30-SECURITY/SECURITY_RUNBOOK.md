@@ -17,6 +17,11 @@ forge test --match-path "test/invariants/*" -vvv
 npm run coverage:contracts
 ```
 
+### Frontend smoke (Playwright)
+```sh
+npm run test:ui
+```
+
 ### Client secret scan
 ```sh
 npm run check:no-client-secrets

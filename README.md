@@ -26,6 +26,7 @@ forge test -vvv
 ## Coverage + security checks
 ```sh
 npm run coverage:contracts
+npm run test:ui
 npm run check:no-client-secrets
 cd contracts
 npx solhint "src/**/*.sol"

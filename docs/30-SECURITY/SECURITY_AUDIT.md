@@ -74,6 +74,13 @@ npm test
 ```
 Result: No frontend tests configured (placeholder script).
 
+### Frontend smoke (Playwright)
+Command:
+```sh
+npm run test:ui
+```
+Result: Not run in this audit snapshot.
+
 ### Client secret scan
 Command:
 ```sh
@@ -104,6 +111,7 @@ Results (local):
     - low-level calls: `_transferEth`, router call, `_send`
   - Notes: findings reflect known design tradeoffs; triage pending.
   - Note: `slither` is installed via user-local pip and not on PATH by default.
+  - Triage: see `docs/30-SECURITY/STATIC_ANALYSIS.md` (accepted findings and rationale).
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.

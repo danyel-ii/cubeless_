@@ -93,6 +93,9 @@ forge test -vvv
 # Coverage (writes docs/50-REPORTS/COVERAGE_REPORT.md)
 npm run coverage:contracts
 
+# Frontend smoke (Playwright)
+npm run test:ui
+
 # Static analysis
 cd contracts
 npx solhint "src/**/*.sol"

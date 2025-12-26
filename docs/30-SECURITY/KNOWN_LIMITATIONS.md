@@ -20,3 +20,6 @@ Last updated: 2025-12-26
 
 6. **Sale detection is approximated**
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
+
+7. **Static analysis false positives**
+   - Slither flags `_roundUp` and low-level calls; these are intentional and handled with explicit checks. See `docs/30-SECURITY/STATIC_ANALYSIS.md` for triage details.
