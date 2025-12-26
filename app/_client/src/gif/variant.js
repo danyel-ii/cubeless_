@@ -8,10 +8,10 @@ import {
 } from "./params.js";
 import { getGifLibraryCid } from "../config/links.js";
 
-export function computeGifSeed({ tokenId, minter, lessSupplyMint }) {
+export function computeGifSeed({ tokenId, minter }) {
   return solidityPackedKeccak256(
-    ["string", "uint256", "address", "uint256"],
-    ["cubeless:gif:v1", tokenId, minter, lessSupplyMint]
+    ["string", "uint256", "address"],
+    ["cubeless-gif-v1", tokenId, minter]
   );
 }
 

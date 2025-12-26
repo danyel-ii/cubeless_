@@ -29,12 +29,28 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/security/SECURITY_RUNBOOK.md` — Runbook for tests, incidents, and gates.
 - `docs/security/FORK_TESTING.md` — Mainnet fork harness and how to run.
 - `docs/security/security_audit.md` — Latest audit execution results + tooling outcomes.
+- `docs/security/OSPS_BASELINE_2025-10-10.md` — OSPS Baseline compliance mapping and gaps.
+
+### Governance + Operations
+- `docs/governance/GOVERNANCE.md` — Roles, decision process, and public discussion channels.
+- `docs/governance/MAINTAINERS.md` — Maintainers with access to sensitive resources.
+- `docs/operations/RELEASE.md` — Release process and versioning.
+- `docs/operations/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
+- `docs/operations/DEPENDENCIES.md` — Dependency tracking policy.
 
 ### Project Status + Tasks
 - `docs/status/state_of_review.md` — Snapshot of repo alignment and current health.
 - `docs/status/remaining_tasks.md` — Owner action items to finish v0.
 - `docs/status/TASK_LOG.md` — Chronological task execution log.
 - `docs/overview/STRUCTURE.md` — Repository layout and module responsibilities.
+
+### Repository Policies
+- `README.md` — Project overview and quickstart.
+- `CONTRIBUTING.md` — Contribution guidelines and DCO sign-off.
+- `CODE_OF_CONDUCT.md` — Community code of conduct.
+- `SECURITY.md` — Vulnerability reporting policy.
+- `SUPPORT.md` — Defect reporting and support channels.
+- `CHANGELOG.md` — Release notes.
 
 ### Generated Reports
 - `docs/reports/coverage_report.md` — Solidity line coverage report (grouped by contract).
@@ -80,10 +96,14 @@ npm run coverage:contracts
 cd contracts
 npx solhint "src/**/*.sol"
 slither .
+
+# Client secret scan
+npm run check:no-client-secrets
 ```
 
 ## Quick Health Checklist
 
 - `docs/security/security_audit.md` updated with latest tool runs.
+- `docs/security/OSPS_BASELINE_2025-10-10.md` reviewed after policy changes.
 - `docs/reports/coverage_report.md` regenerated after test updates.
 - `docs/status/state_of_review.md` and `docs/status/remaining_tasks.md` reflect current status.

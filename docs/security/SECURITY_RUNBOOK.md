@@ -15,6 +15,11 @@ forge test --match-path "test/invariants/*" -vvv
 npm run coverage:contracts
 ```
 
+### Client secret scan
+```sh
+npm run check:no-client-secrets
+```
+
 ### Fork tests (optional)
 ```sh
 cd contracts
@@ -26,7 +31,7 @@ forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv
 ```sh
 cd contracts
 npx solhint "src/**/*.sol"
-slither .
+python3 -m slither .
 ```
 
 ## CI gates

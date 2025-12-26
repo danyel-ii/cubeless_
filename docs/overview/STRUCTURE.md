@@ -125,11 +125,27 @@ are split into smaller modules.
 - `docs/security/INVARIANTS.md`
 - `docs/security/KNOWN_LIMITATIONS.md`
 - `docs/security/STATIC_ANALYSIS.md`
+- `docs/security/security_audit.md`
+- `docs/security/OSPS_BASELINE_2025-10-10.md`
+
+## Governance + Operations Docs
+
+- `docs/governance/GOVERNANCE.md`
+- `docs/governance/MAINTAINERS.md`
+- `docs/operations/RELEASE.md`
+- `docs/operations/SECRETS_AND_CREDENTIALS.md`
+- `docs/operations/DEPENDENCIES.md`
 
 ## Root Docs
 
 - `docs/overview/MASTER_DOC.md`
   - Master index, glossary, and doc map.
+- `README.md`
+- `CONTRIBUTING.md`
+- `CODE_OF_CONDUCT.md`
+- `SECURITY.md`
+- `SUPPORT.md`
+- `CHANGELOG.md`
 
 ## Next.js (App Router)
 
@@ -145,6 +161,34 @@ are split into smaller modules.
   - Resolves Farcaster/ENS identity for leaderboard display.
 - `docs/security/SECURITY_RUNBOOK.md`
 - `docs/security/FORK_TESTING.md`
+
+## Server Utilities
+
+- `src/server/env.js`
+  - Server-only env assertions.
+- `src/server/auth.js`
+  - Nonce issuance and EIP-191 signature verification.
+- `src/server/ratelimit.js`
+  - In-memory token bucket rate limiter.
+- `src/server/cache.js`
+  - TTL cache helper.
+- `src/server/pinata.js`
+  - Pinata JSON pinning + dedupe.
+- `src/server/validate.js`
+  - Zod validation + JSON size enforcement.
+- `src/server/json.js`
+  - Canonical JSON stringifier.
+- `src/server/log.js`
+  - Safe request logging.
+- `src/server/request.js`
+  - Client IP detection.
+
+## Shared Schemas
+
+- `src/shared/schemas/metadata.js`
+  - Metadata validation + ref extraction.
+- `src/shared/ipfs-fetch.js`
+  - IPFS gateway fallback helper.
 
 ## Rendering Flow
 

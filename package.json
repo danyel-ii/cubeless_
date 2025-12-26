@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "test": "echo \"No frontend tests configured\"",
-    "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py"
+    "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
+    "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs"
   },
   "devDependencies": {
     "next": "^14.2.5",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.1",
     "buffer": "^6.0.3",
-    "ethers": "^6.16.0"
+    "ethers": "^6.16.0",
+    "zod": "^3.23.8"
   }
 }

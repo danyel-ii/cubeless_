@@ -1,8 +1,15 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
+import { requireEnv } from "../../../src/server/env.js";
+import { checkRateLimit } from "../../../src/server/ratelimit.js";
+import { getClientIp } from "../../../src/server/request.js";
+import { logRequest } from "../../../src/server/log.js";
+import { nftRequestSchema, readJsonWithLimit, formatZodError } from "../../../src/server/validate.js";
+import { getCache, setCache } from "../../../src/server/cache.js";
 
 const NFT_API_VERSION = "v3";
-const CACHE_TTL_MS = 30_000;
-const cache = new Map();
+const CACHE_TTL_MS = 60_000;
+const MAX_BODY_BYTES = 12 * 1024;
 
 const ALLOWED_PATHS = new Set([
   "getNFTsForOwner",
@@ -11,7 +18,7 @@ const ALLOWED_PATHS = new Set([
 ]);
 
 function getAlchemyKey() {
-  return process.env.ALCHEMY_API_KEY;
+  return requireEnv("ALCHEMY_API_KEY");
 }
 
 function getNftBaseUrl(chainId, apiKey) {
@@ -67,17 +74,6 @@ function minimizeResponse(path, data) {
   return data;
 }
 
-async function readBody(request) {
-  if (request.method !== "POST") {
-    return {};
-  }
-  try {
-    return await request.json();
-  } catch (error) {
-    return {};
-  }
-}
-
 function parseQuery(request) {
   const url = new URL(request.url);
   return Object.fromEntries(url.searchParams.entries());
@@ -92,21 +88,56 @@ export async function POST(request) {
 }
 
 async function handleRequest(request) {
-  const apiKey = getAlchemyKey();
-  if (!apiKey) {
-    return NextResponse.json({ error: "Missing ALCHEMY_API_KEY" }, { status: 500 });
+  const requestId = crypto.randomUUID();
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`nfts:ip:${ip}`, { capacity: 30, refillPerSec: 1 });
+  if (!limit.ok) {
+    logRequest({ route: "/api/nfts", status: 429, requestId, bodySize: 0 });
+    return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
   }
 
-  const body = await readBody(request);
+  let body = {};
+  let bodySize = 0;
+  if (request.method === "POST") {
+    try {
+      const parsed = await readJsonWithLimit(request, MAX_BODY_BYTES);
+      body = parsed.data;
+      bodySize = parsed.size;
+    } catch (error) {
+      const status = error?.status || 400;
+      logRequest({ route: "/api/nfts", status, requestId, bodySize });
+      return NextResponse.json({ error: error.message, requestId }, { status });
+    }
+  }
   const query = parseQuery(request);
   const mode = body.mode || query.mode || "alchemy";
   const chainId = Number(body.chainId || query.chainId || 11155111);
+  const path = body.path || query.path;
+  const requestShape = {
+    mode,
+    chainId,
+    path,
+    query: body.query || {},
+    calls: body.calls || undefined,
+  };
+
+  const validation = nftRequestSchema.safeParse(requestShape);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: formatZodError(validation.error), requestId },
+      { status: 400 }
+    );
+  }
 
   try {
+    const apiKey = getAlchemyKey();
     if (mode === "rpc") {
-      const calls = Array.isArray(body.calls) ? body.calls : [];
+      const calls = Array.isArray(validation.data.calls) ? validation.data.calls : [];
       if (!calls.length) {
-        return NextResponse.json({ error: "Missing calls" }, { status: 400 });
+        return NextResponse.json({ error: "Missing calls", requestId }, { status: 400 });
+      }
+      if (calls.length > 20) {
+        return NextResponse.json({ error: "Too many calls", requestId }, { status: 400 });
       }
       const payload = calls.map((call, index) => ({
         jsonrpc: "2.0",
@@ -128,17 +159,17 @@ async function handleRequest(request) {
       });
       if (!response.ok) {
         return NextResponse.json(
-          { error: `RPC call failed (${response.status})` },
+          { error: `RPC call failed (${response.status})`, requestId },
           { status: response.status }
         );
       }
       const json = await response.json();
+      logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
       return NextResponse.json(json);
     }
 
-    const path = body.path || query.path;
     if (!path || typeof path !== "string" || !ALLOWED_PATHS.has(path)) {
-      return NextResponse.json({ error: "Unsupported path" }, { status: 400 });
+      return NextResponse.json({ error: "Unsupported path", requestId }, { status: 400 });
     }
     const params = body.query || {};
     const baseUrl = getNftBaseUrl(chainId, apiKey);
@@ -158,25 +189,32 @@ async function handleRequest(request) {
     });
 
     const cacheKey = url.toString();
-    const cached = cache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return NextResponse.json(cached.payload);
+    const cached = getCache(cacheKey);
+    if (cached) {
+      const response = NextResponse.json(cached);
+      response.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+      logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
+      return response;
     }
 
     const response = await fetch(url.toString());
     if (!response.ok) {
       return NextResponse.json(
-        { error: `Alchemy request failed (${response.status})` },
+        { error: `Alchemy request failed (${response.status})`, requestId },
         { status: response.status }
       );
     }
     const json = await response.json();
     const payload = minimizeResponse(path, json.result ?? json);
-    cache.set(cacheKey, { payload, expiresAt: Date.now() + CACHE_TTL_MS });
-    return NextResponse.json(payload);
+    setCache(cacheKey, payload, CACHE_TTL_MS);
+    const response = NextResponse.json(payload);
+    response.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+    logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
+    return response;
   } catch (error) {
+    logRequest({ route: "/api/nfts", status: 500, requestId, bodySize });
     return NextResponse.json(
-      { error: error?.message || "Request failed" },
+      { error: error?.message || "Request failed", requestId },
       { status: 500 }
     );
   }

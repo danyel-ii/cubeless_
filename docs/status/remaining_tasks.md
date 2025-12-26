@@ -65,11 +65,22 @@ These changes are implemented in code; verify in the UI.
   - `iconUrl`, `imageUrl`, `splashImageUrl` are HTTPS and deployed
 - Add `public/icon.png`, `public/image.png`, `public/splash.png` (or update URLs to hosted assets).
 
+## G1 — Repo Security Settings (OSPS Baseline)
+
+- Enforce branch protection on `main` (no direct commits, required status checks).
+- Require MFA for maintainers and collaborators.
+- (Optional) Enforce DCO or signed commits in CI.
+
 ## T13 — Storage Decision (Metadata)
 
 - Verify metadata pinning works end-to-end (`/api/pin/metadata`).
 - Confirm `animation_url = https://<domain>/m/<tokenId>` resolves in the viewer.
 - Decide on a thumbnail capture flow (optional) and update `image` if needed.
+
+## S1 — Server Env Hardening
+
+- Set `SERVER_AUTH_SALT` (HMAC nonce signing).
+- Confirm `PINATA_JWT` and `ALCHEMY_API_KEY` are set only in server environments.
 
 ## Contract Ops
 

@@ -70,6 +70,7 @@ export function buildMintMetadata({
   provenanceBundle,
   refsFaces,
   refsCanonical,
+  salt,
   animationUrl,
   imageUrl,
   gif,
@@ -91,6 +92,7 @@ export function buildMintMetadata({
   return {
     schemaVersion: 1,
     name: tokenId ? `cubeLess #${tokenId}` : "cubeLess",
+    tokenId,
     description:
       "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
     image: imageUrl,
@@ -106,6 +108,8 @@ export function buildMintMetadata({
       ...provenance,
       mintedBy: minter,
       chainId,
+      tokenId,
+      salt,
       refs,
       refsFaces: refsFaces ?? refs,
       refsCanonical: refsCanonical ?? refs,

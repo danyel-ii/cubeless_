@@ -1,50 +1,130 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "../../../../src/server/ratelimit.js";
+import { getClientIp } from "../../../../src/server/request.js";
+import { logRequest } from "../../../../src/server/log.js";
+import { pinRequestSchema, readJsonWithLimit, formatZodError } from "../../../../src/server/validate.js";
+import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
+import { canonicalJson } from "../../../../src/server/json.js";
+import { hashPayload, getCachedCid, setCachedCid, pinJson } from "../../../../src/server/pinata.js";
+import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 
-const PINATA_ENDPOINT = "https://api.pinata.cloud/pinning/pinJSONToIPFS";
-
-function getPinataJwt() {
-  return process.env.PINATA_JWT;
-}
+const MAX_BYTES = 50 * 1024;
 
 export async function POST(request) {
-  const jwt = getPinataJwt();
-  if (!jwt) {
-    return NextResponse.json({ error: "Missing PINATA_JWT" }, { status: 500 });
+  const requestId = crypto.randomUUID();
+  let bodySize = 0;
+  const ip = getClientIp(request);
+
+  const ipLimit = checkRateLimit(`pin:ip:${ip}`, { capacity: 5, refillPerSec: 0.5 });
+  if (!ipLimit.ok) {
+    logRequest({ route: "/api/pin/metadata", status: 429, requestId, bodySize });
+    return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
   }
-  let payload;
+
   try {
-    payload = await request.json();
-  } catch (error) {
-    return NextResponse.json({ error: "Invalid metadata payload" }, { status: 400 });
-  }
-  if (!payload || typeof payload !== "object") {
-    return NextResponse.json({ error: "Invalid metadata payload" }, { status: 400 });
-  }
-  try {
-    const response = await fetch(PINATA_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      const text = await response.text();
+    const { data, size } = await readJsonWithLimit(request, MAX_BYTES);
+    bodySize = size;
+    const parsed = pinRequestSchema.safeParse(data);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: text || "Pinata error" },
-        { status: response.status }
+        { error: formatZodError(parsed.error), requestId },
+        { status: 400 }
       );
     }
-    const data = await response.json();
-    return NextResponse.json({
-      ipfsHash: data.IpfsHash,
-      uri: data.IpfsHash ? `ipfs://${data.IpfsHash}` : null,
+
+    const { address, nonce, signature, payload } = parsed.data;
+    const nonceStatus = verifyNonce(nonce);
+    if (!nonceStatus.ok) {
+      return NextResponse.json(
+        { error: nonceStatus.error || "Invalid nonce", requestId },
+        { status: 401 }
+      );
+    }
+
+    const sigStatus = verifySignature({ address, nonce, signature });
+    if (!sigStatus.ok) {
+      return NextResponse.json(
+        { error: sigStatus.error || "Invalid signature", requestId },
+        { status: 401 }
+      );
+    }
+
+    const actor = sigStatus.address;
+    const actorLimit = checkRateLimit(`pin:actor:${actor}`, { capacity: 4, refillPerSec: 0.5 });
+    if (!actorLimit.ok) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded", requestId },
+        { status: 429 }
+      );
+    }
+
+    const metadataParsed = metadataSchema.safeParse(payload);
+    if (!metadataParsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(metadataParsed.error), requestId },
+        { status: 400 }
+      );
+    }
+
+    const refs = extractRefs(metadataParsed.data);
+    if (!refs || refs.length === 0) {
+      return NextResponse.json(
+        { error: "Metadata missing provenance refs", requestId },
+        { status: 400 }
+      );
+    }
+
+    if (refs.length > 6) {
+      return NextResponse.json(
+        { error: "Too many refs", requestId },
+        { status: 400 }
+      );
+    }
+
+    const payloadText = canonicalJson(payload);
+    const payloadHash = hashPayload(payloadText);
+    const cachedCid = getCachedCid(payloadHash);
+    if (cachedCid) {
+      const tokenURI = `ipfs://${cachedCid}`;
+      logRequest({
+        route: "/api/pin/metadata",
+        status: 200,
+        requestId,
+        bodySize,
+        payloadHash,
+        actor,
+      });
+      return NextResponse.json(
+        { cid: cachedCid, tokenURI, cached: true, requestId },
+        { status: 200 }
+      );
+    }
+
+    const cid = await pinJson(payloadText);
+    if (!cid) {
+      return NextResponse.json(
+        { error: "Pinata response missing CID", requestId },
+        { status: 502 }
+      );
+    }
+    setCachedCid(payloadHash, cid);
+    const tokenURI = `ipfs://${cid}`;
+    logRequest({
+      route: "/api/pin/metadata",
+      status: 200,
+      requestId,
+      bodySize,
+      payloadHash,
+      actor,
     });
+    return NextResponse.json({ cid, tokenURI, requestId }, { status: 200 });
   } catch (error) {
+    const status = error?.status || 500;
+    logRequest({ route: "/api/pin/metadata", status, requestId, bodySize });
     return NextResponse.json(
-      { error: error?.message || "Pinata request failed" },
-      { status: 500 }
+      { error: error?.message || "Pin request failed", requestId },
+      { status }
     );
   }
 }

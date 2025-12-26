@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   forge-test:
     runs-on: ubuntu-latest
@@ -39,6 +42,18 @@ jobs:
       - name: Solhint
         run: npx solhint "src/**/*.sol"
         working-directory: contracts
+
+  client-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: npm ci
+      - name: Client secret scan
+        run: npm run check:no-client-secrets
 
   slither:
     runs-on: ubuntu-latest

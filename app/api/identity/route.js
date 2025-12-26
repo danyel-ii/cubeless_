@@ -1,11 +1,15 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { JsonRpcProvider, getAddress } from "ethers";
+import { requireEnv } from "../../../src/server/env.js";
+import { checkRateLimit } from "../../../src/server/ratelimit.js";
+import { getClientIp } from "../../../src/server/request.js";
+import { logRequest } from "../../../src/server/log.js";
+import { identityRequestSchema } from "../../../src/server/validate.js";
+import { getCache, setCache } from "../../../src/server/cache.js";
 
 function getRpcUrl() {
-  const key = process.env.ALCHEMY_API_KEY;
-  if (!key) {
-    return null;
-  }
+  const key = requireEnv("ALCHEMY_API_KEY");
   return `https://eth-mainnet.g.alchemy.com/v2/${key}`;
 }
 
@@ -50,27 +54,58 @@ async function resolveFarcaster(address) {
 }
 
 export async function GET(request) {
+  const requestId = crypto.randomUUID();
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`identity:ip:${ip}`, { capacity: 20, refillPerSec: 1 });
+  if (!limit.ok) {
+    logRequest({ route: "/api/identity", status: 429, requestId, bodySize: 0 });
+    return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
+  }
+
   const url = new URL(request.url);
   const rawAddress = url.searchParams.get("address");
   if (!rawAddress) {
-    return NextResponse.json({ error: "Missing address" }, { status: 400 });
+    return NextResponse.json({ error: "Missing address", requestId }, { status: 400 });
+  }
+
+  const validation = identityRequestSchema.safeParse({ address: rawAddress });
+  if (!validation.success) {
+    return NextResponse.json({ error: "Invalid address", requestId }, { status: 400 });
   }
 
   let address;
   try {
     address = getAddress(rawAddress);
   } catch (error) {
-    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid address", requestId }, { status: 400 });
   }
 
-  const [farcaster, ens] = await Promise.all([
-    resolveFarcaster(address),
-    resolveEns(address),
-  ]);
+  const cacheKey = `identity:${address.toLowerCase()}`;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    logRequest({ route: "/api/identity", status: 200, requestId, bodySize: 0, actor: address });
+    return NextResponse.json({ ...cached, requestId });
+  }
 
-  return NextResponse.json({
-    address,
-    farcaster,
-    ens: ens || null,
-  });
+  try {
+    const [farcaster, ens] = await Promise.all([
+      resolveFarcaster(address),
+      resolveEns(address),
+    ]);
+
+    const payload = {
+      address,
+      farcaster,
+      ens: ens || null,
+    };
+    setCache(cacheKey, payload, 60_000);
+    logRequest({ route: "/api/identity", status: 200, requestId, bodySize: 0, actor: address });
+    return NextResponse.json({ ...payload, requestId });
+  } catch (error) {
+    logRequest({ route: "/api/identity", status: 500, requestId, bodySize: 0, actor: address });
+    return NextResponse.json(
+      { error: error?.message || "Identity lookup failed", requestId },
+      { status: 500 }
+    );
+  }
 }

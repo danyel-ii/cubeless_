@@ -6,15 +6,15 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 ## What’s working
 
-- **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys).
+- **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys), and metadata pinning now requires a signed nonce.
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
 - **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests pass (41 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
-- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently failing at 82.58%).
+- **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently failing at 82.58%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
-- **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router.
+- **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router with rate limits, schema validation, and safe logging.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".
 
 ## Current manifest status
@@ -39,6 +39,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - `forge test`: pass (41 tests).
 - `forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv`: pass (2 tests).
 - `npm test`: no frontend tests configured (placeholder script only).
+- `npm run check:no-client-secrets`: required for client bundle secret scan (new).
 
 ## Open items (must finish before v0)
 

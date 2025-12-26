@@ -134,6 +134,36 @@ contract IceCubeMinterTest is Test {
         assertEq(idA, idB);
     }
 
+    function testTokenIdDiffersAcrossAccountsAndSalts() public {
+        address minterA = makeAddr("minterA");
+        address minterB = makeAddr("minterB");
+        uint256 tokenA = nftA.mint(minterA);
+        uint256 tokenB = nftB.mint(minterA);
+        uint256 tokenC = nftC.mint(minterA);
+
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        bytes32 saltA = keccak256("salt-a");
+        bytes32 saltB = keccak256("salt-b");
+
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterA, price);
+        vm.prank(minterA);
+        uint256 tokenIdA = minter.mint{ value: price }(saltA, "ipfs://a", refs);
+
+        vm.prank(minterA);
+        nftA.transferFrom(minterA, minterB, tokenA);
+        vm.prank(minterA);
+        nftB.transferFrom(minterA, minterB, tokenB);
+        vm.prank(minterA);
+        nftC.transferFrom(minterA, minterB, tokenC);
+
+        vm.deal(minterB, price);
+        vm.prank(minterB);
+        uint256 tokenIdB = minter.mint{ value: price }(saltB, "ipfs://b", refs);
+
+        assertTrue(tokenIdA != tokenIdB);
+    }
+
     function testMintTracksEnumeration() public {
         address minterAddr = makeAddr("minter");
         uint256 tokenA = nftA.mint(minterAddr);

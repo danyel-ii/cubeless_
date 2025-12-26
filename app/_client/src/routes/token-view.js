@@ -8,6 +8,8 @@ import { fetchTokenUri } from "../data/chain/icecube-reader.js";
 import { getProvenance } from "../data/nft/indexer";
 import { resolveUri } from "../shared/utils/uri";
 import { ICECUBE_CONTRACT } from "../config/contracts";
+import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
+import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
 
 function parseTokenIdFromPath() {
   const path = window.location.pathname || "";
@@ -26,23 +28,6 @@ function setStatus(message, tone = "neutral") {
   statusEl.classList.remove("is-hidden");
   statusEl.textContent = message;
   statusEl.classList.toggle("is-error", tone === "error");
-}
-
-function resolveRefs(metadata) {
-  const provenance = metadata?.provenance ?? null;
-  if (provenance?.refsFaces && Array.isArray(provenance.refsFaces)) {
-    return provenance.refsFaces;
-  }
-  if (provenance?.refs && Array.isArray(provenance.refs)) {
-    return provenance.refs;
-  }
-  if (provenance?.nfts && Array.isArray(provenance.nfts)) {
-    return provenance.nfts.map((nft) => ({
-      contractAddress: nft.contractAddress,
-      tokenId: nft.tokenId,
-    }));
-  }
-  return [];
 }
 
 async function loadImages(urls) {
@@ -107,12 +92,16 @@ export async function initTokenViewRoute() {
     if (!resolved?.resolved) {
       throw new Error("Token URI could not be resolved.");
     }
-    const response = await fetch(resolved.resolved);
+    const { response } = await fetchWithGateways(resolved.resolved);
     if (!response.ok) {
       throw new Error(`Metadata fetch failed (${response.status}).`);
     }
-    const metadata = await response.json();
-    const refs = resolveRefs(metadata);
+    const metadataJson = await response.json();
+    const validation = metadataSchema.safeParse(metadataJson);
+    if (!validation.success) {
+      throw new Error("Metadata failed schema validation.");
+    }
+    const refs = extractRefs(validation.data);
     if (!refs.length) {
       throw new Error("No provenance refs found in metadata.");
     }

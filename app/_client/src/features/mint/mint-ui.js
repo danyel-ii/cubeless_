@@ -388,7 +388,6 @@ export function initMintUi() {
       const selectionSeed = computeGifSeed({
         tokenId,
         minter: walletState.address,
-        lessSupplyMint,
       });
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
@@ -405,6 +404,7 @@ export function initMintUi() {
         provenanceBundle: bundle,
         refsFaces,
         refsCanonical: refsCanonicalMeta,
+        salt,
         animationUrl,
         imageUrl,
         gif: {
@@ -415,7 +415,11 @@ export function initMintUi() {
         },
       });
       setStatus("Pinning metadata...");
-      const tokenUri = await pinTokenMetadata(metadata);
+      const tokenUri = await pinTokenMetadata({
+        metadata,
+        signer,
+        address: walletState.address,
+      });
       if (devChecklist) {
         const diagnostics = buildDiagnostics({
           selection: state.nftSelection,
