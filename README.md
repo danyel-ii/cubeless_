@@ -30,6 +30,13 @@ npx solhint "src/**/*.sol"
 python3 -m slither .
 ```
 
+## Fork tests (release gate)
+```sh
+export MAINNET_RPC_URL=...
+export FORK_BLOCK_NUMBER=19000000
+npm run fork-test
+```
+
 ## Configuration
 Copy `.env.example` to `.env` and set values. The Next.js server reads server-only keys and exposes only what is required to the client.
 

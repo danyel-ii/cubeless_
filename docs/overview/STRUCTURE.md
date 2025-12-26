@@ -211,3 +211,5 @@ are split into smaller modules.
 ## Debug Helpers
 
 - `scripts/gif-debug.mjs`
+- `scripts/fork-test.sh`
+  - Release gate wrapper for mainnet fork tests.

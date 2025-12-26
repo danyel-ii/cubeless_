@@ -87,7 +87,15 @@ contract IceCubeMinterTest is Test {
         IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         vm.prank(minterAddr);
-        vm.expectRevert("Not owner of referenced NFT");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IceCubeMinter.RefNotOwned.selector,
+                address(nftC),
+                tokenC,
+                minterAddr,
+                address(0xBEEF)
+            )
+        );
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 

@@ -16,6 +16,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     error EthTransferFailed(address recipient, uint256 amount);
+    error RefOwnershipCheckFailed(address nft, uint256 tokenId);
+    error RefNotOwned(address nft, uint256 tokenId, address expectedOwner, address actualOwner);
 
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
     uint256 public constant BASE_PRICE_WEI = 1_500_000_000_000_000;
@@ -59,8 +61,20 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
 
         for (uint256 i = 0; i < refs.length; i += 1) {
-            address nftOwner = IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId);
-            require(nftOwner == msg.sender, "Not owner of referenced NFT");
+            try IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId) returns (
+                address nftOwner
+            ) {
+                if (nftOwner != msg.sender) {
+                    revert RefNotOwned(
+                        refs[i].contractAddress,
+                        refs[i].tokenId,
+                        msg.sender,
+                        nftOwner
+                    );
+                }
+            } catch {
+                revert RefOwnershipCheckFailed(refs[i].contractAddress, refs[i].tokenId);
+            }
         }
 
         uint256 price = currentMintPrice();

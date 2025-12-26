@@ -5,6 +5,10 @@
 
 ## Pre-release checklist
 1. Ensure CI passes (forge tests, solhint, slither, coverage gate).
+2. Run fork tests with a pinned block:
+   - `MAINNET_RPC_URL` set
+   - Optional `FORK_BLOCK_NUMBER` (defaults in test)
+   - Command: `npm run fork-test`
 2. Update `CHANGELOG.md` with release notes.
 3. Verify `docs/security/security_audit.md` is current.
 4. Verify deployment artifacts and contract addresses.

@@ -12,10 +12,12 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
     bytes public swapCalldata;
 
     error LessTokenRequired();
+    error SwapCalldataRequired();
     error SwapCalldataRequiresRouter();
     error EthTransferFailed(address recipient, uint256 amount);
 
     event RouterUpdated(address router, bytes swapCalldata);
+    event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
     constructor(
         address owner_,
@@ -31,6 +33,9 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
         }
         if (router_ == address(0) && swapCalldata_.length != 0) {
             revert SwapCalldataRequiresRouter();
+        }
+        if (router_ != address(0) && swapCalldata_.length == 0) {
+            revert SwapCalldataRequired();
         }
         lessToken = lessToken_;
         router = router_;
@@ -50,8 +55,11 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
         if (router_ == address(0) && swapCalldata_.length != 0) {
             revert SwapCalldataRequiresRouter();
         }
+        if (router_ != address(0) && swapCalldata_.length == 0) {
+            revert SwapCalldataRequired();
+        }
         router = router_;
-        swapCalldata = swapCalldata_;
+        swapCalldata = router_ == address(0) ? bytes("") : swapCalldata_;
         emit RouterUpdated(router_, swapCalldata_);
     }
 
@@ -67,8 +75,9 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard {
         }
 
         uint256 half = amount / 2;
-        (bool ok, ) = router.call{ value: half }(swapCalldata);
+        (bool ok, bytes memory data) = router.call{ value: half }(swapCalldata);
         if (!ok) {
+            emit SwapFailedFallbackToOwner(amount, keccak256(data));
             _send(owner(), amount);
             return;
         }

@@ -104,7 +104,13 @@ contract IceCubeMinterEdgeTest is Test {
         IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IceCubeMinter.RefOwnershipCheckFailed.selector,
+                address(badNft),
+                1
+            )
+        );
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -114,7 +120,15 @@ contract IceCubeMinterEdgeTest is Test {
         IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
         refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
-        vm.expectRevert("Not owner of referenced NFT");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IceCubeMinter.RefNotOwned.selector,
+                address(badNft),
+                1,
+                address(this),
+                wrongOwner
+            )
+        );
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 

@@ -10,7 +10,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
 - **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
-- **Contracts**: Foundry tests pass (47 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
+- **Contracts**: Foundry tests pass (51 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently passing at 95.02%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
@@ -36,7 +36,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 ## Tests
 
-- `forge test`: pass (47 tests).
+- `forge test`: pass (51 tests).
 - `forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv`: pass (2 tests).
 - `npm test`: no frontend tests configured (placeholder script only).
 - `npm run check:no-client-secrets`: required for client bundle secret scan (new).

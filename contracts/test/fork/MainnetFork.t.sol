@@ -10,6 +10,7 @@ contract MainnetForkTest is Test {
 
     address private constant ENS = 0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85;
     address private constant BAYC = 0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D;
+    uint256 private constant DEFAULT_FORK_BLOCK = 19_000_000;
 
     function setUp() public {
         string memory url = vm.envOr("MAINNET_RPC_URL", string(""));
@@ -17,8 +18,8 @@ contract MainnetForkTest is Test {
             emit log("MAINNET_RPC_URL not set; skipping fork tests.");
             return;
         }
-        uint256 fork = vm.createFork(url);
-        vm.selectFork(fork);
+        uint256 forkBlock = vm.envOr("FORK_BLOCK_NUMBER", DEFAULT_FORK_BLOCK);
+        vm.createSelectFork(url, forkBlock);
         forkReady = true;
     }
 

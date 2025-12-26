@@ -38,6 +38,7 @@ contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
     address private burn = address(0x000000000000000000000000000000000000dEaD);
     event RouterUpdated(address router, bytes swapCalldata);
+    event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
     function testForwardsAllWhenRouterUnset() public {
         MockLess less = new MockLess();
@@ -103,6 +104,11 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
+        vm.expectEmit(false, false, false, true);
+        emit SwapFailedFallbackToOwner(
+            2 ether,
+            keccak256(abi.encodeWithSignature("Error(string)", "Swap failed"))
+        );
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
         assertEq(owner.balance, 2 ether);
@@ -143,5 +149,41 @@ contract RoyaltySplitterTest is Test {
             abi.encodeWithSelector(RoyaltySplitter.EthTransferFailed.selector, address(receiver), 1 ether)
         );
         address(splitter).call{ value: 1 ether }("");
+    }
+
+    function testConstructorRevertsOnZeroLessToken() public {
+        vm.expectRevert(RoyaltySplitter.LessTokenRequired.selector);
+        new RoyaltySplitter(owner, address(0), address(0), "", burn);
+    }
+
+    function testConstructorRevertsOnEmptyCalldataWithRouterSet() public {
+        MockLess less = new MockLess();
+        vm.expectRevert(RoyaltySplitter.SwapCalldataRequired.selector);
+        new RoyaltySplitter(owner, address(less), address(0xBEEF), "", burn);
+    }
+
+    function testSetRouterRevertsOnEmptyCalldataWhenRouterSet() public {
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
+        vm.prank(owner);
+        vm.expectRevert(RoyaltySplitter.SwapCalldataRequired.selector);
+        splitter.setRouter(address(0xBEEF), "");
+    }
+
+    function testSetRouterAllowsDisableWithEmptyCalldata() public {
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(0xBEEF),
+            hex"deadbeef",
+            burn
+        );
+
+        vm.prank(owner);
+        splitter.setRouter(address(0), "");
+
+        assertEq(splitter.router(), address(0));
+        assertEq(splitter.swapCalldata(), bytes(""));
     }
 }

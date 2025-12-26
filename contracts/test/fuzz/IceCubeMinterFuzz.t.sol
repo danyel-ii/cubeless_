@@ -63,18 +63,28 @@ contract IceCubeMinterFuzzTest is Test {
         address other = makeAddr("other");
 
         IceCubeMinter.NftRef[] memory refs = _buildRefs(minterAddr, count);
+        uint256 wrongTokenId = 0;
         if (injectWrongOwner) {
-            refs[count - 1].tokenId = nft.mint(other);
+            wrongTokenId = nft.mint(other);
+            refs[count - 1].tokenId = wrongTokenId;
         }
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         vm.prank(minterAddr);
         if (injectWrongOwner) {
-            vm.expectRevert("Not owner of referenced NFT");
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    IceCubeMinter.RefNotOwned.selector,
+                    address(nft),
+                    wrongTokenId,
+                    minterAddr,
+                    other
+                )
+            );
             minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
-        } else {
-            minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
+            return;
         }
+        minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
     }
 }

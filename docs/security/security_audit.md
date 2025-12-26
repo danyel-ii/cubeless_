@@ -31,7 +31,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (47 tests)
+Result: PASS (51 tests)
 - Fork tests logged as skipped because `MAINNET_RPC_URL` was not set in this run.
 
 ### Coverage (Solidity)
@@ -88,7 +88,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 145 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+  - Result: 0 errors, 148 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run:
   - Command: `cd contracts && python3 -m slither .`
   - Result: 7 findings (warnings):
@@ -101,5 +101,6 @@ Results (local):
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
+- Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
 - `npm audit --json` reports 0 vulnerabilities after removing unused Vite dependencies.

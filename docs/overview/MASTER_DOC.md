@@ -96,6 +96,11 @@ cd contracts
 npx solhint "src/**/*.sol"
 slither .
 
+# Fork tests (release gate)
+export MAINNET_RPC_URL=...
+export FORK_BLOCK_NUMBER=19000000
+npm run fork-test
+
 # Client secret scan
 npm run check:no-client-secrets
 ```

@@ -5,11 +5,11 @@ Validate `ownerOf` and optional `royaltyInfo` behavior against real mainnet cont
 
 ## Requirements
 - `MAINNET_RPC_URL` environment variable
+- Optional `FORK_BLOCK_NUMBER` (defaults to pinned block in test)
 
 ## Command
 ```sh
-cd contracts
-forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv
+npm run fork-test
 ```
 
 ## Notes
