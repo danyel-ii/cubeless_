@@ -32,7 +32,7 @@ representing the project or its community.
 
 ## Enforcement
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the
-project maintainers at: security@cubeless.app
+project maintainers at: dh4wes@gmail.com
 
 All complaints will be reviewed and investigated promptly and fairly.
 

@@ -152,18 +152,18 @@ async function handleRequest(request) {
         ],
       }));
       const rpcUrl = getRpcUrl(chainId, apiKey);
-      const response = await fetch(rpcUrl, {
+      const rpcResponse = await fetch(rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) {
+      if (!rpcResponse.ok) {
         return NextResponse.json(
-          { error: `RPC call failed (${response.status})`, requestId },
-          { status: response.status }
+          { error: `RPC call failed (${rpcResponse.status})`, requestId },
+          { status: rpcResponse.status }
         );
       }
-      const json = await response.json();
+      const json = await rpcResponse.json();
       logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
       return NextResponse.json(json);
     }
@@ -191,26 +191,26 @@ async function handleRequest(request) {
     const cacheKey = url.toString();
     const cached = getCache(cacheKey);
     if (cached) {
-      const response = NextResponse.json(cached);
-      response.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+      const cachedResponse = NextResponse.json(cached);
+      cachedResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
       logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
-      return response;
+      return cachedResponse;
     }
 
-    const response = await fetch(url.toString());
-    if (!response.ok) {
+    const alchemyResponse = await fetch(url.toString());
+    if (!alchemyResponse.ok) {
       return NextResponse.json(
-        { error: `Alchemy request failed (${response.status})`, requestId },
-        { status: response.status }
+        { error: `Alchemy request failed (${alchemyResponse.status})`, requestId },
+        { status: alchemyResponse.status }
       );
     }
-    const json = await response.json();
+    const json = await alchemyResponse.json();
     const payload = minimizeResponse(path, json.result ?? json);
     setCache(cacheKey, payload, CACHE_TTL_MS);
-    const response = NextResponse.json(payload);
-    response.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+    const payloadResponse = NextResponse.json(payload);
+    payloadResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
     logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
-    return response;
+    return payloadResponse;
   } catch (error) {
     logRequest({ route: "/api/nfts", status: 500, requestId, bodySize });
     return NextResponse.json(

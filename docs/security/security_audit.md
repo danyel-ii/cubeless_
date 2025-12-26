@@ -1,10 +1,10 @@
 # cubeLess — Security & Edge-Case Coverage Implementation Results
-Date: 2025-12-25
+Date: 2025-12-26
 
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`
 - Tests: unit, fuzz, invariants, edge cases, fork harness
-- Tooling: Slither + Solhint configs, CI workflow
+- Tooling: Slither + Solhint configs, CI workflow, client secret scan
 
 ## Implemented artifacts
 - Docs: `docs/security/THREAT_MODEL.md`, `docs/security/INVARIANTS.md`, `docs/security/KNOWN_LIMITATIONS.md`, `docs/security/STATIC_ANALYSIS.md`, `docs/security/SECURITY_RUNBOOK.md`, `docs/security/FORK_TESTING.md`
@@ -15,6 +15,8 @@ Date: 2025-12-25
 - Fuzz tests: `contracts/test/fuzz/IceCubeMinterFuzz.t.sol`
 - Invariants: `contracts/test/invariants/IceCubeMinterInvariants.t.sol`
 - Fork tests: `contracts/test/fork/MainnetFork.t.sol`
+ - Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
+ - Client secret scan: `scripts/check-client-secrets.mjs`
 
 ## Policy decisions captured
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
@@ -29,7 +31,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (41 tests)
+Result: PASS (42 tests)
 - Fork tests executed but skipped because `MAINNET_RPC_URL` was not set.
 
 ### Coverage (Solidity)
@@ -66,6 +68,13 @@ npm test
 ```
 Result: No frontend tests configured (placeholder script).
 
+### Client secret scan
+Command:
+```sh
+npm run check:no-client-secrets
+```
+Result: PASS (no forbidden strings in the client bundle).
+
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
@@ -83,4 +92,5 @@ Result: No frontend tests configured (placeholder script).
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
-- CI includes `forge test`, `solhint`, `slither`, and coverage (90% minimum) gates.
+- CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
+- `npm audit fix` still reports 2 moderate vulnerabilities (esbuild via vite); resolving requires `npm audit fix --force` (breaking change).

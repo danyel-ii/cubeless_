@@ -7,7 +7,7 @@ Preferred:
 - GitHub Security Advisories ("Report a vulnerability" on the repo)
 
 Alternative:
-- Email: security@cubeless.app
+- Email: dh4wes@gmail.com
 
 ## Scope
 This policy applies to:
