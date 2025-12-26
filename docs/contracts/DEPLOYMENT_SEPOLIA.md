@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-23
+- Last reviewed: 2025-12-26
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -42,6 +42,8 @@ struct NftRef {
   - RoyaltySplitter calls a router with half the royalty when configured; otherwise it forwards ETH to owner.
   - If the router call fails, the full amount is forwarded to owner.
   - If the router call succeeds, any $LESS received is split 50% to burn address and 50% to owner before forwarding remaining ETH.
+  - If `ICECUBE_ROUTER` is set, `ICECUBE_SWAP_CALLDATA` must be non-empty (swap is required).
+  - If `ICECUBE_ROUTER` is unset, swap calldata must be empty and no swap is attempted.
 
 ## Admin Controls
 

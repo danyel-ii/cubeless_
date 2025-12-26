@@ -117,4 +117,5 @@ Mint UI: `app/_client/src/features/mint/mint-ui.js`
 - RoyaltySplitter uses a router call if configured; otherwise it forwards ETH to owner.
 - When the router call fails, all ETH is forwarded to owner.
 - When the router call succeeds, any $LESS received is split 50% to burn address and 50% to owner, then any remaining ETH balance is forwarded to owner.
+- If a router is configured, swap calldata must be non-empty; if router is unset, calldata is cleared and swaps are disabled.
 - Metadata is pinned to IPFS via the server route and references the token viewer via `animation_url`.

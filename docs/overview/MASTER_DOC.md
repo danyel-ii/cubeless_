@@ -99,6 +99,9 @@ slither .
 # Fork tests (release gate)
 export MAINNET_RPC_URL=...
 export FORK_BLOCK_NUMBER=19000000
+export NO_PROXY="*"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
 npm run fork-test
 
 # Client secret scan

@@ -6,9 +6,18 @@ Validate `ownerOf` and optional `royaltyInfo` behavior against real mainnet cont
 ## Requirements
 - `MAINNET_RPC_URL` environment variable
 - Optional `FORK_BLOCK_NUMBER` (defaults to pinned block in test)
+ - On macOS, disable system proxy detection to avoid Foundry crashes:
+   - `NO_PROXY="*"`
+   - `HTTP_PROXY=""`
+   - `HTTPS_PROXY=""`
 
 ## Command
 ```sh
+export MAINNET_RPC_URL="https://your-mainnet-rpc"
+export FORK_BLOCK_NUMBER=19000000
+export NO_PROXY="*"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
 npm run fork-test
 ```
 

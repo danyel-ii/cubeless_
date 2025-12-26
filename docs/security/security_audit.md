@@ -32,7 +32,7 @@ cd contracts
 forge test -vvv
 ```
 Result: PASS (51 tests)
-- Fork tests logged as skipped because `MAINNET_RPC_URL` was not set in this run.
+- Fork tests executed with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` and proxy vars cleared (NO_PROXY/HTTP_PROXY/HTTPS_PROXY): PASS (2 tests).
 
 ### Coverage (Solidity)
 Command:

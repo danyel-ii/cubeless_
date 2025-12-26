@@ -20,11 +20,14 @@ npm run coverage:contracts
 npm run check:no-client-secrets
 ```
 
-### Fork tests (optional)
+### Fork tests (release gate)
 ```sh
-cd contracts
 export MAINNET_RPC_URL="https://your-mainnet-rpc"
-forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv
+export FORK_BLOCK_NUMBER=19000000
+export NO_PROXY="*"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
+npm run fork-test
 ```
 
 ### Static analysis

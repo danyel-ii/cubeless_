@@ -8,6 +8,7 @@
 2. Run fork tests with a pinned block:
    - `MAINNET_RPC_URL` set
    - Optional `FORK_BLOCK_NUMBER` (defaults in test)
+   - If on macOS, set `NO_PROXY="*"`, `HTTP_PROXY=""`, `HTTPS_PROXY=""`
    - Command: `npm run fork-test`
 2. Update `CHANGELOG.md` with release notes.
 3. Verify `docs/security/security_audit.md` is current.
