@@ -15,9 +15,7 @@
     "@types/react": "19.2.7",
     "next": "^14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "vite": "^5.2.0",
-    "vite-plugin-node-polyfills": "^0.24.0"
+    "react-dom": "^18.3.1"
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.1",

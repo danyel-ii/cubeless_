@@ -40,12 +40,11 @@ This document is the single entry point for cubeless documentation. It explains 
 
 ### Project Status + Tasks
 - `docs/status/state_of_review.md` — Snapshot of repo alignment and current health.
-- `docs/status/remaining_tasks.md` — Owner action items to finish v0.
-- `docs/status/TASK_LOG.md` — Chronological task execution log.
 - `docs/overview/STRUCTURE.md` — Repository layout and module responsibilities.
 
 ### Repository Policies
 - `README.md` — Project overview and quickstart.
+- `MASTER.md` — Top-level entry point linking into the docs tree.
 - `CONTRIBUTING.md` — Contribution guidelines and DCO sign-off.
 - `CODE_OF_CONDUCT.md` — Community code of conduct.
 - `SECURITY.md` — Vulnerability reporting policy.
@@ -68,7 +67,7 @@ This document is the single entry point for cubeless documentation. It explains 
 4) **Security posture**
    - Review `docs/security/*` and update `docs/security/security_audit.md`.
 5) **Status + next steps**
-   - Check `docs/status/state_of_review.md` and `docs/status/remaining_tasks.md`.
+   - Check `docs/status/state_of_review.md`.
 
 ## Glossary
 
@@ -106,4 +105,4 @@ npm run check:no-client-secrets
 - `docs/security/security_audit.md` updated with latest tool runs.
 - `docs/security/OSPS_BASELINE_2025-10-10.md` reviewed after policy changes.
 - `docs/reports/coverage_report.md` regenerated after test updates.
-- `docs/status/state_of_review.md` and `docs/status/remaining_tasks.md` reflect current status.
+- `docs/status/state_of_review.md` reflects current status.

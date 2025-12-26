@@ -24,6 +24,7 @@ forge test -vvv
 ## Coverage + security checks
 ```sh
 npm run coverage:contracts
+npm run check:no-client-secrets
 cd contracts
 npx solhint "src/**/*.sol"
 python3 -m slither .
@@ -34,6 +35,7 @@ Copy `.env.example` to `.env` and set values. The Next.js server reads server-on
 
 ## Documentation
 Start with:
+- `MASTER.md`
 - `docs/overview/MASTER_DOC.md`
 - `docs/contracts/contract_details.md`
 - `docs/security/security_audit.md`

@@ -18,6 +18,14 @@ contract MockERC721 is ERC721 {
     }
 }
 
+contract IceCubeMinterHarness is IceCubeMinter {
+    constructor(address splitter, address lessToken, uint96 bps) IceCubeMinter(splitter, lessToken, bps) {}
+
+    function exposedRoundUp(uint256 value, uint256 step) external pure returns (uint256) {
+        return _roundUp(value, step);
+    }
+}
+
 contract IceCubeMinterTest is Test {
     IceCubeMinter private minter;
     MockERC721 private nftA;
@@ -256,6 +264,18 @@ contract IceCubeMinterTest is Test {
 
         assertEq(minter.mintSupplySnapshot(tokenId), supply);
         assertEq(minter.lastSupplySnapshot(tokenId), supply);
+    }
+
+    function testLessSupplyNowReturnsTotalSupply() public {
+        uint256 supply = 555_000e18;
+        lessToken.mint(address(this), supply);
+
+        assertEq(minter.lessSupplyNow(), supply);
+    }
+
+    function testRoundUpZeroReturnsZero() public {
+        IceCubeMinterHarness harness = new IceCubeMinterHarness(resaleSplitter, address(lessToken), 500);
+        assertEq(harness.exposedRoundUp(0, 1e14), 0);
     }
 
     function testLastSnapshotUpdatesOnTransfer() public {

@@ -138,6 +138,8 @@ are split into smaller modules.
 
 ## Root Docs
 
+- `MASTER.md`
+  - Top-level entry point linking into the docs tree.
 - `docs/overview/MASTER_DOC.md`
   - Master index, glossary, and doc map.
 - `README.md`

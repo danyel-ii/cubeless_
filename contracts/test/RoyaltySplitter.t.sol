@@ -37,6 +37,7 @@ contract SuccessfulRouter {
 contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
     address private burn = address(0x000000000000000000000000000000000000dEaD);
+    event RouterUpdated(address router, bytes swapCalldata);
 
     function testForwardsAllWhenRouterUnset() public {
         RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
@@ -45,6 +46,46 @@ contract RoyaltySplitterTest is Test {
         (bool ok, ) = address(splitter).call{ value: 1 ether }("");
         assertTrue(ok);
         assertEq(owner.balance, 1 ether);
+    }
+
+    function testFallbackWithCalldataForwardsWhenRouterUnset() public {
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        vm.deal(address(this), 1 ether);
+
+        (bool ok, ) = address(splitter).call{ value: 1 ether }(hex"1234");
+        assertTrue(ok);
+        assertEq(owner.balance, 1 ether);
+    }
+
+    function testSetRouterUpdatesStateAndEmits() public {
+        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        bytes memory calldataBlob = hex"deadbeef";
+
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit RouterUpdated(address(0xBEEF), calldataBlob);
+        splitter.setRouter(address(0xBEEF), calldataBlob);
+
+        assertEq(splitter.router(), address(0xBEEF));
+        assertEq(splitter.swapCalldata(), calldataBlob);
+    }
+
+    function testForwardLessSkipsWhenBalanceZero() public {
+        MockLess less = new MockLess();
+        SuccessfulRouter router = new SuccessfulRouter(less, 0);
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(router),
+            hex"deadbeef",
+            burn
+        );
+
+        vm.deal(address(this), 2 ether);
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
+        assertEq(less.balanceOf(owner), 0);
+        assertEq(less.balanceOf(burn), 0);
     }
 
     function testForwardsAllWhenSwapReverts() public {

@@ -33,6 +33,10 @@ def parse_lcov(path: str) -> tuple[int, int, dict[str, dict[str, object]]]:
             line = raw.strip()
             if line.startswith("SF:"):
                 current = line[3:]
+                normalized = current.replace("\\", "/")
+                if "/script/" in normalized or normalized.startswith("script/"):
+                    current = None
+                    continue
                 per_file[current] = {"covered": 0, "total": 0, "missed": []}
                 continue
             if line.startswith("DA:") and current:
@@ -62,7 +66,8 @@ def write_report(path: str, covered: int, total: int, per_file: dict[str, dict[s
         grouped.setdefault(contract_name, []).append((filename, data))
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("# Solidity Coverage Report\n\n")
-        handle.write(f"Total: {covered}/{total} lines = {pct:.2f}%\n\n")
+        handle.write(f"Total: {covered}/{total} lines = {pct:.2f}%\n")
+        handle.write("Excluded: contracts/script/**\n\n")
         handle.write("## Uncovered Lines (by contract)\n\n")
         for contract_name in sorted(grouped.keys()):
             entries = grouped[contract_name]

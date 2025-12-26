@@ -31,17 +31,17 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (42 tests)
-- Fork tests executed but skipped because `MAINNET_RPC_URL` was not set.
+Result: PASS (47 tests)
+- Fork tests logged as skipped because `MAINNET_RPC_URL` was not set in this run.
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: FAIL (82.58% line coverage; minimum is 90%).
+Result: PASS (95.02% line coverage; minimum is 90%).
 - Report: `docs/reports/coverage_report.md` (grouped by contract).
-- Primary gaps: deploy scripts and portions of `IceCubeMinter` + `RoyaltySplitter` (see report).
+- Excluded: `contracts/script/**` from the coverage gate.
 
 ### Invariants (standalone run)
 Command:
@@ -75,6 +75,16 @@ npm run check:no-client-secrets
 ```
 Result: PASS (no forbidden strings in the client bundle).
 
+### Abuse checks (pin endpoint)
+Command:
+```sh
+npm run dev -- --port 3010
+```
+Results (local):
+- Size cap: `POST /api/pin/metadata` with ~60KB body → `413 Payload too large`.
+- Rate limit: 5 requests in quick succession → `429 Rate limit exceeded` after the 4th allowed request (capacity 5, refill 0.5/sec).
+- Invalid payloads return `400` before signature checks as expected.
+
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
@@ -93,4 +103,4 @@ Result: PASS (no forbidden strings in the client bundle).
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- `npm audit fix` still reports 2 moderate vulnerabilities (esbuild via vite); resolving requires `npm audit fix --force` (breaking change).
+- `npm audit --json` reports 0 vulnerabilities after removing unused Vite dependencies.
