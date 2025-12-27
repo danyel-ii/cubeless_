@@ -72,7 +72,7 @@ Command:
 ```sh
 npm test
 ```
-Result: No frontend tests configured (placeholder script).
+Result: PASS (22 tests, Vitest unit/component/API; v4.0.16).
 
 ### Frontend smoke (Playwright)
 Command:
@@ -80,6 +80,7 @@ Command:
 npm run test:ui
 ```
 Result: PASS (1 test, ~18.6s)
+- Mocked E2E specs (`tests/e2e/*`) added but not run in this snapshot.
 
 ### Client secret scan
 Command:
@@ -117,4 +118,4 @@ Results (local):
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- `npm audit --json` reports 0 vulnerabilities after updating Playwright.
+- `npm audit --json` reports 0 vulnerabilities after upgrading Vitest to v4.0.16.

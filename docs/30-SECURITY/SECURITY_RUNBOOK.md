@@ -12,6 +12,11 @@ forge test --match-path "test/fuzz/*" -vvv
 forge test --match-path "test/invariants/*" -vvv
 ```
 
+### Unit + API tests (Vitest)
+```sh
+npm test
+```
+
 ### Coverage (Solidity)
 ```sh
 npm run coverage:contracts

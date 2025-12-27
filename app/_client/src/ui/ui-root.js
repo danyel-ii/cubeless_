@@ -11,7 +11,13 @@ import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { state } from "../app/app-state.js";
 
+let uiInitialized = false;
+
 export function initUiRoot() {
+  if (uiInitialized) {
+    return;
+  }
+  uiInitialized = true;
   initOverlay();
   initLocalTextureUi();
   initExportUi();

@@ -90,6 +90,9 @@ This document is the single entry point for cubeless documentation. It explains 
 cd contracts
 forge test -vvv
 
+# Unit + API tests (Vitest)
+npm test
+
 # Coverage (writes docs/50-REPORTS/COVERAGE_REPORT.md)
 npm run coverage:contracts
 

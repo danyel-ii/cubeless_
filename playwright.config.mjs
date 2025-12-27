@@ -13,6 +13,7 @@ const webServer =
 
 export default defineConfig({
   testDir: "./tests",
+  testMatch: ["smoke.spec.mjs", "e2e/**/*.spec.mjs"],
   timeout: 60_000,
   retries: 0,
   use: {

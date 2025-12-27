@@ -7,14 +7,14 @@ const TEN_THOUSAND = 10_000n * WAD;
 const MILLION = 1_000_000n * WAD;
 const REFRESH_MS = 60000;
 
-function formatFixed(value, divisor) {
+export function formatFixed(value, divisor) {
   const scaled = (value * 100n) / divisor;
   const whole = scaled / 100n;
   const decimals = scaled % 100n;
   return `${whole.toString()}.${decimals.toString().padStart(2, "0")}`;
 }
 
-function formatSupply(value) {
+export function formatSupply(value) {
   if (value === null || value === undefined) {
     return "—";
   }

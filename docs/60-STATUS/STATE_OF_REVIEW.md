@@ -40,9 +40,10 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 - `forge test`: pass (51 tests).
 - `npm run fork-test` with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` (and proxy vars cleared on macOS): pass (2 tests).
+- `npm test`: Vitest unit/component/API suite pass (22 tests).
 - `npm run test:ui`: Playwright smoke test pass (1 test).
 - `npm run check:no-client-secrets`: required for client bundle secret scan (new).
-- `npm audit --json`: 0 vulnerabilities after Playwright update.
+- `npm audit --json`: 0 vulnerabilities after upgrading Vitest to v4.0.16.
 
 ## Open items (must finish before v0)
 

@@ -80,6 +80,14 @@ function extractImageUri(nft: AlchemyNft): string | null {
   return null;
 }
 
+export {
+  assertSepolia,
+  parseTokenId,
+  normalizeAddress,
+  extractTokenUri,
+  extractImageUri,
+};
+
 export async function getNftsForOwner(
   ownerAddress: string,
   chainId: number

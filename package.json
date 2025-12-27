@@ -7,7 +7,8 @@
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
     "start": "next start",
-    "test": "echo \"No frontend tests configured\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "playwright test",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
     "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs",
@@ -15,10 +16,13 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@testing-library/dom": "9.3.4",
     "@types/react": "19.2.7",
+    "jsdom": "24.1.1",
     "next": "^14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.1",

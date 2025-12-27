@@ -2,7 +2,7 @@ import { state } from "../../app/app-state.js";
 
 const WAD = 1_000_000_000_000_000_000n;
 
-function formatLess(value) {
+export function formatLess(value) {
   if (value === null || value === undefined) {
     return "—";
   }

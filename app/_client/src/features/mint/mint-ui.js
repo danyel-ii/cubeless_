@@ -42,7 +42,7 @@ function generateSalt() {
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function sortRefsCanonically(refs) {
+export function sortRefsCanonically(refs) {
   return [...refs].sort((a, b) => {
     const addrA = BigInt(a.contractAddress);
     const addrB = BigInt(b.contractAddress);

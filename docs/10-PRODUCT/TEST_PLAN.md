@@ -184,6 +184,7 @@ Because Warpcast hosting is hard to automate, we split E2E into:
 - Stub Alchemy responses (owned NFTs + metadata)
 - Stub Pinata endpoints (return fake CIDs)
 - Stub contract calls (or run local Anvil with deployed contract)
+  - Playwright mocked flows live under `tests/e2e/`.
 
 **Assertions**
 - connect -> inventory renders
@@ -223,6 +224,7 @@ Not tests, but they reduce time-to-fix:
 
 ## 6) Commands / what to run
 - Contract: `forge test`
+- Unit/API: `npm test` (Vitest)
 - Frontend: `npm run test:ui` (Playwright smoke)
 - Manual: Warpcast E2E gate (see 4.2)
 

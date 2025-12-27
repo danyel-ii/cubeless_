@@ -6,7 +6,7 @@ const MAX_ENTRIES = 50;
 const SEPOLIA_CHAIN_ID = 11155111;
 const WAD = 1_000_000_000_000_000_000n;
 
-function formatDelta(value) {
+export function formatDelta(value) {
   if (value === null || value === undefined) {
     return "—";
   }
@@ -20,7 +20,7 @@ function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
 }
 
-function shortenAddress(address) {
+export function shortenAddress(address) {
   if (!address) {
     return "—";
   }

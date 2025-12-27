@@ -214,3 +214,16 @@ are split into smaller modules.
 - `scripts/gif-debug.mjs`
 - `scripts/fork-test.sh`
   - Release gate wrapper for mainnet fork tests.
+
+## Test Layout
+
+- `tests/unit/*.spec.mjs`
+  - Pure logic tests (provenance, GIF mapping, metadata, IPFS normalization).
+- `tests/component/*.spec.mjs`
+  - DOM/component tests for UI widgets (HUDs, NFT picker).
+- `tests/api/*.spec.mjs`
+  - Node tests for `/api/*` route handlers with mocks.
+- `tests/smoke.spec.mjs`
+  - Playwright smoke test for the home UI shell.
+- `tests/e2e/*.spec.mjs`
+  - Playwright mocked E2E flows (mint + token viewer).
