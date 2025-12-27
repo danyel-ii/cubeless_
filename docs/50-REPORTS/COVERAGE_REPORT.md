@@ -1,8 +1,6 @@
 # Solidity Coverage Report
 
-Last updated: 2025-12-26
-
-Total: 229/241 lines = 95.02%
+Total: 243/257 lines = 94.55%
 Excluded: contracts/script/**
 
 ## Uncovered Lines (by contract)
@@ -10,12 +8,12 @@ Excluded: contracts/script/**
 ### IceCubeMinter.sol
 
 - src/icecube/IceCubeMinter.sol
-  - Coverage: 101/112 = 90.18%
-  - Missed lines: 136, 137, 138, 139, 141, 144, 145, 146, 147, 150, 153
+  - Coverage: 105/116 = 90.52%
+  - Missed lines: 152, 153, 154, 155, 157, 160, 161, 162, 163, 166, 169
 
 ### RoyaltySplitter.sol
 
 - src/royalties/RoyaltySplitter.sol
-  - Coverage: 45/46 = 97.83%
-  - Missed lines: 48
+  - Coverage: 55/58 = 94.83%
+  - Missed lines: 35, 56, 69
 
