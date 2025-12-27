@@ -117,4 +117,4 @@ Results (local):
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- `npm audit --json` reports 0 vulnerabilities after removing unused Vite dependencies.
+- `npm audit --json` reports 0 vulnerabilities after updating Playwright.
