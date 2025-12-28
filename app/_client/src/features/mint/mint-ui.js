@@ -91,6 +91,71 @@ export function initMintUi() {
     statusEl.classList.toggle("is-success", tone === "success");
   }
 
+  function getToastRoot() {
+    let root = document.getElementById("toast-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "toast-root";
+      root.className = "toast-root";
+      document.body.appendChild(root);
+    }
+    return root;
+  }
+
+  function buildTxUrl(hash) {
+    if (!hash) {
+      return "";
+    }
+    return `https://sepolia.etherscan.io/tx/${hash}`;
+  }
+
+  function showToast({ title, message, tone = "neutral", links = [] }) {
+    const root = getToastRoot();
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${tone}`;
+
+    const heading = document.createElement("div");
+    heading.className = "toast-title";
+    heading.textContent = title;
+    toast.appendChild(heading);
+
+    if (message) {
+      const body = document.createElement("div");
+      body.className = "toast-body";
+      body.textContent = message;
+      toast.appendChild(body);
+    }
+
+    if (links.length) {
+      const actions = document.createElement("div");
+      actions.className = "toast-actions";
+      links.forEach(({ label, href }) => {
+        if (!href) {
+          return;
+        }
+        const link = document.createElement("a");
+        link.className = "toast-link";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.textContent = label;
+        actions.appendChild(link);
+      });
+      toast.appendChild(actions);
+    }
+
+    root.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.classList.add("is-visible");
+    });
+
+    const remove = () => {
+      toast.classList.remove("is-visible");
+      setTimeout(() => toast.remove(), 200);
+    };
+    setTimeout(remove, 7000);
+  }
+
   function setDisabled(disabled) {
     mintButton.disabled = disabled;
     amountInput.disabled = disabled;
@@ -443,6 +508,12 @@ export function initMintUi() {
 
       setStatus("Submitting mint transaction...");
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
+      showToast({
+        title: "Mint submitted",
+        message: "Transaction broadcast to Sepolia.",
+        tone: "neutral",
+        links: [{ label: "View tx", href: buildTxUrl(tx.hash) }],
+      });
       setStatus("Waiting for confirmation...");
       const receipt = await tx.wait();
       const mintedTokenId = extractMintedTokenId(receipt, contract);
@@ -455,9 +526,25 @@ export function initMintUi() {
         }
       }
       setStatus("Mint confirmed.", "success");
+      const tokenUrl = mintedTokenId ? buildTokenViewUrl(mintedTokenId.toString()) : "";
+      showToast({
+        title: "Mint confirmed",
+        message: mintedTokenId ? `Token #${mintedTokenId.toString()}` : "Transaction confirmed.",
+        tone: "success",
+        links: [
+          { label: "View tx", href: buildTxUrl(tx.hash) },
+          { label: "View token", href: tokenUrl },
+        ],
+      });
       document.dispatchEvent(new CustomEvent("mint-complete"));
     } catch (error) {
-      setStatus(formatError(error), "error");
+      const message = formatError(error);
+      setStatus(message, "error");
+      showToast({
+        title: "Mint failed",
+        message,
+        tone: "error",
+      });
     } finally {
       setDisabled(false);
       updateEligibility();
