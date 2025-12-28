@@ -42,6 +42,15 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           }
           return responses.currentMintPrice;
         }
+        if (method === "eth_estimateGas") {
+          return "0x5208";
+        }
+        if (method === "eth_gasPrice") {
+          return "0x3b9aca00";
+        }
+        if (method === "eth_getTransactionCount") {
+          return "0x1";
+        }
         if (method === "eth_sendTransaction") {
           return "0xdeadbeef";
         }
@@ -134,6 +143,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.waitForSelector("#overlay");
+  await page.evaluate(() => {
+    document.getElementById("overlay")?.classList.add("is-hidden");
+  });
   await page.getByRole("button", { name: /connect wallet/i }).click();
   await page.waitForTimeout(100);
   await page.getByRole("button", { name: /refresh nfts/i }).click();
@@ -141,7 +154,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.locator(".nft-card").first().click();
   await page.getByRole("button", { name: /mint nft/i }).click();
 
-  await expect(page.locator("#mint-status")).toContainText(/mint confirmed|waiting for confirmation/i, {
-    timeout: 5000,
-  });
+  await expect(page.locator("#mint-status")).toContainText(
+    /submitting mint transaction|waiting for confirmation|mint confirmed/i,
+    {
+      timeout: 5000,
+    }
+  );
 });
