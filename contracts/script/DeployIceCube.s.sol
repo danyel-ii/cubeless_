@@ -39,7 +39,7 @@ contract DeployIceCube is Script {
         vm.stopBroadcast();
 
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/contracts/deployments/sepolia.json");
+        string memory path = string.concat(root, "/deployments/sepolia.json");
         string memory obj = "deployment";
         vm.serializeUint(obj, "chainId", 11155111);
         string memory json = vm.serializeAddress(obj, "address", address(minter));
