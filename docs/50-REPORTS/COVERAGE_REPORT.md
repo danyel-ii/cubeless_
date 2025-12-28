@@ -1,9 +1,15 @@
 # Solidity Coverage Report
 
-Total: 243/257 lines = 94.55%
+Total: 245/262 lines = 93.51%
 Excluded: contracts/script/**
 
 ## Uncovered Lines (by contract)
+
+### DummyERC20.sol
+
+- src/mocks/DummyERC20.sol
+  - Coverage: 0/3 = 0.00%
+  - Missed lines: 7, 13, 14
 
 ### IceCubeMinter.sol
 
