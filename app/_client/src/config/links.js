@@ -3,7 +3,7 @@ import { readEnvValue } from "../shared/utils/env.js";
 export function getGifLibraryCid() {
   return (
     readEnvValue("NEXT_PUBLIC_GIF_LIBRARY_CID") ??
-    "bafybeibwlwe5gwxwg3bjzkqtzxtjdq7tr346iwfozipl47tlpfnagzwfhi"
+    "bafybeiap5a6tm3kpiizbjscfh5cafj245jjuchvfumz2azwyvs3y3ybvpy"
   );
 }
 

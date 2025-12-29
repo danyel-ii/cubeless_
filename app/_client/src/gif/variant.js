@@ -38,6 +38,6 @@ export function decodeVariantIndex(index) {
 
 export function gifIpfsUrl(index) {
   const cid = getGifLibraryCid();
-  const padded = index.toString().padStart(4, "0");
-  return `ipfs://${cid}/gif_${padded}.gif`;
+  void index;
+  return `ipfs://${cid}`;
 }
