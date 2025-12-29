@@ -1,6 +1,6 @@
-# cubeless v0 — State of Review (2025-12-26)
+# cubeless v0 — State of Review (2025-12-29)
 
-Last updated: 2025-12-26
+Last updated: 2025-12-29
 
 ## Summary
 
@@ -13,7 +13,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests pass (51 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
-- **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`, currently passing at 95.02%).
+- **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`, currently passing at 90.67%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router with rate limits, schema validation, and safe logging.
@@ -38,11 +38,11 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 ## Tests
 
-- `forge test`: pass (51 tests).
-- `npm run fork-test` with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` (and proxy vars cleared on macOS): pass (2 tests).
+- `forge test`: pass (63 tests).
+- `npm run fork-test` with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` (and proxy vars cleared on macOS): **fail** (missing `MAINNET_RPC_URL`).
 - `npm test`: Vitest unit/component/API suite pass (22 tests).
 - `npm run test:ui`: Playwright smoke test pass (1 test).
-- `npm run check:no-client-secrets`: required for client bundle secret scan (new).
+- `npm run check:no-client-secrets`: **fail** (Next.js build typecheck error in `contracts/lib/v4-core/test/js-scripts/src/getModifyLiquidityResult.ts`: `ethers.BigNumber` not exported).
 - `npm audit --json`: 0 vulnerabilities after upgrading Vitest to v4.0.16.
 
 ## Open items (must finish before v0)

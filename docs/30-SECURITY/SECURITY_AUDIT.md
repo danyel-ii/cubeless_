@@ -33,18 +33,17 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (53 tests)
-- Fork tests executed with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` and proxy vars cleared (NO_PROXY/HTTP_PROXY/HTTPS_PROXY): PASS (2 tests).
+Result: PASS (63 tests)
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: FAIL (86.81% line coverage; minimum is 90%).
+Result: PASS (90.67% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
-- Action: add tests or adjust coverage threshold before mainnet release.
+- Action: keep coverage at or above 90% before mainnet release.
 
 ### Invariants (standalone run)
 Command:
@@ -64,9 +63,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests)
-- `ownerOf` reverted (non-standard or restricted), logged and allowed.
-- `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
+Result: FAIL (missing `MAINNET_RPC_URL` in local environment).
 
 ### Frontend tests
 Command:
@@ -88,7 +85,7 @@ Command:
 ```sh
 npm run check:no-client-secrets
 ```
-Result: PASS (no forbidden strings in the client bundle).
+Result: FAIL (Next.js build typecheck error in `contracts/lib/v4-core/test/js-scripts/src/getModifyLiquidityResult.ts`: `ethers.BigNumber` not exported).
 
 ### Abuse checks (pin endpoint)
 Command:
@@ -103,7 +100,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 180 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+  - Result: 0 errors, 129 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
   - Result: **0 findings** after addressing previous warnings.
