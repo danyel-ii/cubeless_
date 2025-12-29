@@ -1,4 +1,5 @@
 import { getNftsForOwner } from "../../data/nft/indexer";
+import { ICECUBE_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import {
@@ -8,8 +9,17 @@ import {
   getMaxTextureSize,
 } from "../../app/app-utils.js";
 
-const CHAIN_ID = 11155111;
 const MAX_SELECTION = 6;
+
+function formatChainName(chainId) {
+  if (chainId === 1) {
+    return "Ethereum Mainnet";
+  }
+  if (chainId === 11155111) {
+    return "Sepolia";
+  }
+  return `Chain ${chainId}`;
+}
 
 function buildKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
@@ -153,11 +163,11 @@ export function initNftPickerUi() {
 
   async function loadInventory(address) {
     setLoading(true);
-    setStatus("Loading Sepolia NFTs...");
+    setStatus(`Loading ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs...`);
     state.nftStatus = "loading";
     state.nftError = null;
     try {
-      const nfts = await getNftsForOwner(address, CHAIN_ID);
+      const nfts = await getNftsForOwner(address, ICECUBE_CONTRACT.chainId);
       inventory = nfts;
       state.nftInventory = nfts;
       state.nftStatus = "ready";
@@ -165,7 +175,9 @@ export function initNftPickerUi() {
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
       if (!nfts.length) {
-        setStatus("No Sepolia NFTs found for this wallet.");
+        setStatus(
+          `No ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs found for this wallet.`
+        );
       } else {
         setStatus("Select 1 to 6 NFTs to continue.");
       }
@@ -290,12 +302,16 @@ export function initNftPickerUi() {
     state.nftSelection = [];
     state.nftStatus = "idle";
     state.nftError = null;
-    setStatus("Connect your wallet to load Sepolia NFTs.");
+    setStatus(
+      `Connect your wallet to load ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs.`
+    );
     updateSelection();
     renderInventory();
     setLoading(false);
   });
 
-  setStatus("Connect your wallet to load Sepolia NFTs.");
+  setStatus(
+    `Connect your wallet to load ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs.`
+  );
   updateSelection();
 }

@@ -14,7 +14,6 @@ import {
   gifIpfsUrl,
 } from "../../gif/variant.js";
 
-const SEPOLIA_CHAIN_ID = 11155111;
 const FALLBACK_BASE_PRICE_WEI = 1_500_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
 const WAD = 1_000_000_000_000_000_000n;
@@ -31,6 +30,16 @@ function formatError(error) {
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
+}
+
+function formatChainName(chainId) {
+  if (chainId === 1) {
+    return "Ethereum Mainnet";
+  }
+  if (chainId === 11155111) {
+    return "Sepolia";
+  }
+  return `Chain ${chainId}`;
 }
 
 function generateSalt() {
@@ -106,7 +115,14 @@ export function initMintUi() {
     if (!hash) {
       return "";
     }
-    return `https://sepolia.etherscan.io/tx/${hash}`;
+    const chainId = ICECUBE_CONTRACT.chainId;
+    const base =
+      chainId === 1
+        ? "https://etherscan.io"
+        : chainId === 11155111
+        ? "https://sepolia.etherscan.io"
+        : "";
+    return base ? `${base}/tx/${hash}` : "";
   }
 
   function showToast({ title, message, tone = "neutral", links = [] }) {
@@ -220,7 +236,7 @@ export function initMintUi() {
     try {
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
-      if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
+      if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
         return null;
       }
       const contract = new Contract(
@@ -419,8 +435,10 @@ export function initMintUi() {
       await refreshFloorSnapshot(true);
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
-      if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
-        throw new Error("Switch wallet to Sepolia.");
+      if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+        throw new Error(
+          `Switch wallet to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`
+        );
       }
       const signer = await provider.getSigner();
       const contract = new Contract(
@@ -432,7 +450,7 @@ export function initMintUi() {
       const bundle = await buildProvenanceBundle(
         state.nftSelection,
         walletState.address,
-        SEPOLIA_CHAIN_ID
+        ICECUBE_CONTRACT.chainId
       );
       const refsFaces = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
@@ -464,7 +482,7 @@ export function initMintUi() {
       const metadata = buildMintMetadata({
         tokenId: tokenId.toString(),
         minter: walletState.address,
-        chainId: SEPOLIA_CHAIN_ID,
+        chainId: ICECUBE_CONTRACT.chainId,
         selection: state.nftSelection,
         provenanceBundle: bundle,
         refsFaces,
@@ -510,7 +528,7 @@ export function initMintUi() {
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
       showToast({
         title: "Mint submitted",
-        message: "Transaction broadcast to Sepolia.",
+        message: `Transaction broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
         tone: "neutral",
         links: [{ label: "View tx", href: buildTxUrl(tx.hash) }],
       });

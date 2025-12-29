@@ -4,7 +4,7 @@ export type ResolvedUri = {
 };
 
 export type NftItem = {
-  chainId: 11155111;
+  chainId: number;
   contractAddress: string;
   tokenId: string;
   name: string | null;
@@ -17,7 +17,7 @@ export type NftItem = {
 };
 
 export type ProvenanceNft = {
-  chainId: 11155111;
+  chainId: number;
   contractAddress: string;
   tokenId: string;
   tokenUri: ResolvedUri | null;
@@ -32,7 +32,7 @@ export type ProvenanceNft = {
 };
 
 export type ProvenanceBundle = {
-  chainId: 11155111;
+  chainId: number;
   selectedBy: string;
   retrievedAt: string;
   nfts: ProvenanceNft[];

@@ -1,8 +1,6 @@
 import { BrowserProvider, Contract, Interface } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
 
-const SEPOLIA_CHAIN_ID = 11155111;
-
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
 }
@@ -19,7 +17,7 @@ export async function fetchLessDelta(provider, tokenId) {
   }
   const browserProvider = new BrowserProvider(provider);
   const network = await browserProvider.getNetwork();
-  if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
+  if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
     return null;
   }
   const contract = new Contract(

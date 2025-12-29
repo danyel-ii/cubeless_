@@ -3,7 +3,6 @@ import { ICECUBE_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 
 const MAX_ENTRIES = 50;
-const SEPOLIA_CHAIN_ID = 11155111;
 const WAD = 1_000_000_000_000_000_000n;
 
 export function formatDelta(value) {
@@ -108,8 +107,10 @@ export function initLeaderboardUi() {
   async function fetchLeaderboard(provider) {
     const browserProvider = new BrowserProvider(provider);
     const network = await browserProvider.getNetwork();
-    if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
-      throw new Error("Switch wallet to Sepolia to view leaderboard.");
+    if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+      throw new Error(
+        `Switch wallet to ${formatChain(ICECUBE_CONTRACT.chainId)} to view leaderboard.`
+      );
     }
     const contract = new Contract(
       ICECUBE_CONTRACT.address,

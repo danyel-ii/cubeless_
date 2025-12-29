@@ -1,5 +1,6 @@
 import { getAddress } from "ethers";
 import { alchemyGet } from "../chain/alchemy-client";
+import { ICECUBE_CONTRACT } from "../../config/contracts";
 import type {
   NftItem,
   ProvenanceBundle,
@@ -27,9 +28,9 @@ type AlchemyMetadataResponse = AlchemyNft & {
   raw?: { metadata?: Record<string, unknown> | null } | Record<string, unknown>;
 };
 
-function assertSepolia(chainId: number) {
-  if (chainId !== 11155111) {
-    throw new Error("v0 requires Sepolia (chainId 11155111).");
+function assertConfiguredChain(chainId: number) {
+  if (chainId !== ICECUBE_CONTRACT.chainId) {
+    throw new Error(`Configured for chain ${ICECUBE_CONTRACT.chainId}.`);
   }
 }
 
@@ -81,7 +82,7 @@ function extractImageUri(nft: AlchemyNft): string | null {
 }
 
 export {
-  assertSepolia,
+  assertConfiguredChain,
   parseTokenId,
   normalizeAddress,
   extractTokenUri,
@@ -92,7 +93,7 @@ export async function getNftsForOwner(
   ownerAddress: string,
   chainId: number
 ): Promise<NftItem[]> {
-  assertSepolia(chainId);
+  assertConfiguredChain(chainId);
   const response = await alchemyGet<AlchemyGetNftsResponse>(chainId, "getNFTsForOwner", {
     owner: ownerAddress,
     withMetadata: "true",
@@ -109,7 +110,7 @@ export async function getNftsForOwner(
         const tokenUri = resolveUri(extractTokenUri(nft));
         const image = resolveUri(extractImageUri(nft));
         return {
-          chainId: 11155111,
+          chainId,
           contractAddress,
           tokenId,
           name: nft.name ?? null,
@@ -131,7 +132,7 @@ export async function getProvenance(
   tokenId: string,
   chainId: number
 ): Promise<ProvenanceNft> {
-  assertSepolia(chainId);
+  assertConfiguredChain(chainId);
   const checksumAddress = normalizeAddress(contractAddress);
   const response = await alchemyGet<AlchemyMetadataResponse>(chainId, "getNFTMetadata", {
     contractAddress: checksumAddress,
@@ -146,7 +147,7 @@ export async function getProvenance(
     null;
 
   return {
-    chainId: 11155111,
+    chainId,
     contractAddress: checksumAddress,
     tokenId,
     tokenUri,
@@ -162,7 +163,7 @@ export async function buildProvenanceBundle(
   selectedByAddress: string,
   chainId: number
 ): Promise<ProvenanceBundle> {
-  assertSepolia(chainId);
+  assertConfiguredChain(chainId);
   if (selected.length < 1 || selected.length > 6) {
     throw new Error("Provenance bundle requires 1 to 6 NFTs.");
   }
@@ -171,7 +172,7 @@ export async function buildProvenanceBundle(
     selected.map((nft) => getProvenance(nft.contractAddress, nft.tokenId, chainId))
   );
   return {
-    chainId: 11155111,
+    chainId,
     selectedBy,
     retrievedAt: new Date().toISOString(),
     nfts: provenanceList,
