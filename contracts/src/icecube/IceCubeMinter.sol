@@ -7,6 +7,8 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 
 /// @title IceCubeMinter
@@ -19,8 +21,6 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         uint256 tokenId;
     }
 
-    /// @notice ETH transfer failed.
-    error EthTransferFailed(address recipient, uint256 amount);
     /// @notice Reference ownership check reverted.
     error RefOwnershipCheckFailed(address nft, uint256 tokenId);
     /// @notice Reference is not owned by expected minter.
@@ -93,6 +93,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
 
         for (uint256 i = 0; i < refs.length; i += 1) {
+            // slither-disable-next-line calls-loop
             try IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId) returns (
                 address nftOwner
             ) {
@@ -231,10 +232,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (amount == 0) {
             return;
         }
-        (bool success, ) = recipient.call{ value: amount }("");
-        if (!success) {
-            revert EthTransferFailed(recipient, amount);
-        }
+        Address.sendValue(payable(recipient), amount);
     }
 
     /// @dev Canonicalize refs and hash for tokenId derivation.
@@ -284,7 +282,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (value == 0) {
             return 0;
         }
-        return ((value + step - 1) / step) * step;
+        uint256 rounded = Math.mulDiv(value + step - 1, 1, step);
+        return Math.mulDiv(rounded, step, 1);
     }
 
     /// @dev Record LESS supply snapshots and emit events.

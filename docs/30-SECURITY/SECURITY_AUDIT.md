@@ -106,14 +106,7 @@ Results (local):
   - Result: 0 errors, 180 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
-  - Result: 10 findings (warnings):
-    - divide-before-multiply: `_roundUp` math
-    - dangerous strict equality: `lessBalance == 0`, `amount == 0`
-    - external calls inside loop: `ownerOf` in mint refs loop
-    - unused return values: PoolManager `unlock`, `getSlot0`, `settle`
-    - low-level calls: `_transferEth`, PoolManager unlock+swap, `_send`
-  - Notes: findings reflect known design tradeoffs; triage captured below.
-  - Triage: see `docs/30-SECURITY/STATIC_ANALYSIS.md` (accepted findings and rationale).
+  - Result: **0 findings** after addressing previous warnings.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.

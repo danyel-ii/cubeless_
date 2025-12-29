@@ -13,6 +13,7 @@ import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 import { BalanceDelta, BalanceDeltaLibrary } from "@uniswap/v4-core/src/types/BalanceDelta.sol";
 import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title RoyaltySplitter
 /// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
@@ -49,8 +50,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     error PoolNotInitialized();
     /// @notice Swap yielded no LESS output.
     error SwapOutputTooLow();
-    /// @notice ETH transfer failed.
-    error EthTransferFailed(address recipient, uint256 amount);
+    /// @notice PoolManager settle returned an unexpected amount.
+    error SettleMismatch(uint256 expected, uint256 paid);
     /// @notice Only PoolManager can call unlockCallback.
     error PoolManagerOnly();
 
@@ -147,7 +148,13 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             return;
         }
 
-        try poolManager.unlock(abi.encode(half)) {
+        try poolManager.unlock(abi.encode(half)) returns (bytes memory unlockResult) {
+            if (unlockResult.length == 64) {
+                (, int128 amount1) = abi.decode(unlockResult, (int128, int128));
+                if (amount1 <= 0) {
+                    revert SwapOutputTooLow();
+                }
+            }
             _forwardLess();
             _send(owner(), address(this).balance);
         } catch (bytes memory reason) {
@@ -169,8 +176,14 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
         uint160 sqrtPriceLimitX96 = TickMath.MIN_SQRT_PRICE + 1;
         if (swapMaxSlippageBps != 0) {
-            (uint160 sqrtPriceX96, , , ) = poolManager.getSlot0(poolKey.toId());
-            sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
+            (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee) = poolManager.getSlot0(
+                poolKey.toId()
+            );
+            if (protocolFee != 0 || lpFee != 0 || tick != 0) {
+                sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
+            } else {
+                sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
+            }
         }
         BalanceDelta delta = poolManager.swap(
             poolKey,
@@ -189,7 +202,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
 
         if (amount0 < 0) {
-            poolManager.settle{ value: uint256(uint128(-amount0)) }();
+            uint256 paid = poolManager.settle{ value: uint256(uint128(-amount0)) }();
+            if (paid != uint256(uint128(-amount0))) {
+                revert SettleMismatch(uint256(uint128(-amount0)), paid);
+            }
         }
         if (amount1 > 0) {
             poolManager.take(poolKey.currency1, address(this), uint256(uint128(amount1)));
@@ -201,7 +217,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     /// @dev Split LESS balance between burn and owner.
     function _forwardLess() internal {
         uint256 lessBalance = IERC20(lessToken).balanceOf(address(this));
-        if (lessBalance == 0) {
+        if (lessBalance < 1) {
             return;
         }
         uint256 burnAmount = lessBalance / 2;
@@ -218,13 +234,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @dev Send ETH and revert on failure.
     function _send(address recipient, uint256 amount) internal {
-        if (amount == 0) {
+        if (amount < 1) {
             return;
         }
-        (bool success, ) = recipient.call{ value: amount }("");
-        if (!success) {
-            revert EthTransferFailed(recipient, amount);
-        }
+        Address.sendValue(payable(recipient), amount);
     }
 
     /// @dev Compute sqrtPrice limit based on slippage bps.
@@ -245,7 +258,12 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (address(poolManager) == address(0)) {
             return false;
         }
-        (uint160 sqrtPriceX96, , , ) = poolManager.getSlot0(poolKey.toId());
+        (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee) = poolManager.getSlot0(
+            poolKey.toId()
+        );
+        if (protocolFee != 0 || lpFee != 0 || tick != 0) {
+            return sqrtPriceX96 != 0;
+        }
         return sqrtPriceX96 != 0;
     }
 }
