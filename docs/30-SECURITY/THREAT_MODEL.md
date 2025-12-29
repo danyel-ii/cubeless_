@@ -7,20 +7,20 @@ Last updated: 2025-12-26
 - Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity
 
 ## Actors
-- **Owner**: receives mint payments + royalties, can update royalty receiver/router.
+- **Owner**: receives mint payments + royalties, can update royalty receiver and swap enablement.
 - **Minter**: mints NFTs by proving ownership of referenced NFTs.
 - **Router**: optional external swap target for royalties.
 - **Referenced NFT contracts**: external ERC-721 contracts used for gating.
 
 ## Trust boundaries
 - External calls to `IERC721.ownerOf` (untrusted contract behavior).
-- External calls to router (arbitrary code execution).
+- External calls to PoolManager unlock/swap (external execution paths).
 - ETH transfers to owner/minter (receiver-controlled code).
 - ERC-20 transfer of $LESS (token contract behavior).
 
 ## Attack surfaces
 - `IceCubeMinter.mint` (external, payable, external calls + transfers).
-- `RoyaltySplitter.receive/fallback` (external, payable, router call + token transfers).
+- `RoyaltySplitter.receive/fallback` (external, payable, PoolManager swap + token transfers).
 
 ## Threats
 1. **Reentrancy on payable transfers**

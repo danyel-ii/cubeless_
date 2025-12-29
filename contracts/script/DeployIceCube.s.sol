@@ -4,6 +4,10 @@ pragma solidity ^0.8.20;
 import { Script } from "forge-std/Script.sol";
 import { IceCubeMinter } from "../src/icecube/IceCubeMinter.sol";
 import { RoyaltySplitter } from "../src/royalties/RoyaltySplitter.sol";
+import { IPoolManager } from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
+import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
+import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 
 contract DeployIceCube is Script {
     function run() external {
@@ -16,16 +20,25 @@ contract DeployIceCube is Script {
             "ICECUBE_BURN_ADDRESS",
             address(0x000000000000000000000000000000000000dEaD)
         );
-        address router = vm.envOr("ICECUBE_ROUTER", address(0));
-        bytes memory swapCalldata = vm.envOr("ICECUBE_SWAP_CALLDATA", bytes(""));
+        address poolManager = vm.envOr("ICECUBE_POOL_MANAGER", address(0));
+        uint24 poolFee = uint24(vm.envOr("ICECUBE_POOL_FEE", uint256(0)));
+        int24 tickSpacing = int24(int256(vm.envOr("ICECUBE_POOL_TICK_SPACING", uint256(0))));
+        address hooks = vm.envOr("ICECUBE_POOL_HOOKS", address(0));
         uint96 resaleRoyaltyBps = uint96(vm.envOr("ICECUBE_RESALE_BPS", uint256(500)));
+        PoolKey memory poolKey = PoolKey({
+            currency0: Currency.wrap(address(0)),
+            currency1: Currency.wrap(lessToken),
+            fee: poolFee,
+            tickSpacing: tickSpacing,
+            hooks: IHooks(hooks)
+        });
 
         vm.startBroadcast();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             lessToken,
-            router,
-            swapCalldata,
+            IPoolManager(poolManager),
+            poolKey,
             burnAddress
         );
         IceCubeMinter minter = new IceCubeMinter(

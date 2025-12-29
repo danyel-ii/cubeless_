@@ -109,7 +109,7 @@ Results (local):
     - divide-before-multiply: `_roundUp` math
     - dangerous strict equality: `lessBalance == 0`, `amount == 0`
     - external calls inside loop: `ownerOf` in mint refs loop
-    - low-level calls: `_transferEth`, router call, `_send`
+    - low-level calls: `_transferEth`, PoolManager unlock+swap, `_send`
   - Notes: findings reflect known design tradeoffs; triage pending.
   - Note: `slither` is installed via user-local pip and not on PATH by default.
   - Triage: see `docs/30-SECURITY/STATIC_ANALYSIS.md` (accepted findings and rationale).

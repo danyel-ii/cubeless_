@@ -10,7 +10,7 @@ Last updated: 2025-12-26
    - `ownerOf` is assumed to be ERC-721 compliant. Non-compliant contracts may revert or return unexpected owners; mint will revert in those cases.
 
 3. **Router behavior is opaque**
-   - Swap logic is a single router call with caller-supplied calldata; router behavior is not validated on-chain.
+   - Swap logic uses PoolManager `unlock` + `swap` without on-chain price bounds; swap outcomes depend on pool liquidity and hook behavior.
 
 4. **$LESS token transfer assumptions**
    - The splitter assumes `IERC20.transfer` returns a boolean and reverts otherwise.

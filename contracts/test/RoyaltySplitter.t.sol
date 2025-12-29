@@ -5,15 +5,21 @@ import { Test } from "forge-std/Test.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { RoyaltySplitter } from "../src/royalties/RoyaltySplitter.sol";
 import { ReceiverRevertsOnReceive } from "./mocks/Receivers.sol";
+import { IPoolManager } from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
+import { IUnlockCallback } from "@uniswap/v4-core/src/interfaces/callback/IUnlockCallback.sol";
+import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
+import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
+import { BalanceDelta, toBalanceDelta } from "@uniswap/v4-core/src/types/BalanceDelta.sol";
+import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 
-contract RevertingRouter {
-    fallback() external payable {
+contract RevertingPoolManager {
+    function unlock(bytes calldata) external pure returns (bytes memory) {
         revert("Swap failed");
     }
 }
 
-contract SilentRevertingRouter {
-    fallback() external payable {
+contract SilentRevertingPoolManager {
+    function unlock(bytes calldata) external pure returns (bytes memory) {
         revert();
     }
 }
@@ -26,29 +32,64 @@ contract MockLess is ERC20 {
     }
 }
 
-contract SuccessfulRouter {
+contract MockPoolManager {
     MockLess public immutable less;
-    uint256 public immutable mintAmount;
+    int128 public immutable amount1Out;
 
-    constructor(MockLess less_, uint256 mintAmount_) {
+    constructor(MockLess less_, int128 amount1Out_) {
         less = less_;
-        mintAmount = mintAmount_;
+        amount1Out = amount1Out_;
     }
 
-    fallback() external payable {
-        less.mint(msg.sender, mintAmount);
+    function unlock(bytes calldata data) external returns (bytes memory) {
+        return IUnlockCallback(msg.sender).unlockCallback(data);
+    }
+
+    function swap(PoolKey memory, IPoolManager.SwapParams memory params, bytes calldata)
+        external
+        view
+        returns (BalanceDelta)
+    {
+        int128 amount0 = int128(params.amountSpecified);
+        return toBalanceDelta(amount0, amount1Out);
+    }
+
+    function settle() external payable returns (uint256) {
+        return msg.value;
+    }
+
+    function take(Currency currency, address to, uint256 amount) external {
+        if (!currency.isAddressZero()) {
+            less.mint(to, amount);
+        }
     }
 }
 
 contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
     address private burn = address(0x000000000000000000000000000000000000dEaD);
-    event RouterUpdated(address router, bytes swapCalldata);
+    event SwapEnabledUpdated(bool enabled);
     event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
-    function testForwardsAllWhenRouterUnset() public {
+    function _poolKey(address less) internal pure returns (PoolKey memory) {
+        return PoolKey({
+            currency0: Currency.wrap(address(0)),
+            currency1: Currency.wrap(less),
+            fee: 0,
+            tickSpacing: 60,
+            hooks: IHooks(address(0))
+        });
+    }
+
+    function testForwardsAllWhenSwapDisabled() public {
         MockLess less = new MockLess();
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            burn
+        );
         vm.deal(address(this), 1 ether);
 
         (bool ok, ) = address(splitter).call{ value: 1 ether }("");
@@ -56,9 +97,15 @@ contract RoyaltySplitterTest is Test {
         assertEq(owner.balance, 1 ether);
     }
 
-    function testFallbackWithCalldataForwardsWhenRouterUnset() public {
+    function testFallbackWithCalldataForwardsWhenSwapDisabled() public {
         MockLess less = new MockLess();
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            burn
+        );
         vm.deal(address(this), 1 ether);
 
         (bool ok, ) = address(splitter).call{ value: 1 ether }(hex"1234");
@@ -66,28 +113,32 @@ contract RoyaltySplitterTest is Test {
         assertEq(owner.balance, 1 ether);
     }
 
-    function testSetRouterUpdatesStateAndEmits() public {
+    function testSetSwapEnabledUpdatesStateAndEmits() public {
         MockLess less = new MockLess();
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
-        bytes memory calldataBlob = hex"deadbeef";
+        MockPoolManager poolManager = new MockPoolManager(less, 0);
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
+            burn
+        );
 
         vm.prank(owner);
         vm.expectEmit(true, false, false, true);
-        emit RouterUpdated(address(0xBEEF), calldataBlob);
-        splitter.setRouter(address(0xBEEF), calldataBlob);
-
-        assertEq(splitter.router(), address(0xBEEF));
-        assertEq(splitter.swapCalldata(), calldataBlob);
+        emit SwapEnabledUpdated(false);
+        splitter.setSwapEnabled(false);
+        assertEq(splitter.swapEnabled(), false);
     }
 
     function testForwardLessSkipsWhenBalanceZero() public {
         MockLess less = new MockLess();
-        SuccessfulRouter router = new SuccessfulRouter(less, 0);
+        MockPoolManager poolManager = new MockPoolManager(less, 0);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
-            address(router),
-            hex"deadbeef",
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
             burn
         );
 
@@ -99,13 +150,13 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testForwardsAllWhenSwapReverts() public {
-        RevertingRouter router = new RevertingRouter();
+        RevertingPoolManager poolManager = new RevertingPoolManager();
         MockLess less = new MockLess();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
-            address(router),
-            hex"deadbeef",
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
             burn
         );
 
@@ -121,13 +172,13 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testForwardsAllWhenSwapRevertsWithoutReason() public {
-        SilentRevertingRouter router = new SilentRevertingRouter();
+        SilentRevertingPoolManager poolManager = new SilentRevertingPoolManager();
         MockLess less = new MockLess();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
-            address(router),
-            hex"deadbeef",
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
             burn
         );
 
@@ -141,12 +192,12 @@ contract RoyaltySplitterTest is Test {
 
     function testForwardsLessAndEthOnSwapSuccess() public {
         MockLess less = new MockLess();
-        SuccessfulRouter router = new SuccessfulRouter(less, 250 ether);
+        MockPoolManager poolManager = new MockPoolManager(less, 250 ether);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
-            address(router),
-            hex"deadbeef",
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
             burn
         );
 
@@ -164,8 +215,8 @@ contract RoyaltySplitterTest is Test {
         RoyaltySplitter splitter = new RoyaltySplitter(
             address(receiver),
             address(less),
-            address(0),
-            "",
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
             burn
         );
 
@@ -178,37 +229,27 @@ contract RoyaltySplitterTest is Test {
 
     function testConstructorRevertsOnZeroLessToken() public {
         vm.expectRevert(RoyaltySplitter.LessTokenRequired.selector);
-        new RoyaltySplitter(owner, address(0), address(0), "", burn);
+        new RoyaltySplitter(
+            owner,
+            address(0),
+            IPoolManager(address(0)),
+            _poolKey(address(0xBEEF)),
+            burn
+        );
     }
 
-    function testConstructorRevertsOnEmptyCalldataWithRouterSet() public {
-        MockLess less = new MockLess();
-        vm.expectRevert(RoyaltySplitter.SwapCalldataRequired.selector);
-        new RoyaltySplitter(owner, address(less), address(0xBEEF), "", burn);
-    }
-
-    function testSetRouterRevertsOnEmptyCalldataWhenRouterSet() public {
-        MockLess less = new MockLess();
-        RoyaltySplitter splitter = new RoyaltySplitter(owner, address(less), address(0), "", burn);
-        vm.prank(owner);
-        vm.expectRevert(RoyaltySplitter.SwapCalldataRequired.selector);
-        splitter.setRouter(address(0xBEEF), "");
-    }
-
-    function testSetRouterAllowsDisableWithEmptyCalldata() public {
+    function testSetSwapEnabledRevertsWhenNoPoolManager() public {
         MockLess less = new MockLess();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
-            address(0xBEEF),
-            hex"deadbeef",
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
             burn
         );
 
         vm.prank(owner);
-        splitter.setRouter(address(0), "");
-
-        assertEq(splitter.router(), address(0));
-        assertEq(splitter.swapCalldata(), bytes(""));
+        vm.expectRevert(RoyaltySplitter.PoolManagerRequired.selector);
+        splitter.setSwapEnabled(true);
     }
 }

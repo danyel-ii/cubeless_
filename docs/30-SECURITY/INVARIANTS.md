@@ -32,4 +32,4 @@ For the minting handler address, `balanceOf(handler) == mintCount`.
 - Router succeeds → splits $LESS 50% to burn address and 50% to owner, then remaining ETH to owner.
 
 ## I-9: Reentrancy safety
-Reentrancy via owner/refund/router calls must not mint extra tokens or corrupt state.
+Reentrancy via owner/refund/PoolManager calls must not mint extra tokens or corrupt state.

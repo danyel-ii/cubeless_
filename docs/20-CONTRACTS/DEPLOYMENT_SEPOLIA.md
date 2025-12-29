@@ -41,11 +41,10 @@ struct NftRef {
 
 - Mint-time payout goes to `owner()`.
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
-  - RoyaltySplitter calls a router with half the royalty when configured; otherwise it forwards ETH to owner.
-  - If the router call fails, the full amount is forwarded to owner.
-  - If the router call succeeds, any $LESS received is split 50% to burn address and 50% to owner before forwarding remaining ETH.
-  - If `ICECUBE_ROUTER` is set, `ICECUBE_SWAP_CALLDATA` must be non-empty (swap is required).
-  - If `ICECUBE_ROUTER` is unset, swap calldata must be empty and no swap is attempted.
+  - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
+  - If the swap fails, the full amount is forwarded to owner.
+  - If the swap succeeds, any $LESS received is split 50% to burn address and 50% to owner before forwarding remaining ETH.
+  - If `ICECUBE_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
 
@@ -59,6 +58,8 @@ Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 - `ICECUBE_OWNER`
 - `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
 - `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_ROUTER` (optional, leave unset for no-swap mode)
-- `ICECUBE_SWAP_CALLDATA` (optional, router calldata)
+- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `ICECUBE_POOL_FEE` (optional, defaults to 0)
+- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
+- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)

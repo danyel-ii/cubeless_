@@ -44,8 +44,10 @@ npm run fork-test
 - `ICECUBE_OWNER`
 - `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
 - `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_ROUTER` (optional, leave unset for no-swap mode)
-- `ICECUBE_SWAP_CALLDATA` (required if router is set)
+- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `ICECUBE_POOL_FEE` (optional, defaults to 0)
+- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
+- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)
 
 ### Deploy
