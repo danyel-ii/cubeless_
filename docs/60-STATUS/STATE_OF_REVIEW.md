@@ -35,12 +35,14 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - Repo: `https://github.com/danyel-ii/cubeless_.git`
 - Vercel domain: `https://cubeless-red.vercel.app`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
-- Mainnet contracts (2025-12-29):
-  - IceCubeMinter: `0x428032392237cb3ba908a6743994380dcfe7bb74`
-  - RoyaltySplitter: `0xbafeaa2bd3ecb0dde992727c289adfa227ca12e2`
+- Mainnet contracts (2025-12-30):
+  - IceCubeMinter: `0x6B324B49e7016dADB8C09b385bDA17d546BeB18f`
+  - RoyaltySplitter: `0xa3F2A191a5fc3a2f051C2d9dA1Ff630BdAAada4e`
   - Deploy txs:
-    - `0x01d5fea77ae8069a76dc3918852e8cdd7cdc65aff9ae9d164ca15d421384d695`
-    - `0x3eb75e212d9b81ebdedc22a74d73e765593d059084818c98defa3f4722eb3a1a`
+    - `0xb95281da2ec8279a1091bf3feb8cafe48cebe2d4502a33f284694fce812a59b7`
+    - `0x4d9cba4d8cac2da7804cb127613557cd647460cd842256a52579bd7c88cb1175`
+  - Ownership transfer (minter → splitter):
+    - `0xdaea1f193770de0f7098f828f21a4bc78269e3685c3f829b36bf031330b676e4`
 
 ## Tests
 
@@ -60,7 +62,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 ### Storage / tokenURI
 - Pin metadata JSON to IPFS and set `tokenURI = ipfs://<metaCID>`.
 - Use `animation_url = https://<domain>/m/<tokenId>` (Vercel token viewer).
-- Ensure metadata includes GIF traits + provenance refs.
+- Ensure metadata includes selection summary, floor snapshot, LESS supply at mint, and provenance refs.
 
 ### Onchain deployment
 - Deploy `IceCubeMinter` to Sepolia.
