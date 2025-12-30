@@ -66,6 +66,15 @@ export default function AppShell() {
         </div>
       </div>
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
+      <div id="minted-banner" className="minted-banner is-hidden">
+        <span>your cube lives : </span>
+        <button id="minted-link" className="minted-link" type="button">
+          here
+        </button>
+        <span id="minted-copied" className="minted-copied is-hidden">
+          copied
+        </span>
+      </div>
       <div id="eth-hud" className="eth-hud" aria-hidden="true">
         <div className="eth-hud-body">
           <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">

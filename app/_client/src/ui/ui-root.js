@@ -10,6 +10,7 @@ import { initWalletUi } from "../features/wallet/wallet-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { state } from "../app/app-state.js";
+import { buildTokenViewUrl } from "../config/links.js";
 
 let uiInitialized = false;
 
@@ -29,6 +30,7 @@ export function initUiRoot() {
   initLessSupplyHud();
   initLessDeltaTracking();
   initPreviewUi();
+  initMintedBanner();
   initUiTouchGuards();
   initTokenIdFromUrl();
   initLandingReturn();
@@ -81,6 +83,64 @@ function initLandingReturn() {
     mainPanel.classList.remove("is-hidden");
     document.dispatchEvent(new CustomEvent("open-overlay"));
   });
+}
+
+function initMintedBanner() {
+  const banner = document.getElementById("minted-banner");
+  const linkButton = document.getElementById("minted-link");
+  const copiedEl = document.getElementById("minted-copied");
+  if (!banner || !linkButton || !copiedEl) {
+    return;
+  }
+
+  let copyTimeout = null;
+
+  function updateLink() {
+    if (!state.currentCubeTokenId) {
+      linkButton.dataset.url = "";
+      linkButton.disabled = true;
+      return;
+    }
+    const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
+    linkButton.dataset.url = url;
+    linkButton.disabled = !url;
+  }
+
+  async function copyLink() {
+    const url = linkButton.dataset.url;
+    if (!url) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (error) {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+    copiedEl.classList.remove("is-hidden");
+    if (copyTimeout) {
+      window.clearTimeout(copyTimeout);
+    }
+    copyTimeout = window.setTimeout(() => {
+      copiedEl.classList.add("is-hidden");
+    }, 1500);
+  }
+
+  linkButton.addEventListener("click", copyLink);
+
+  document.addEventListener("mint-complete", () => {
+    updateLink();
+    banner.classList.remove("is-hidden");
+  });
+
+  document.addEventListener("cube-token-change", updateLink);
+  updateLink();
 }
 
 function initDebugPanel() {
