@@ -173,9 +173,13 @@ are split into smaller modules.
 - `src/server/auth.js`
   - Nonce issuance and EIP-191 signature verification.
 - `src/server/ratelimit.js`
-  - In-memory token bucket rate limiter.
+  - Redis-backed token bucket rate limiter with in-memory fallback.
 - `src/server/cache.js`
-  - TTL cache helper.
+  - Redis-backed TTL cache helper with LRU in-memory fallback.
+- `src/server/redis.js`
+  - Upstash Redis client helper.
+- `src/server/metrics.js`
+  - Lightweight counter metrics (console flush).
 - `src/server/pinata.js`
   - Pinata JSON pinning + dedupe.
 - `src/server/validate.js`

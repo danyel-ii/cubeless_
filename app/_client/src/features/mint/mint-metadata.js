@@ -33,6 +33,28 @@ function buildFloorSummary(selection) {
   return { sumFloorEth };
 }
 
+function buildSelectionSummary(selection) {
+  return selection
+    .map((nft) => {
+      const name = nft.collectionName || nft.name || "Unknown";
+      return `${name} #${nft.tokenId}`;
+    })
+    .join(" | ");
+}
+
+function buildSelectionAttributes(selection) {
+  return selection.map((nft, index) => {
+    const name = nft.collectionName || nft.name || "Unknown";
+    const contract = nft.contractAddress
+      ? `${nft.contractAddress.slice(0, 6)}…${nft.contractAddress.slice(-4)}`
+      : "unknown";
+    return {
+      trait_type: `Selected NFT ${index + 1}`,
+      value: `${name} #${nft.tokenId} (${contract})`,
+    };
+  });
+}
+
 function enrichProvenance(provenanceBundle, selection) {
   const byKey = new Map(
     selection.map((nft) => [
@@ -99,6 +121,14 @@ export function buildMintMetadata({
     { trait_type: "grain_intensity", value: gif.params.grain_intensity },
     { trait_type: "contrast_flicker", value: gif.params.contrast_flicker },
     { trait_type: "solarization_strength", value: gif.params.solarization_strength },
+    {
+      trait_type: "Total Floor Snapshot (ETH)",
+      value: Number(buildFloorSummary(selection).sumFloorEth.toFixed(6)),
+    },
+    { trait_type: "LESS Supply At Mint", value: gif.lessSupplyMint },
+    { trait_type: "Selection Count", value: selection.length },
+    { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
+    ...buildSelectionAttributes(selection),
   ];
 
   return {

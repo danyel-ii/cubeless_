@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("../../src/server/ratelimit.js", () => ({
-  checkRateLimit: () => ({ ok: true }),
+  checkRateLimit: async () => ({ ok: true }),
 }));
 vi.mock("../../src/server/request.js", () => ({
   getClientIp: () => "127.0.0.1",
@@ -10,13 +10,13 @@ vi.mock("../../src/server/log.js", () => ({
   logRequest: vi.fn(),
 }));
 vi.mock("../../src/server/auth.js", () => ({
-  verifyNonce: () => ({ ok: true }),
-  verifySignature: () => ({ ok: true, address: "0x000000000000000000000000000000000000dEaD" }),
+  verifyNonce: async () => ({ ok: true }),
+  verifySignature: async () => ({ ok: true, address: "0x000000000000000000000000000000000000dEaD" }),
 }));
 vi.mock("../../src/server/pinata.js", () => ({
   hashPayload: () => "hash",
-  getCachedCid: () => null,
-  setCachedCid: vi.fn(),
+  getCachedCid: async () => null,
+  setCachedCid: vi.fn(async () => {}),
   pinJson: async () => "cid123",
 }));
 

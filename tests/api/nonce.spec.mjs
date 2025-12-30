@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("../../src/server/ratelimit.js", () => ({
-  checkRateLimit: () => ({ ok: true }),
+  checkRateLimit: async () => ({ ok: true }),
 }));
 vi.mock("../../src/server/request.js", () => ({
   getClientIp: () => "127.0.0.1",

@@ -90,7 +90,7 @@ export async function POST(request) {
 async function handleRequest(request) {
   const requestId = crypto.randomUUID();
   const ip = getClientIp(request);
-  const limit = checkRateLimit(`nfts:ip:${ip}`, { capacity: 30, refillPerSec: 1 });
+  const limit = await checkRateLimit(`nfts:ip:${ip}`, { capacity: 30, refillPerSec: 1 });
   if (!limit.ok) {
     logRequest({ route: "/api/nfts", status: 429, requestId, bodySize: 0 });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
@@ -189,7 +189,7 @@ async function handleRequest(request) {
     });
 
     const cacheKey = url.toString();
-    const cached = getCache(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       const cachedResponse = NextResponse.json(cached);
       cachedResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
@@ -206,7 +206,7 @@ async function handleRequest(request) {
     }
     const json = await alchemyResponse.json();
     const payload = minimizeResponse(path, json.result ?? json);
-    setCache(cacheKey, payload, CACHE_TTL_MS);
+    await setCache(cacheKey, payload, CACHE_TTL_MS);
     const payloadResponse = NextResponse.json(payload);
     payloadResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
     logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });

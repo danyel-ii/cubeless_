@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/server/ratelimit.js", () => ({
-  checkRateLimit: vi.fn(() => ({ ok: true })),
+  checkRateLimit: vi.fn(async () => ({ ok: true })),
 }));
 vi.mock("../../src/server/request.js", () => ({
   getClientIp: () => "127.0.0.1",
@@ -13,8 +13,8 @@ vi.mock("../../src/server/env.js", () => ({
   requireEnv: () => "alchemy-key",
 }));
 vi.mock("../../src/server/cache.js", () => ({
-  getCache: () => null,
-  setCache: vi.fn(),
+  getCache: async () => null,
+  setCache: vi.fn(async () => {}),
 }));
 
 import { POST } from "../../app/api/nfts/route.js";
@@ -66,7 +66,7 @@ describe("/api/nfts", () => {
 
   it("returns 429 when rate limited", async () => {
     const { checkRateLimit } = await import("../../src/server/ratelimit.js");
-    checkRateLimit.mockReturnValueOnce({ ok: false });
+    checkRateLimit.mockResolvedValueOnce({ ok: false });
     const res = await POST(
       new Request("http://localhost/api/nfts", {
         method: "POST",

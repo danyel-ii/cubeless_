@@ -56,7 +56,7 @@ async function resolveFarcaster(address) {
 export async function GET(request) {
   const requestId = crypto.randomUUID();
   const ip = getClientIp(request);
-  const limit = checkRateLimit(`identity:ip:${ip}`, { capacity: 20, refillPerSec: 1 });
+  const limit = await checkRateLimit(`identity:ip:${ip}`, { capacity: 20, refillPerSec: 1 });
   if (!limit.ok) {
     logRequest({ route: "/api/identity", status: 429, requestId, bodySize: 0 });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
@@ -81,7 +81,7 @@ export async function GET(request) {
   }
 
   const cacheKey = `identity:${address.toLowerCase()}`;
-  const cached = getCache(cacheKey);
+  const cached = await getCache(cacheKey);
   if (cached) {
     logRequest({ route: "/api/identity", status: 200, requestId, bodySize: 0, actor: address });
     return NextResponse.json({ ...cached, requestId });
@@ -98,7 +98,7 @@ export async function GET(request) {
       farcaster,
       ens: ens || null,
     };
-    setCache(cacheKey, payload, 60_000);
+    await setCache(cacheKey, payload, 60_000);
     logRequest({ route: "/api/identity", status: 200, requestId, bodySize: 0, actor: address });
     return NextResponse.json({ ...payload, requestId });
   } catch (error) {

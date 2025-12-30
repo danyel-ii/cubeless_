@@ -16,7 +16,7 @@ export async function POST(request) {
   let bodySize = 0;
   const ip = getClientIp(request);
 
-  const ipLimit = checkRateLimit(`pin:ip:${ip}`, { capacity: 5, refillPerSec: 0.5 });
+  const ipLimit = await checkRateLimit(`pin:ip:${ip}`, { capacity: 5, refillPerSec: 0.5 });
   if (!ipLimit.ok) {
     logRequest({ route: "/api/pin/metadata", status: 429, requestId, bodySize });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
@@ -34,7 +34,7 @@ export async function POST(request) {
     }
 
     const { address, nonce, signature, payload } = parsed.data;
-    const nonceStatus = verifyNonce(nonce);
+    const nonceStatus = await verifyNonce(nonce);
     if (!nonceStatus.ok) {
       return NextResponse.json(
         { error: nonceStatus.error || "Invalid nonce", requestId },
@@ -42,7 +42,7 @@ export async function POST(request) {
       );
     }
 
-    const sigStatus = verifySignature({ address, nonce, signature });
+    const sigStatus = await verifySignature({ address, nonce, signature });
     if (!sigStatus.ok) {
       return NextResponse.json(
         { error: sigStatus.error || "Invalid signature", requestId },
@@ -51,7 +51,7 @@ export async function POST(request) {
     }
 
     const actor = sigStatus.address;
-    const actorLimit = checkRateLimit(`pin:actor:${actor}`, { capacity: 4, refillPerSec: 0.5 });
+    const actorLimit = await checkRateLimit(`pin:actor:${actor}`, { capacity: 4, refillPerSec: 0.5 });
     if (!actorLimit.ok) {
       return NextResponse.json(
         { error: "Rate limit exceeded", requestId },
@@ -84,7 +84,7 @@ export async function POST(request) {
 
     const payloadText = canonicalJson(payload);
     const payloadHash = hashPayload(payloadText);
-    const cachedCid = getCachedCid(payloadHash);
+    const cachedCid = await getCachedCid(payloadHash);
     if (cachedCid) {
       const tokenURI = `ipfs://${cachedCid}`;
       logRequest({
@@ -108,7 +108,7 @@ export async function POST(request) {
         { status: 502 }
       );
     }
-    setCachedCid(payloadHash, cid);
+    await setCachedCid(payloadHash, cid);
     const tokenURI = `ipfs://${cid}`;
     logRequest({
       route: "/api/pin/metadata",

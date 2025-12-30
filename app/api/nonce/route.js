@@ -8,7 +8,7 @@ import { logRequest } from "../../../src/server/log.js";
 export async function GET(request) {
   const requestId = crypto.randomUUID();
   const ip = getClientIp(request);
-  const limit = checkRateLimit(`nonce:${ip}`, {
+  const limit = await checkRateLimit(`nonce:${ip}`, {
     capacity: 10,
     refillPerSec: 1,
   });

@@ -1,9 +1,9 @@
 import crypto from "crypto";
 import { requireEnv } from "./env.js";
+import { getCache, setCache } from "./cache.js";
 
 const PINATA_ENDPOINT = "https://api.pinata.cloud/pinning/pinJSONToIPFS";
 
-const dedupeCache = new Map();
 const DEDUPE_TTL_MS = 10 * 60 * 1000;
 
 function nowMs() {
@@ -14,20 +14,12 @@ export function hashPayload(payload) {
   return crypto.createHash("sha256").update(payload).digest("hex");
 }
 
-export function getCachedCid(hash) {
-  const cached = dedupeCache.get(hash);
-  if (!cached) {
-    return null;
-  }
-  if (cached.expiresAt < nowMs()) {
-    dedupeCache.delete(hash);
-    return null;
-  }
-  return cached.cid;
+export async function getCachedCid(hash) {
+  return await getCache(`pinata:${hash}`);
 }
 
-export function setCachedCid(hash, cid) {
-  dedupeCache.set(hash, { cid, expiresAt: nowMs() + DEDUPE_TTL_MS });
+export async function setCachedCid(hash, cid) {
+  await setCache(`pinata:${hash}`, cid, DEDUPE_TTL_MS);
 }
 
 export async function pinJson(payload) {

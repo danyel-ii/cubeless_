@@ -60,3 +60,7 @@ python3 -m slither .
 2. Add a failing regression test that reproduces the issue.
 3. Patch contract(s) and rerun: unit + fuzz + invariants + fork.
 4. Document the issue and fix in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+
+## Proxy IP headers
+- Trust `x-forwarded-for` only when `x-vercel-proxied-for` or `x-real-ip` is present.
+- Fall back to `x-real-ip` or `"unknown"` if proxy headers are missing.

@@ -1,7 +1,34 @@
-const NONCE_PREFIX = "cubeless:nonce:v1";
+function parseNonce(nonce) {
+  if (!nonce || typeof nonce !== "string") {
+    return { ok: false };
+  }
+  const parts = nonce.split(".");
+  if (parts.length !== 4) {
+    return { ok: false };
+  }
+  const [, issuedAtRaw, ttlRaw] = parts;
+  const issuedAt = Number(issuedAtRaw);
+  const ttlMs = Number(ttlRaw);
+  if (!Number.isFinite(issuedAt) || !Number.isFinite(ttlMs)) {
+    return { ok: false };
+  }
+  return { ok: true, issuedAt, ttlMs };
+}
 
 function buildNonceMessage(nonce) {
-  return `${NONCE_PREFIX}:${nonce}`;
+  const parsed = parseNonce(nonce);
+  const issuedAt = parsed.ok ? new Date(parsed.issuedAt).toISOString() : "unknown";
+  const expiresAt = parsed.ok
+    ? new Date(parsed.issuedAt + parsed.ttlMs).toISOString()
+    : "unknown";
+  return [
+    "cubeLess wants you to sign this message to authorize metadata pinning.",
+    "No transaction or gas is required.",
+    "",
+    `Nonce: ${nonce}`,
+    `Issued At: ${issuedAt}`,
+    `Expires At: ${expiresAt}`,
+  ].join("\n");
 }
 
 async function fetchNonce() {

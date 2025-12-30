@@ -22,6 +22,10 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT` (HMAC nonce signing)
 
+## Optional secrets
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+
 ## Incident response
 - Remove compromised keys from providers.
 - Audit recent deployments and access logs.
