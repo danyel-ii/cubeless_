@@ -124,13 +124,12 @@ forge script script/DeployIceCube.s.sol \
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - IceCubeMinter: `0x6B324B49e7016dADB8C09b385bDA17d546BeB18f`
-   - RoyaltySplitter: `0xa3F2A191a5fc3a2f051C2d9dA1Ff630BdAAada4e`
+   - IceCubeMinter: `0xdd81D5A0F7e82978cf9Da0DD29c7C6cA4187ffd6`
+   - RoyaltySplitter: `0x1BF35EC159fC3fD73D0EEc9BD52bBAA02FB76576`
    - Deploy txs:
-     - `0xb95281da2ec8279a1091bf3feb8cafe48cebe2d4502a33f284694fce812a59b7`
-     - `0x4d9cba4d8cac2da7804cb127613557cd647460cd842256a52579bd7c88cb1175`
-   - Ownership transfer (minter → splitter):
-     - `0xdaea1f193770de0f7098f828f21a4bc78269e3685c3f829b36bf031330b676e4`
+     - `0xbb92ceb471132d2d29ed734e2a65a7ed290c15e2337b25d384c6989cc179f4b3`
+     - `0x5d1732a7333610ed33dd2c22c49b45ff40fb9814a753f9a544d4db060f27a21e`
+   - Ownership transfer (minter → splitter): completed (tx hash not recorded)
 
 ## 6) Mainnet launch validation
 
@@ -141,4 +140,4 @@ forge script script/DeployIceCube.s.sol \
    - metadata fields are correct
    - token viewer renders
    - royalties route to splitter
-   - $LESS split sends 50% to burn, 50% to owner
+   - $LESS swap output lands in the owner wallet

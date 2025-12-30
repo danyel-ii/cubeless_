@@ -155,7 +155,6 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
                     revert SwapOutputTooLow();
                 }
             }
-            _forwardLess();
             _send(owner(), address(this).balance);
         } catch (bytes memory reason) {
             emit SwapFailedFallbackToOwner(amount, keccak256(reason));
@@ -208,28 +207,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             }
         }
         if (amount1 > 0) {
-            poolManager.take(poolKey.currency1, address(this), uint256(uint128(amount1)));
+            poolManager.take(poolKey.currency1, owner(), uint256(uint128(amount1)));
         }
 
         return abi.encode(amount0, amount1);
-    }
-
-    /// @dev Split LESS balance between burn and owner.
-    function _forwardLess() internal {
-        uint256 lessBalance = IERC20(lessToken).balanceOf(address(this));
-        if (lessBalance < 1) {
-            return;
-        }
-        uint256 burnAmount = lessBalance / 2;
-        uint256 ownerAmount = lessBalance - burnAmount;
-        if (burnAmount > 0) {
-            bool burned = IERC20(lessToken).transfer(burnAddress, burnAmount);
-            require(burned, "LESS burn transfer failed");
-        }
-        if (ownerAmount > 0) {
-            bool success = IERC20(lessToken).transfer(owner(), ownerAmount);
-            require(success, "LESS transfer failed");
-        }
     }
 
     /// @dev Send ETH and revert on failure.
