@@ -13,7 +13,7 @@ function getLessTokenAddress() {
   );
 }
 
-export async function fetchLessTotalSupply() {
+export async function fetchLessTotalSupply(chainId = 1) {
   const token = getLessTokenAddress();
   const payload = {
     to: "",
@@ -25,7 +25,7 @@ export async function fetchLessTotalSupply() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       mode: "rpc",
-      chainId: 1,
+      chainId,
       calls: [
         {
           ...payload,

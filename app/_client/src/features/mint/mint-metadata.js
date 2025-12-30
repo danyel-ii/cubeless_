@@ -105,7 +105,7 @@ export function buildMintMetadata({
   salt,
   animationUrl,
   imageUrl,
-  gif,
+  lessSupplyMint,
 }) {
   const provenance = sanitizeProvenance(
     enrichProvenance(provenanceBundle, selection)
@@ -115,19 +115,14 @@ export function buildMintMetadata({
     tokenId: nft.tokenId,
   }));
   const attributes = [
-    { trait_type: "variantIndex", value: gif.variantIndex },
-    { trait_type: "rgb_sep_px", value: gif.params.rgb_sep_px },
-    { trait_type: "band_shift_px", value: gif.params.band_shift_px },
-    { trait_type: "grain_intensity", value: gif.params.grain_intensity },
-    { trait_type: "contrast_flicker", value: gif.params.contrast_flicker },
-    { trait_type: "solarization_strength", value: gif.params.solarization_strength },
     {
       trait_type: "Total Floor Snapshot (ETH)",
       value: Number(buildFloorSummary(selection).sumFloorEth.toFixed(6)),
     },
-    { trait_type: "LESS Supply At Mint", value: gif.lessSupplyMint },
+    { trait_type: "LESS Supply At Mint", value: lessSupplyMint },
     { trait_type: "Selection Count", value: selection.length },
     { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
+    { trait_type: "Animation URL", value: animationUrl },
     ...buildSelectionAttributes(selection),
   ];
 
@@ -136,15 +131,9 @@ export function buildMintMetadata({
     name: tokenId ? `cubeLess #${tokenId}` : "cubeLess",
     tokenId,
     description:
-      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
+      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own. See animation_url in metadata for the interactive cube link.",
     image: imageUrl,
     animation_url: animationUrl,
-    gif: {
-      variantIndex: gif.variantIndex,
-      selectionSeed: gif.selectionSeed,
-      params: gif.params,
-      lessSupplyMint: gif.lessSupplyMint,
-    },
     provenance: {
       schemaVersion: 1,
       ...provenance,

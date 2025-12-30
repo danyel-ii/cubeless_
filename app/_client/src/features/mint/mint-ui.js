@@ -13,6 +13,7 @@ import {
   decodeVariantIndex,
   gifIpfsUrl,
 } from "../../gif/variant.js";
+import { fetchLessTotalSupply } from "../../data/chain/less-supply.js";
 
 const FALLBACK_BASE_PRICE_WEI = 1_500_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
@@ -470,7 +471,7 @@ export function initMintUi() {
         tokenId: ref.tokenId.toString(),
       }));
       const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
-      const lessSupplyMint = await contract.lessSupplyNow();
+      const lessSupplyMint = await fetchLessTotalSupply(ICECUBE_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
         tokenId,
@@ -494,12 +495,7 @@ export function initMintUi() {
         salt,
         animationUrl,
         imageUrl,
-        gif: {
-          variantIndex,
-          selectionSeed,
-          params,
-          lessSupplyMint: lessSupplyMint.toString(),
-        },
+        lessSupplyMint: lessSupplyMint.toString(),
       });
       setStatus("Pinning metadata...");
       const tokenUri = await pinTokenMetadata({
