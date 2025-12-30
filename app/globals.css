@@ -380,7 +380,8 @@ canvas {
   overflow-y: auto;
   overscroll-behavior: contain;
   backdrop-filter: blur(8px);
-  touch-action: manipulation;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .is-hidden {
@@ -456,6 +457,18 @@ button.ui-button {
   display: none;
 }
 
+.ui-footer-link {
+  display: inline-flex;
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(230, 233, 239, 0.6);
+  text-decoration: none;
+}
+
+.ui-footer-link:hover {
+  text-decoration: underline;
+}
+
 body.is-minted .preview-bar {
   display: none;
 }
@@ -481,6 +494,13 @@ body.is-minted .preview-bar {
   margin-top: 6px;
   font-size: 11px;
   color: rgba(230, 233, 239, 0.55);
+}
+
+.ui-text {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(230, 233, 239, 0.7);
+  line-height: 1.4;
 }
 
 #mint-share-link {
@@ -537,6 +557,10 @@ body.is-minted .preview-bar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
 }
 
 .nft-card {
@@ -624,6 +648,7 @@ body.is-minted .preview-bar {
     top: 12px;
     left: 12px;
     right: 12px;
+    height: calc(100vh - 24px);
     max-width: none;
   }
 

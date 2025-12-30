@@ -173,6 +173,14 @@ export default function AppShell() {
             Landing
           </button>
         </div>
+        <a
+          className="ui-footer-link"
+          href="https://deepwiki.com/danyel-ii/cubeless_/1-overview#what-is-cubeless"
+          target="_blank"
+          rel="noreferrer"
+        >
+          deepwiki cubeless
+        </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">
         <button id="preview-back" className="ui-button is-ghost" type="button">
@@ -181,7 +189,23 @@ export default function AppShell() {
       </div>
       <div id="leaderboard" className="ui-panel is-hidden">
         <div className="ui-title">Leaderboard</div>
-        <div className="ui-sub">Mint history coming soon.</div>
+        <div className="ui-sub">Mint history powered by $LESS supply snapshots.</div>
+        <div className="ui-section">
+          <div className="ui-section-title">$LESS + Minting</div>
+          <p className="ui-text">
+            Mint fees and resale royalties route through the RoyaltySplitter. Half the ETH goes to
+            the contract owner, and the other half is swapped to $LESS. Of the $LESS output, 90% is
+            sent to the owner and 10% is sent to the burn address.
+          </p>
+        </div>
+        <div className="ui-section">
+          <div className="ui-section-title">How the leaderboard works</div>
+          <p className="ui-text">
+            Each mint snapshots total $LESS supply. The leaderboard ranks tokens by ΔLESS — the
+            drop in total supply since the token’s last transfer. Bigger burns → bigger ΔLESS →
+            higher rank.
+          </p>
+        </div>
         <div className="ui-section">
           <div className="ui-section-title">Contract</div>
           <div id="leaderboard-contract" className="ui-hint"></div>

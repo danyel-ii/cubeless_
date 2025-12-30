@@ -22,6 +22,7 @@ type AlchemyNft = {
 
 type AlchemyGetNftsResponse = {
   ownedNfts?: AlchemyNft[];
+  pageKey?: string;
 };
 
 type AlchemyMetadataResponse = AlchemyNft & {
@@ -94,13 +95,19 @@ export async function getNftsForOwner(
   chainId: number
 ): Promise<NftItem[]> {
   assertConfiguredChain(chainId);
-  const response = await alchemyGet<AlchemyGetNftsResponse>(chainId, "getNFTsForOwner", {
-    owner: ownerAddress,
-    withMetadata: "true",
-  });
-  const owned = response.ownedNfts ?? [];
-  return owned
-    .map((nft) => {
+  const items: NftItem[] = [];
+  let pageKey: string | undefined;
+  let pages = 0;
+  const MAX_PAGES = 20;
+
+  do {
+    const response = await alchemyGet<AlchemyGetNftsResponse>(chainId, "getNFTsForOwner", {
+      owner: ownerAddress,
+      withMetadata: "true",
+      pageKey,
+    });
+    const owned = response.ownedNfts ?? [];
+    owned.forEach((nft) => {
       try {
         if (nft.tokenType && nft.tokenType !== "ERC721") {
           throw new Error("Unsupported token standard.");
@@ -109,7 +116,7 @@ export async function getNftsForOwner(
         const tokenId = parseTokenId(nft.tokenId);
         const tokenUri = resolveUri(extractTokenUri(nft));
         const image = resolveUri(extractImageUri(nft));
-        return {
+        items.push({
           chainId,
           contractAddress,
           tokenId,
@@ -118,13 +125,16 @@ export async function getNftsForOwner(
           tokenUri,
           image,
           source: "alchemy",
-        } satisfies NftItem;
+        } satisfies NftItem);
       } catch (error) {
         console.warn("Skipping NFT:", error);
-        return null;
       }
-    })
-    .filter((item): item is NftItem => item !== null);
+    });
+    pageKey = response.pageKey;
+    pages += 1;
+  } while (pageKey && pages < MAX_PAGES);
+
+  return items;
 }
 
 export async function getProvenance(
