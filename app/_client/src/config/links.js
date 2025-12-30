@@ -17,7 +17,9 @@ export function getTokenViewBaseUrl() {
     return normalized.replace(/\/$/, "");
   }
   if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin;
+    if (process.env.NODE_ENV !== "production") {
+      return window.location.origin;
+    }
   }
   return "";
 }
