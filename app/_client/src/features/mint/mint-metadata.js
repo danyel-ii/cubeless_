@@ -122,7 +122,7 @@ export function buildMintMetadata({
     { trait_type: "LESS Supply At Mint", value: lessSupplyMint },
     { trait_type: "Selection Count", value: selection.length },
     { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
-    { trait_type: "Animation URL", value: animationUrl },
+    { trait_type: "Animation URL", value: animationUrl, display_type: "url" },
     ...buildSelectionAttributes(selection),
   ];
 
@@ -130,8 +130,11 @@ export function buildMintMetadata({
     schemaVersion: 1,
     name: tokenId ? `cubeLess #${tokenId}` : "cubeLess",
     tokenId,
-    description:
-      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own. See animation_url in metadata for the interactive cube link.",
+    description: [
+      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
+      "Interactive cube:",
+      animationUrl,
+    ].join("\n"),
     image: imageUrl,
     external_url: animationUrl,
     animation_url: animationUrl,
