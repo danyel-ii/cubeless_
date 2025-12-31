@@ -205,6 +205,7 @@ type MintMetadata = {
 ## Farcaster Frame Embed
 
 - The home page includes an `fc:frame` definition in the HTML head.
+- The home page also includes an `fc:miniapp` definition for discovery.
 - Frame definition fields:
   - `imageUrl` (3:2) points to the social preview image.
   - `button.title` is the CTA label.

@@ -28,6 +28,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
   - `buttonTitle` + `imageUrl` set for share cards
 - accountAssociation set in `public/.well-known/farcaster.json`.
 - `miniapp.castShareUrl` set to the Vercel domain.
+- The home page includes `fc:frame` and `fc:miniapp` meta tags.
 
 ## Deployment status
 
