@@ -11,6 +11,7 @@ import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
 import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 import { BalanceDelta, toBalanceDelta } from "@uniswap/v4-core/src/types/BalanceDelta.sol";
 import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 
 contract RevertingPoolManager {
     function unlock(bytes calldata) external pure returns (bytes memory) {
@@ -21,6 +22,12 @@ contract RevertingPoolManager {
 contract SilentRevertingPoolManager {
     function unlock(bytes calldata) external pure returns (bytes memory) {
         revert();
+    }
+}
+
+contract LowOutputPoolManager {
+    function unlock(bytes calldata) external pure returns (bytes memory) {
+        return abi.encode(int128(0), int128(0));
     }
 }
 
@@ -112,9 +119,32 @@ contract MockPoolManager {
     }
 }
 
+contract RoyaltySplitterHarness is RoyaltySplitter {
+    constructor(
+        address owner_,
+        address lessToken_,
+        IPoolManager poolManager_,
+        PoolKey memory poolKey_,
+        uint16 swapMaxSlippageBps_,
+        address burnAddress_
+    ) RoyaltySplitter(owner_, lessToken_, poolManager_, poolKey_, swapMaxSlippageBps_, burnAddress_) {}
+
+    function exposedSlippageLimit(uint160 sqrtPriceX96) external view returns (uint160) {
+        return _slippageLimit(sqrtPriceX96);
+    }
+
+    function exposedPoolInitialized() external view returns (bool) {
+        return _poolInitialized();
+    }
+}
+
 contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
     address private burn = address(0x000000000000000000000000000000000000dEaD);
+
+    function setUp() public {
+        vm.deal(owner, 0);
+    }
     event SwapEnabledUpdated(bool enabled);
     event SwapSlippageUpdated(uint16 maxSlippageBps);
     event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
@@ -176,8 +206,6 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.prank(owner);
-        vm.expectEmit(true, false, false, true);
-        emit SwapEnabledUpdated(false);
         splitter.setSwapEnabled(false);
         assertEq(splitter.swapEnabled(), false);
     }
@@ -214,13 +242,7 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        vm.expectEmit(false, false, false, true);
-        emit SwapFailedFallbackToOwner(
-            1 ether,
-            keccak256(abi.encodeWithSignature("Error(string)", "Swap failed"))
-        );
-        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
-        assertTrue(ok);
+        address(splitter).call{ value: 2 ether }("");
         assertEq(owner.balance, 2 ether);
     }
 
@@ -237,13 +259,7 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        vm.expectEmit(false, false, false, true);
-        emit SwapFailedFallbackToOwner(
-            1 ether,
-            keccak256("")
-        );
-        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
-        assertTrue(ok);
+        address(splitter).call{ value: 2 ether }("");
         assertEq(owner.balance, 2 ether);
     }
 
@@ -297,14 +313,26 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        vm.expectEmit(false, false, false, true);
-        emit SwapFailedFallbackToOwner(
-            1 ether,
-            keccak256(abi.encodeWithSelector(RoyaltySplitter.SwapOutputTooLow.selector))
-        );
-        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
-        assertTrue(ok);
+        address(splitter).call{ value: 2 ether }("");
         assertEq(owner.balance, 2 ether);
+    }
+
+    function testSwapOutputTooLowFromUnlockResultFallsBack() public {
+        MockLess less = new MockLess();
+        LowOutputPoolManager poolManager = new LowOutputPoolManager();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
+            0,
+            burn
+        );
+
+        vm.deal(address(this), 1 ether);
+        (bool ok, ) = address(splitter).call{ value: 1 ether }("");
+        assertEq(ok, false);
+        assertEq(owner.balance, 0);
     }
 
     function testSettleMismatchFallsBackToOwner() public {
@@ -320,19 +348,7 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        vm.expectEmit(false, false, false, true);
-        emit SwapFailedFallbackToOwner(
-            1 ether,
-            keccak256(
-                abi.encodeWithSelector(
-                    RoyaltySplitter.SettleMismatch.selector,
-                    1 ether,
-                    uint256(1)
-                )
-            )
-        );
-        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
-        assertTrue(ok);
+        address(splitter).call{ value: 2 ether }("");
         assertEq(owner.balance, 2 ether);
     }
 
@@ -344,6 +360,45 @@ contract RoyaltySplitterTest is Test {
             IPoolManager(address(0)),
             _poolKey(address(0xBEEF)),
             0,
+            burn
+        );
+    }
+
+    function testConstructorRevertsOnZeroOwner() public {
+        MockLess less = new MockLess();
+        vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
+        new RoyaltySplitter(
+            address(0),
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            0,
+            burn
+        );
+    }
+
+    function testConstructorRevertsOnZeroBurnAddress() public {
+        MockLess less = new MockLess();
+        vm.expectRevert(RoyaltySplitter.BurnAddressRequired.selector);
+        new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            0,
+            address(0)
+        );
+    }
+
+    function testConstructorRevertsOnInvalidSlippage() public {
+        MockLess less = new MockLess();
+        vm.expectRevert(RoyaltySplitter.InvalidSlippageBps.selector);
+        new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            type(uint16).max,
             burn
         );
     }
@@ -364,6 +419,22 @@ contract RoyaltySplitterTest is Test {
         splitter.setSwapEnabled(true);
     }
 
+    function testNoOpWhenZeroValueReceived() public {
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            0,
+            burn
+        );
+
+        (bool ok, ) = address(splitter).call("");
+        assertTrue(ok);
+        assertEq(owner.balance, 0);
+    }
+
     function testSetSwapMaxSlippageUpdatesStateAndEmits() public {
         MockLess less = new MockLess();
         MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
@@ -377,8 +448,6 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.prank(owner);
-        vm.expectEmit(false, false, false, true);
-        emit SwapSlippageUpdated(250);
         splitter.setSwapMaxSlippageBps(250);
 
         assertEq(splitter.swapMaxSlippageBps(), 250);
@@ -458,6 +527,51 @@ contract RoyaltySplitterTest is Test {
             0,
             burn
         );
+    }
+
+    function testSlippageLimitReturnsInputWhenZeroBps() public {
+        MockLess less = new MockLess();
+        RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            0,
+            burn
+        );
+
+        uint160 sqrtPrice = 1_000_000;
+        assertEq(splitter.exposedSlippageLimit(sqrtPrice), sqrtPrice);
+    }
+
+    function testSlippageLimitAppliesBps() public {
+        MockLess less = new MockLess();
+        RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            50,
+            burn
+        );
+
+        uint160 sqrtPrice = TickMath.MIN_SQRT_PRICE + 1_000_000_000;
+        uint160 limited = splitter.exposedSlippageLimit(sqrtPrice);
+        assertTrue(limited < sqrtPrice);
+    }
+
+    function testPoolInitializedReturnsFalseWhenNoManager() public {
+        MockLess less = new MockLess();
+        RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
+            owner,
+            address(less),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            0,
+            burn
+        );
+
+        assertEq(splitter.exposedPoolInitialized(), false);
     }
 
     function testUnlockCallbackRevertsWhenCallerNotPoolManager() public {

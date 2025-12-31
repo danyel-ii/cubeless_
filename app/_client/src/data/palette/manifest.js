@@ -12,6 +12,19 @@ export function computePaletteSeed({ tokenId, minter }) {
   );
 }
 
+export function computePaletteCommitSeed({
+  refsHash,
+  salt,
+  minter,
+  commitBlockNumber,
+  commitBlockHash,
+}) {
+  return solidityPackedKeccak256(
+    ["bytes32", "bytes32", "address", "uint256", "bytes32"],
+    [refsHash, salt, minter, commitBlockNumber, commitBlockHash]
+  );
+}
+
 export async function loadPaletteManifest() {
   if (manifestCache) {
     return manifestCache;

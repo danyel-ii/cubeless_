@@ -33,14 +33,14 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (63 tests; latest local run required)
+Result: PASS (89 tests via coverage run 2025-12-31; use `forge test -vvv` to reproduce the same suite)
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (90.67% line coverage; minimum is 90%).
+Result: PASS (98.56% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
@@ -102,13 +102,16 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 63 warnings (import-path-check + gas lint warnings; NatSpec warnings resolved).
+  - Result: not rerun in this environment (requires network access to install `solhint`).
+  - Last known run: 0 errors, 25 warnings (import-path-check disabled; NatSpec warnings resolved).
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
-  - Result: **0 findings** after addressing previous warnings.
+  - Result: **1 finding** (weak PRNG) for commit-reveal palette index selection.
+  - Note: This is an art randomization signal (not a financial outcome) and is documented as blockhash-derived.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
 - CI runs `npm audit` at `--audit-level=high`.
+- Local `npm audit --json` (2025-12-31): 0 vulnerabilities.

@@ -11,6 +11,7 @@ vi.mock("../../src/server/log.js", () => ({
 }));
 vi.mock("../../src/server/env.js", () => ({
   requireEnv: () => "alchemy-key",
+  readEnvBool: () => false,
 }));
 vi.mock("../../src/server/cache.js", () => ({
   getCache: async () => null,

@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
 import { MockERC20 } from "../mocks/MockERC20.sol";
+import { Refs } from "../helpers/Refs.sol";
 
 contract MintHandler is Test {
     IceCubeMinter public minter;
@@ -39,6 +40,9 @@ contract MintHandler is Test {
             });
         }
         bytes32 salt = keccak256(abi.encodePacked("salt", mintCount, count));
+        bytes32 refsHash = Refs.hashCanonical(refs);
+        minter.commitMint(salt, refsHash);
+        vm.roll(block.number + 1);
         uint256 tokenId = minter.mint{ value: mintPrice }(salt, "ipfs://token", refs);
         mintCount += 1;
         lastTokenId = tokenId;
@@ -75,7 +79,7 @@ contract IceCubeMinterInvariants is StdInvariant, Test {
     }
 
     function invariant_ownerBalanceMatchesMintCount() public {
-        assertEq(owner.balance, handler.mintCount() * handler.mintPrice());
+        assertEq(resaleSplitter.balance, handler.mintCount() * handler.mintPrice());
     }
 
     function invariant_balanceMatchesMintCount() public {

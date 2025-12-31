@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
-  assertSepolia,
+  assertConfiguredChain,
   parseTokenId,
   normalizeAddress,
   buildProvenanceBundle,
 } from "../../app/_client/src/data/nft/indexer.ts";
+import { ICECUBE_CONTRACT } from "../../app/_client/src/config/contracts";
 
 describe("provenance shaping", () => {
   it("normalizes addresses and tokenIds", () => {
@@ -15,17 +16,24 @@ describe("provenance shaping", () => {
     );
   });
 
-  it("rejects non-Sepolia chainId", () => {
-    expect(() => assertSepolia(1)).toThrow(/sepolia/i);
+  it("rejects non-configured chainId", () => {
+    const wrongChain = ICECUBE_CONTRACT.chainId === 1 ? 11155111 : 1;
+    expect(() => assertConfiguredChain(wrongChain)).toThrow(/configured/i);
   });
 
   it("enforces selection bounds for provenance bundles", async () => {
-    await expect(buildProvenanceBundle([], "0x000000000000000000000000000000000000dEaD", 11155111))
+    await expect(
+      buildProvenanceBundle(
+        [],
+        "0x000000000000000000000000000000000000dEaD",
+        ICECUBE_CONTRACT.chainId
+      )
+    )
       .rejects.toThrow(/1 to 6/i);
     await expect(
       buildProvenanceBundle(
         new Array(7).fill(null).map((_, idx) => ({
-          chainId: 11155111,
+          chainId: ICECUBE_CONTRACT.chainId,
           contractAddress: "0x000000000000000000000000000000000000dEaD",
           tokenId: String(idx + 1),
           name: null,
@@ -35,7 +43,7 @@ describe("provenance shaping", () => {
           source: "alchemy",
         })),
         "0x000000000000000000000000000000000000dEaD",
-        11155111
+        ICECUBE_CONTRACT.chainId
       )
     ).rejects.toThrow(/1 to 6/i);
   });

@@ -15,6 +15,7 @@ Last updated: 2025-12-31
 - Merge new manifest fields into a combined metadata JSON at mint time.
 - Standardize `image` for all tokens to a single shared GIF/MP4 (marketplace preview).
 - Keep unique `animation_url` per token (IPFS cube viewer).
+- Shared preview media: `palette_cycle_512.gif` hosted at the app base URL.
 
 ## Mint flow + randomness
 - Move to streamlined commit-reveal.

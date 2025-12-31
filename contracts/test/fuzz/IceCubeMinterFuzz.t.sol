@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
 import { MockERC20 } from "../mocks/MockERC20.sol";
+import { Refs } from "../helpers/Refs.sol";
 
 contract IceCubeMinterFuzzTest is Test {
     IceCubeMinter private minter;
@@ -12,6 +13,17 @@ contract IceCubeMinterFuzzTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
+
+    function _commitMint(
+        address minterAddr,
+        bytes32 salt,
+        IceCubeMinter.NftRef[] memory refs
+    ) internal {
+        bytes32 refsHash = Refs.hashCanonical(refs);
+        vm.prank(minterAddr);
+        minter.commitMint(salt, refsHash);
+        vm.roll(block.number + 1);
+    }
 
     function setUp() public {
         vm.startPrank(owner);
@@ -42,18 +54,21 @@ contract IceCubeMinterFuzzTest is Test {
         bytes32 salt = keccak256(abi.encodePacked(minterAddr, count, payment));
         vm.deal(minterAddr, payment);
 
-        vm.prank(minterAddr);
         if (payment < price) {
-            vm.expectRevert("INSUFFICIENT_ETH");
+            _commitMint(minterAddr, salt, refs);
+            vm.prank(minterAddr);
+            vm.expectRevert(IceCubeMinter.InsufficientEth.selector);
             minter.mint{ value: payment }(salt, "ipfs://token", refs);
             return;
         }
 
-        uint256 ownerBefore = owner.balance;
+        uint256 splitterBefore = resaleSplitter.balance;
         uint256 minterBefore = minterAddr.balance;
+        _commitMint(minterAddr, salt, refs);
+        vm.prank(minterAddr);
         minter.mint{ value: payment }(salt, "ipfs://token", refs);
 
-        assertEq(owner.balance, ownerBefore + price);
+        assertEq(resaleSplitter.balance, splitterBefore + price);
         assertEq(minterAddr.balance, minterBefore - price);
     }
 
@@ -71,6 +86,7 @@ contract IceCubeMinterFuzzTest is Test {
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
+        _commitMint(minterAddr, keccak256("salt"), refs);
         vm.prank(minterAddr);
         if (injectWrongOwner) {
             vm.expectRevert(

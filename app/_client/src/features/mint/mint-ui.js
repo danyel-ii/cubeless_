@@ -1,6 +1,6 @@
 import { BrowserProvider, Contract } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
-import { buildTokenViewUrl } from "../../config/links.js";
+import { buildPalettePreviewGifUrl, buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import { subscribeWallet } from "../wallet/wallet.js";
@@ -8,11 +8,12 @@ import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
 import {
   buildPaletteImageUrl,
-  computePaletteSeed,
+  computePaletteCommitSeed,
   loadPaletteManifest,
   pickPaletteEntry,
 } from "../../data/palette/manifest.js";
 import { pinTokenMetadata } from "./token-uri-provider.js";
+import { computeRefsHash, sortRefsCanonically } from "./refs.js";
 import {
   computeGifSeed,
   computeVariantIndex,
@@ -56,26 +57,6 @@ function generateSalt() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
-}
-
-export function sortRefsCanonically(refs) {
-  return [...refs].sort((a, b) => {
-    const addrA = BigInt(a.contractAddress);
-    const addrB = BigInt(b.contractAddress);
-    if (addrA < addrB) {
-      return -1;
-    }
-    if (addrA > addrB) {
-      return 1;
-    }
-    if (a.tokenId < b.tokenId) {
-      return -1;
-    }
-    if (a.tokenId > b.tokenId) {
-      return 1;
-    }
-    return 0;
-  });
 }
 
 export function initMintUi() {
@@ -433,6 +414,7 @@ export function initMintUi() {
         tokenId: BigInt(nft.tokenId),
       }));
       const refsCanonical = sortRefsCanonically(refsForContract);
+      const refsHash = computeRefsHash(refsCanonical);
       const refsCanonicalMeta = refsCanonical.map((ref) => ({
         contractAddress: ref.contractAddress,
         tokenId: ref.tokenId.toString(),
@@ -444,9 +426,30 @@ export function initMintUi() {
         tokenId,
         minter: walletState.address,
       });
-      const paletteSeed = computePaletteSeed({
-        tokenId,
+      setStatus("Committing mint (step 1/2)...");
+      const commitTx = await contract.commitMint(salt, refsHash);
+      showToast({
+        title: "Commit submitted",
+        message: `Commit broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
+        tone: "neutral",
+        links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
+      });
+      const commitReceipt = await commitTx.wait();
+      const commitBlockNumber = commitReceipt?.blockNumber;
+      if (!commitBlockNumber) {
+        throw new Error("Commit block unavailable.");
+      }
+      const commitBlock = await provider.getBlock(commitBlockNumber);
+      const commitBlockHash = commitBlock?.hash;
+      if (!commitBlockHash) {
+        throw new Error("Commit hash unavailable.");
+      }
+      const paletteSeed = computePaletteCommitSeed({
+        refsHash,
+        salt,
         minter: walletState.address,
+        commitBlockNumber,
+        commitBlockHash,
       });
       const paletteManifest = await loadPaletteManifest();
       const { entry: paletteEntry, index: paletteIndex } = pickPaletteEntry(
@@ -455,7 +458,8 @@ export function initMintUi() {
       );
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
-      const imageUrl = buildPaletteImageUrl(paletteEntry);
+      const paletteImageUrl = buildPaletteImageUrl(paletteEntry);
+      const imageUrl = buildPalettePreviewGifUrl();
       const animationUrl = buildTokenViewUrl(tokenId.toString());
       if (!animationUrl) {
         throw new Error("Token viewer URL is not configured.");
@@ -473,6 +477,7 @@ export function initMintUi() {
         imageUrl,
         paletteEntry,
         paletteIndex,
+        paletteImageUrl,
         lessSupplyMint: lessSupplyMint.toString(),
       });
       setStatus("Pinning metadata...");
@@ -497,7 +502,7 @@ export function initMintUi() {
       document.dispatchEvent(new CustomEvent("cube-token-change"));
       const overrides = { value: currentMintPriceWei };
 
-      setStatus("Submitting mint transaction...");
+      setStatus("Revealing mint (step 2/2)...");
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
       showToast({
         title: "Mint submitted",

@@ -50,6 +50,8 @@ npm run fork-test
 - `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)
+- `ICECUBE_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
+- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `deployments/mainnet.json` on chainId 1, otherwise `deployments/sepolia.json`)
 
 ### Deploy
 ```sh

@@ -39,3 +39,11 @@ export function buildTokenViewUrl(tokenId) {
   }
   return `${base}/m/${tokenId}`;
 }
+
+export function buildPalettePreviewGifUrl() {
+  const base = getTokenViewBaseUrl();
+  if (!base) {
+    return "";
+  }
+  return `${base}/palette_cycle_512.gif`;
+}

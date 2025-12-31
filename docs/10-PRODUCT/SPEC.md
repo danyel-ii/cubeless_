@@ -192,6 +192,14 @@ type MintMetadata = {
 - `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
 - Clients call `previewTokenId(salt, refs)` to build metadata before mint.
 
+## Commit-Reveal Mint Flow
+
+- Minting uses a two-step commit-reveal:
+  1. `commitMint(salt, refsHash)` stores a commitment and block number.
+  2. `mint(salt, tokenURI, refs)` reveals refs + salt and completes the mint.
+- The reveal must occur within 256 blocks of the commit.
+- Random palette index is derived from `refsHash`, `salt`, minter, and the commit block hash.
+
 ## $LESS Delta Metric (UI/Leaderboard)
 
 - The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
@@ -202,6 +210,13 @@ type MintMetadata = {
 
 - `animation_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.
+
+## Palette Mapping
+
+- The in-wallet static image is chosen from a 10,000-image IPFS folder using the onchain random index.
+- A manifest JSON maps random indices to filenames and palette metadata.
+- `image` points to a shared GIF/MP4 preview.
+- The palette-specific image URL is stored under `palette.image_url`.
 
 ## Farcaster Frame Embed
 

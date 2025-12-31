@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sortRefsCanonically } from "../../app/_client/src/features/mint/mint-ui.js";
+import { sortRefsCanonically } from "../../app/_client/src/features/mint/refs.js";
 
 describe("canonical ref ordering", () => {
   it("sorts refs by contract then tokenId", () => {

@@ -107,6 +107,7 @@ export function buildMintMetadata({
   imageUrl,
   paletteEntry,
   paletteIndex,
+  paletteImageUrl,
   lessSupplyMint,
 }) {
   const provenance = sanitizeProvenance(
@@ -178,6 +179,7 @@ export function buildMintMetadata({
     palette: paletteEntry
       ? {
           index: paletteIndex ?? 0,
+          image_url: paletteImageUrl || null,
           ...paletteEntry,
         }
       : undefined,
