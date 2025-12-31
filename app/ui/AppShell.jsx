@@ -45,6 +45,21 @@ export default function AppShell() {
               If floor data is unavailable, we display 0. Your selection is embedded as provenance.
             </p>
           </div>
+          <div className="overlay-section">
+            <div className="overlay-section-title">Mint price</div>
+            <p className="overlay-text">
+              Mint cost scales up as{" "}
+              <a
+                className="ui-link"
+                href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
+                target="_blank"
+                rel="noreferrer"
+              >
+                $LESS
+              </a>{" "}
+              supply falls, so bigger burns mean higher prices.
+            </p>
+          </div>
           <div className="overlay-actions">
             <button id="enter-btn" className="overlay-button" type="button">
               Enter

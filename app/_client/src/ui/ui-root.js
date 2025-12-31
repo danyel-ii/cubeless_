@@ -136,7 +136,9 @@ function initMintedBanner() {
 
   document.addEventListener("mint-complete", () => {
     updateLink();
-    banner.classList.remove("is-hidden");
+    if (linkButton.dataset.url) {
+      banner.classList.remove("is-hidden");
+    }
   });
 
   document.addEventListener("cube-token-change", updateLink);
