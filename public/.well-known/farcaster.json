@@ -22,7 +22,7 @@
     "ogTitle": "cubeless",
     "ogDescription": "mint the cube, cube your ownership",
     "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": ""
+    "castShareUrl": "https://cubeless-red.vercel.app"
   },
   "frame": {
     "version": "1",
@@ -42,6 +42,6 @@
     "ogTitle": "cubeless",
     "ogDescription": "mint the cube, cube your ownership",
     "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": ""
+    "castShareUrl": "https://cubeless-red.vercel.app"
   }
 }
