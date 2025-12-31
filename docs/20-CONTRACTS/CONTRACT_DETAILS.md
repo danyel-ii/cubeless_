@@ -43,6 +43,7 @@ Key steps:
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
+4.5 **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
 5. **Mint + metadata**: mint token and store `tokenURI`.
 6. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 

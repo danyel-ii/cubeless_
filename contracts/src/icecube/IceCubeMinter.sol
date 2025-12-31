@@ -37,6 +37,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     uint256 public constant ONE_BILLION = 1_000_000_000e18;
     /// @notice Fixed-point scale for WAD math.
     uint256 public constant WAD = 1e18;
+    /// @notice Maximum number of mints allowed.
+    uint256 public constant MAX_MINTS = 32_768;
 
     /// @notice LESS supply at mint time by tokenId.
     mapping(uint256 => uint256) private _mintSupply;
@@ -101,6 +103,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     ) external payable nonReentrant returns (uint256 tokenId) {
         // Revert if refs length is outside 1..6 to prevent ambiguous split math.
         require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
+        require(totalMinted < MAX_MINTS, "MINT_CAP_REACHED");
 
         for (uint256 i = 0; i < refs.length; i += 1) {
             // slither-disable-next-line calls-loop

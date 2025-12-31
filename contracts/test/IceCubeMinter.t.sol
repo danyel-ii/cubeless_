@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { Test } from "forge-std/Test.sol";
+import { StdStorage, stdStorage } from "forge-std/StdStorage.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { IceCubeMinter } from "../src/icecube/IceCubeMinter.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
@@ -27,6 +28,8 @@ contract IceCubeMinterHarness is IceCubeMinter {
 }
 
 contract IceCubeMinterTest is Test {
+    using stdStorage for StdStorage;
+
     IceCubeMinter private minter;
     MockERC721 private nftA;
     MockERC721 private nftB;
@@ -39,6 +42,7 @@ contract IceCubeMinterTest is Test {
     uint256 private constant BASE_PRICE = 1_500_000_000_000_000;
     uint256 private constant PRICE_STEP = 100_000_000_000_000;
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
+    StdStorage private stdstore;
 
     function setUp() public {
         vm.startPrank(owner);
@@ -113,6 +117,26 @@ contract IceCubeMinterTest is Test {
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
 
         assertEq(resaleSplitter.balance, amount);
+    }
+
+    function testMintCapReached() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        uint256 amount = minter.currentMintPrice();
+        vm.deal(minterAddr, amount);
+
+        stdstore
+            .target(address(minter))
+            .sig("totalMinted()")
+            .checked_write(IceCubeMinter.MAX_MINTS());
+
+        vm.prank(minterAddr);
+        vm.expectRevert("MINT_CAP_REACHED");
+        minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testMintSetsTokenUri() public {
