@@ -201,3 +201,13 @@ type MintMetadata = {
 
 - `animation_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.
+
+## Farcaster Frame Embed
+
+- The home page includes an `fc:frame` definition in the HTML head.
+- Frame definition fields:
+  - `imageUrl` (3:2) points to the social preview image.
+  - `button.title` is the CTA label.
+  - `button.action.type` is `launch_frame`.
+  - `button.action.url` is the home URL.
+  - `splashImageUrl` + `splashBackgroundColor` are set for the miniapp launch screen.

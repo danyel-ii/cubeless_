@@ -25,6 +25,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
   - `miniapp` + `frame` blocks (identical as required)
   - `version` set to `"1"`
   - Hosted image assets under `/public` (icon, hero, splash, ogImage)
+  - `buttonTitle` + `imageUrl` set for share cards
 - accountAssociation set in `public/.well-known/farcaster.json`.
 - `miniapp.castShareUrl` set to the Vercel domain.
 

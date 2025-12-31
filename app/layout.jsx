@@ -6,10 +6,47 @@ export const metadata = {
     "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.",
 };
 
+function getBaseUrl() {
+  const raw = (
+    process.env.NEXT_PUBLIC_TOKEN_VIEW_BASE_URL ||
+    process.env.VERCEL_URL ||
+    ""
+  ).trim();
+  if (!raw) {
+    return "";
+  }
+  const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return normalized.replace(/\/$/, "");
+}
+
 export default function RootLayout({ children }) {
+  const baseUrl = getBaseUrl();
+  const frameDefinition = baseUrl
+    ? {
+        version: "next",
+        imageUrl: `${baseUrl}/ogImage.png`,
+        button: {
+          title: "Launch cubeless",
+          action: {
+            type: "launch_frame",
+            url: baseUrl,
+          },
+        },
+        splashImageUrl: `${baseUrl}/splash.png`,
+        splashBackgroundColor: "#000000",
+      }
+    : null;
+
   return (
     <html lang="en">
-      <head />
+      <head>
+        {frameDefinition ? (
+          <meta
+            property="fc:frame"
+            content={JSON.stringify(frameDefinition)}
+          />
+        ) : null}
+      </head>
       <body>
         {children}
       </body>
