@@ -24,6 +24,14 @@ export function getTokenViewBaseUrl() {
   return "";
 }
 
+export function getPaletteImagesCid() {
+  return readEnvValue("NEXT_PUBLIC_PALETTE_IMAGES_CID");
+}
+
+export function getPaletteManifestCid() {
+  return readEnvValue("NEXT_PUBLIC_PALETTE_MANIFEST_CID");
+}
+
 export function buildTokenViewUrl(tokenId) {
   const base = getTokenViewBaseUrl();
   if (!base) {

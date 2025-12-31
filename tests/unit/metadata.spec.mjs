@@ -50,6 +50,17 @@ describe("mint metadata builder", () => {
       salt: "0x" + "11".repeat(32),
       animationUrl: "https://example.com/m/123",
       imageUrl: "ipfs://cid/gif_0001.gif",
+      paletteEntry: {
+        output: "palette_test.png",
+        palette_id: "TEST123",
+        palette_url: "https://colorhunt.co/palette/test",
+        hex_colors: ["#000000", "#ffffff"],
+        used_hex_colors: ["#000000", "#ffffff"],
+        rarity_inverse_frequency: 0.1,
+        rarity_color_rarity_sum: 1.2,
+        rarity_unique_count: 2,
+      },
+      paletteIndex: 42,
       gif: {
         variantIndex: 1,
         selectionSeed: "0x" + "22".repeat(32),
@@ -67,7 +78,15 @@ describe("mint metadata builder", () => {
     expect(metadata.animation_url).toBe("https://example.com/m/123");
     expect(metadata.image).toBe("ipfs://cid/gif_0001.gif");
     expect(metadata.provenance.refsCanonical?.length).toBe(1);
-    expect(metadata.attributes.length).toBe(6);
+    const traits = metadata.attributes.map((attr) => attr.trait_type);
+    expect(traits).toContain("Palette Index");
+    expect(traits).toContain("Palette ID");
+    expect(traits).toContain("Palette URL");
+    expect(traits).toContain("Palette Hex Colors");
+    expect(traits).toContain("Palette Used Hex Colors");
+    expect(traits).toContain("Palette Rarity Inverse Frequency");
+    expect(traits).toContain("Palette Rarity Color Sum");
+    expect(traits).toContain("Palette Rarity Unique Count");
     const size = JSON.stringify(metadata).length;
     expect(size).toBeLessThan(50_000);
   });

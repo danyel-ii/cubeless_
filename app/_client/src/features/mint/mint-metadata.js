@@ -105,6 +105,8 @@ export function buildMintMetadata({
   salt,
   animationUrl,
   imageUrl,
+  paletteEntry,
+  paletteIndex,
   lessSupplyMint,
 }) {
   const provenance = sanitizeProvenance(
@@ -125,6 +127,41 @@ export function buildMintMetadata({
     { trait_type: "Animation URL", value: animationUrl, display_type: "url" },
     ...buildSelectionAttributes(selection),
   ];
+  if (paletteEntry) {
+    attributes.push(
+      { trait_type: "Palette Index", value: paletteIndex ?? 0 },
+      { trait_type: "Palette ID", value: paletteEntry.palette_id },
+      {
+        trait_type: "Palette URL",
+        value: paletteEntry.palette_url,
+        display_type: "url",
+      },
+      {
+        trait_type: "Palette Hex Colors",
+        value: Array.isArray(paletteEntry.hex_colors)
+          ? paletteEntry.hex_colors.join(", ")
+          : "",
+      },
+      {
+        trait_type: "Palette Used Hex Colors",
+        value: Array.isArray(paletteEntry.used_hex_colors)
+          ? paletteEntry.used_hex_colors.join(", ")
+          : "",
+      },
+      {
+        trait_type: "Palette Rarity Inverse Frequency",
+        value: paletteEntry.rarity_inverse_frequency ?? 0,
+      },
+      {
+        trait_type: "Palette Rarity Color Sum",
+        value: paletteEntry.rarity_color_rarity_sum ?? 0,
+      },
+      {
+        trait_type: "Palette Rarity Unique Count",
+        value: paletteEntry.rarity_unique_count ?? 0,
+      }
+    );
+  }
 
   return {
     schemaVersion: 1,
@@ -138,6 +175,12 @@ export function buildMintMetadata({
     image: imageUrl,
     external_url: animationUrl,
     animation_url: animationUrl,
+    palette: paletteEntry
+      ? {
+          index: paletteIndex ?? 0,
+          ...paletteEntry,
+        }
+      : undefined,
     provenance: {
       schemaVersion: 1,
       ...provenance,

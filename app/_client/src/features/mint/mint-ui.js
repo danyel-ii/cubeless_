@@ -6,6 +6,12 @@ import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
+import {
+  buildPaletteImageUrl,
+  computePaletteSeed,
+  loadPaletteManifest,
+  pickPaletteEntry,
+} from "../../data/palette/manifest.js";
 import { pinTokenMetadata } from "./token-uri-provider.js";
 import {
   computeGifSeed,
@@ -438,9 +444,18 @@ export function initMintUi() {
         tokenId,
         minter: walletState.address,
       });
+      const paletteSeed = computePaletteSeed({
+        tokenId,
+        minter: walletState.address,
+      });
+      const paletteManifest = await loadPaletteManifest();
+      const { entry: paletteEntry, index: paletteIndex } = pickPaletteEntry(
+        paletteSeed,
+        paletteManifest
+      );
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
-      const imageUrl = gifIpfsUrl(variantIndex);
+      const imageUrl = buildPaletteImageUrl(paletteEntry);
       const animationUrl = buildTokenViewUrl(tokenId.toString());
       if (!animationUrl) {
         throw new Error("Token viewer URL is not configured.");
@@ -456,6 +471,8 @@ export function initMintUi() {
         salt,
         animationUrl,
         imageUrl,
+        paletteEntry,
+        paletteIndex,
         lessSupplyMint: lessSupplyMint.toString(),
       });
       setStatus("Pinning metadata...");
