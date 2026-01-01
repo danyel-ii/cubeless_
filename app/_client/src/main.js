@@ -36,10 +36,14 @@ function loadP5Library() {
     return p5LoadPromise;
   }
   p5LoadPromise = new Promise((resolve, reject) => {
-    const existing =
-      document.getElementById("p5-lib") ||
-      document.querySelector('script[src*="p5.min.js"]');
+    const existingScripts = Array.from(
+      document.querySelectorAll('script[src*="p5.min.js"]')
+    );
+    const existing = document.getElementById("p5-lib") || existingScripts[0];
     if (existing) {
+      if (existingScripts.length > 1) {
+        existingScripts.slice(1).forEach((script) => script.remove());
+      }
       const poll = () => {
         if (typeof window.p5 === "function") {
           resolve();
@@ -55,6 +59,7 @@ function loadP5Library() {
     script.id = "p5-lib";
     script.src = "https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js";
     script.async = true;
+    window.__CUBIXLES_P5_SCRIPT__ = script;
     script.onload = () => {
       window.__CUBIXLES_P5_LOADING__ = false;
       resolve();

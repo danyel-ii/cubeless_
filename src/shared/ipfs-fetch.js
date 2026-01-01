@@ -1,8 +1,8 @@
 const GATEWAYS = [
   "https://ipfs.io/ipfs/",
-  "https://cloudflare-ipfs.com/ipfs/",
+  "https://w3s.link/ipfs/",
+  "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
-  "https://nftstorage.link/ipfs/",
 ];
 
 export function buildGatewayUrls(ipfsUrl) {
