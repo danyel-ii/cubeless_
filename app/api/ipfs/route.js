@@ -38,7 +38,11 @@ export async function GET(request) {
       const headers = new Headers(response.headers);
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Cache-Control", "public, max-age=300");
-      return new Response(response.body, {
+      headers.delete("content-encoding");
+      headers.delete("content-length");
+      headers.delete("transfer-encoding");
+      const body = await response.arrayBuffer();
+      return new Response(body, {
         status: response.status,
         headers,
       });
