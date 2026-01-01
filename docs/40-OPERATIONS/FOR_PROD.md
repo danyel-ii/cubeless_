@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2025-12-31
+Last updated: 2026-01-01
 
 ## 0) Pre-flight (local)
 

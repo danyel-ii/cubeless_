@@ -380,7 +380,7 @@ export function initMintUi() {
     if (shareButton) {
       shareButton.classList.add("is-hidden");
     }
-    setStatus("Building provenance bundle...");
+    setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
       const provider = new BrowserProvider(walletState.provider);
@@ -426,7 +426,12 @@ export function initMintUi() {
         tokenId,
         minter: walletState.address,
       });
-      setStatus("Committing mint (step 1/2)...");
+      showToast({
+        title: "Two-step mint",
+        message: "You will confirm two wallet prompts: commit, then mint.",
+        tone: "neutral",
+      });
+      setStatus("Step 1/2: confirm commit in your wallet.");
       const commitTx = await contract.commitMint(salt, refsHash);
       showToast({
         title: "Commit submitted",
@@ -434,6 +439,7 @@ export function initMintUi() {
         tone: "neutral",
         links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
       });
+      setStatus("Waiting for commit confirmation...");
       const commitReceipt = await commitTx.wait();
       const commitBlockNumber = commitReceipt?.blockNumber;
       if (!commitBlockNumber) {
@@ -502,7 +508,7 @@ export function initMintUi() {
       document.dispatchEvent(new CustomEvent("cube-token-change"));
       const overrides = { value: currentMintPriceWei };
 
-      setStatus("Revealing mint (step 2/2)...");
+      setStatus("Step 2/2: confirm mint in your wallet.");
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
       showToast({
         title: "Mint submitted",

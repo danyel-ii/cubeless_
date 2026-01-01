@@ -1,6 +1,6 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
-Last updated: 2025-12-31
+Last updated: 2026-01-01
 
 ## Review Status
 
@@ -199,6 +199,7 @@ type MintMetadata = {
   2. `mint(salt, tokenURI, refs)` reveals refs + salt and completes the mint.
 - The reveal must occur within 256 blocks of the commit.
 - Random palette index is derived from `refsHash`, `salt`, minter, and the commit block hash.
+- The UI prompts two wallet confirmations and auto-advances to the mint step after the commit is confirmed.
 
 ## $LESS Delta Metric (UI/Leaderboard)
 

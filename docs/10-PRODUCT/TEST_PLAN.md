@@ -1,6 +1,6 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2025-12-31
+Last updated: 2026-01-01
 
 ## Review Status
 
@@ -166,6 +166,7 @@ For `/api/identity`:
 - floor snapshot computed for current selection
   - pinning succeeded (if option B)
 - mint payment autofill matches `currentMintPrice()`
+- mint flow shows two wallet prompts (commit then mint), and step 2 auto-triggers after commit confirmation
 - floor snapshot UI shows per-NFT and total floor values
 - floor snapshot defaults to `0` when unavailable
 - ΔLESS HUD shows delta when tokenId is known
@@ -190,6 +191,7 @@ Because Warpcast hosting is hard to automate, we split E2E into:
 - connect -> inventory renders
 - select refs -> cube textures update
 - click mint -> app pins metadata -> calls mint with:
+  - commit tx sent first, then mint tx after commit confirmation
   - `tokenURI = ipfs://<metaCID>`
   - `refs` encoded correctly
   - `value` set to max payment

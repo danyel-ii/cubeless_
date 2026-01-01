@@ -1,6 +1,6 @@
 # OSPS Baseline (2025-10-10) Compliance Review
 
-Last updated: 2025-12-31
+Last updated: 2026-01-01
 
 This document maps repo practices to the OpenSSF OSPS Baseline (2025-10-10).
 Status labels:

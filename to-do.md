@@ -23,6 +23,7 @@ Last updated: 2025-12-31
 - Use selected refs as the commit secret (no extra user input).
 - Add a reasonable commit timeout/expiry.
 - Explain the two transactions in human-readable terms in the wallet signing view.
+- Mint UI now prompts two wallet confirmations and auto-advances after commit confirmation.
 
 ## Contract + app updates
 - Update contracts to support commit-reveal and onchain random index generation.
