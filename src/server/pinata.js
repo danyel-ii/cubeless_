@@ -22,15 +22,21 @@ export async function setCachedCid(hash, cid) {
   await setCache(`pinata:${hash}`, cid, DEDUPE_TTL_MS);
 }
 
-export async function pinJson(payload) {
+export async function pinJson(payload, { name } = {}) {
   const jwt = requireEnv("PINATA_JWT");
+  const metadata =
+    name && typeof name === "string"
+      ? { pinataMetadata: { name } }
+      : null;
   const response = await fetch(PINATA_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${jwt}`,
     },
-    body: payload,
+    body: metadata
+      ? JSON.stringify({ pinataContent: JSON.parse(payload), ...metadata })
+      : payload,
   });
   if (!response.ok) {
     const text = await response.text();

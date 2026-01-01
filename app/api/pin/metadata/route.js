@@ -123,7 +123,9 @@ export async function POST(request) {
       );
     }
 
-    const cid = await pinJson(payloadText);
+    const tokenId = payload?.tokenId ? String(payload.tokenId) : null;
+    const name = tokenId ? `cubixles_${tokenId}.json` : "cubixles_metadata.json";
+    const cid = await pinJson(payloadText, { name });
     if (!cid) {
       recordMetric("mint.pin.pinata_missing_cid");
       await recordPinFailure({ reason: "missing_cid" });
