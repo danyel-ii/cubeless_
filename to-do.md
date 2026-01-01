@@ -8,7 +8,8 @@ Last updated: 2025-12-31
 - Manifest will also include extra metadata fields to be merged into token metadata.
 - Keep manifest CID immutable; treat it as source of truth.
 - Images folder CID: `bafybeidguhrhckx2uvywlpvlb5ly7ams46ghtrz6afcfal5kf5ujkxtmyi`.
-- Manifest CID: `bafybeihsvhetu5dhggwjxlqzq3anncamjbtnbawvrufxphjvpyvz5uvecm`.
+- Manifest CID: `bafybeifqsx5gbbqmohxqn3nky6rxz2vy7o5uvabdtic5uni5uykme7v3de/manifest.json`.
+- Palette images CID: `bafybeifqsx5gbbqmohxqn3nky6rxz2vy7o5uvabdtic5uni5uykme7v3de`.
 
 ## Metadata strategy
 - Preserve current metadata (provenance, refs, animation_url, attributes).
