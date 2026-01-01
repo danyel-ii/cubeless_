@@ -412,10 +412,33 @@ export function initMintUi() {
       }));
       const refsCanonical = sortRefsCanonically(refsForContract);
       const refsHash = computeRefsHash(refsCanonical);
+      const latestBlock = BigInt(await provider.getBlockNumber());
+      const existingCommit = await contract.mintCommitByMinter(walletState.address);
+      const existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
+      let commitBlockNumber = null;
+      let salt = null;
+      if (existingBlock > 0n) {
+        const expiryBlock = existingBlock + 256n;
+        if (latestBlock <= expiryBlock) {
+          if (existingCommit.refsHash !== refsHash) {
+            throw new Error(
+              "Pending commit exists. Wait ~256 blocks or mint with the same NFT selection."
+            );
+          }
+          if (latestBlock <= existingBlock) {
+            throw new Error("Commit pending. Wait for the next block to reveal.");
+          }
+          salt = existingCommit.salt;
+          commitBlockNumber = existingBlock;
+        }
+      }
       const refsCanonicalMeta = refsCanonical.map((ref) => ({
         contractAddress: ref.contractAddress,
         tokenId: ref.tokenId.toString(),
       }));
+      if (!salt) {
+        salt = generateSalt();
+      }
       const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
       const lessSupplyMint = await fetchLessTotalSupply(ICECUBE_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
@@ -423,27 +446,32 @@ export function initMintUi() {
         tokenId,
         minter: walletState.address,
       });
-      showToast({
-        title: "Two-step mint",
-        message: "You will confirm two wallet prompts: commit, then mint.",
-        tone: "neutral",
-      });
-      setStatus("Step 1/2: confirm commit in your wallet.");
-      const commitTx = await contract.commitMint(salt, refsHash);
-      showToast({
-        title: "Commit submitted",
-        message: `Commit broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
-        tone: "neutral",
-        links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
-      });
-      setStatus("Waiting for commit confirmation...");
-      const commitReceipt = await commitTx.wait();
-      const commitBlockNumber = commitReceipt?.blockNumber;
-      if (!commitBlockNumber) {
-        throw new Error("Commit block unavailable.");
+      let commitBlockHash = null;
+      if (commitBlockNumber === null) {
+        showToast({
+          title: "Two-step mint",
+          message: "You will confirm two wallet prompts: commit, then mint.",
+          tone: "neutral",
+        });
+        setStatus("Step 1/2: confirm commit in your wallet.");
+        const commitTx = await contract.commitMint(salt, refsHash);
+        showToast({
+          title: "Commit submitted",
+          message: `Commit broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
+          tone: "neutral",
+          links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
+        });
+        setStatus("Waiting for commit confirmation...");
+        const commitReceipt = await commitTx.wait();
+        commitBlockNumber = commitReceipt?.blockNumber;
+        if (!commitBlockNumber) {
+          throw new Error("Commit block unavailable.");
+        }
+      } else {
+        setStatus("Using existing commit. Preparing mint...");
       }
       const commitBlock = await provider.getBlock(commitBlockNumber);
-      const commitBlockHash = commitBlock?.hash;
+      commitBlockHash = commitBlock?.hash;
       if (!commitBlockHash) {
         throw new Error("Commit hash unavailable.");
       }

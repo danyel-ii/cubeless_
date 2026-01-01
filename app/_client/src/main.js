@@ -26,6 +26,9 @@ function loadP5Library() {
   if (typeof window.p5 === "function") {
     return Promise.resolve();
   }
+  if (window.__CUBELESS_P5_LOADING__) {
+    return p5LoadPromise || Promise.resolve();
+  }
   if (p5LoadPromise) {
     return p5LoadPromise;
   }
@@ -44,12 +47,19 @@ function loadP5Library() {
       poll();
       return;
     }
+    window.__CUBELESS_P5_LOADING__ = true;
     const script = document.createElement("script");
     script.id = "p5-lib";
     script.src = "https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js";
     script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load p5.js"));
+    script.onload = () => {
+      window.__CUBELESS_P5_LOADING__ = false;
+      resolve();
+    };
+    script.onerror = () => {
+      window.__CUBELESS_P5_LOADING__ = false;
+      reject(new Error("Failed to load p5.js"));
+    };
     document.head.appendChild(script);
   });
   return p5LoadPromise;
