@@ -396,7 +396,7 @@ export function initMintUi() {
         ICECUBE_CONTRACT.abi,
         signer
       );
-      const salt = generateSalt();
+      let salt = null;
       const bundle = await buildProvenanceBundle(
         state.nftSelection,
         walletState.address,
@@ -416,7 +416,6 @@ export function initMintUi() {
       const existingCommit = await contract.mintCommitByMinter(walletState.address);
       const existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
       let commitBlockNumber = null;
-      let salt = null;
       if (existingBlock > 0n) {
         const expiryBlock = existingBlock + 256n;
         if (latestBlock <= expiryBlock) {
