@@ -15,6 +15,8 @@ export function buildGatewayUrls(ipfsUrl) {
 }
 
 export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
+  const expectsJson =
+    ipfsUrl.endsWith(".json") || ipfsUrl.includes("manifest.json");
   if (typeof window !== "undefined" && ipfsUrl.startsWith("ipfs://")) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -24,6 +26,12 @@ export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
         { signal: controller.signal }
       );
       if (response.ok) {
+        if (expectsJson) {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("text/html")) {
+            throw new Error("IPFS proxy returned HTML.");
+          }
+        }
         clearTimeout(timeout);
         return { response, url: response.url };
       }
@@ -40,6 +48,12 @@ export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
     try {
       const response = await fetch(url, { signal: controller.signal });
       if (response.ok) {
+        if (expectsJson) {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("text/html")) {
+            continue;
+          }
+        }
         clearTimeout(timeout);
         return { response, url };
       }
