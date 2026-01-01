@@ -4,7 +4,7 @@ Last updated: 2026-01-01
 
 ## Review Status
 
-- Last reviewed: 2025-12-31
+- Last reviewed: 2026-01-01
 - Review status: Needs confirmation
 - Owner: TBD
 

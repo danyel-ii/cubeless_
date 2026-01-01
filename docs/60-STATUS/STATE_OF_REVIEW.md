@@ -1,4 +1,4 @@
-# cubixles_ v0 — State of Review (2025-12-31)
+# cubixles_ v0 — State of Review (2026-01-01)
 
 Last updated: 2026-01-01
 
@@ -61,6 +61,6 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 
 ## Next recommended actions (short list)
 
-1. Confirm Vercel build is using `main` from `cubixles__` and redeploy with cache cleared.
+1. Confirm Vercel build is using `main` from `cubixles_` and redeploy with cache cleared.
 2. Re-validate the Farcaster manifest after redeploy.
 3. Run `npm run fork-test` before any contract change in production.

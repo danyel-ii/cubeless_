@@ -33,7 +33,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (89 tests via coverage run 2025-12-31; use `forge test -vvv` to reproduce the same suite)
+Result: PASS (89 tests via coverage run 2026-01-01; use `forge test -vvv` to reproduce the same suite)
 
 ### Coverage (Solidity)
 Command:
@@ -114,4 +114,4 @@ Results (local):
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
 - CI runs `npm audit` at `--audit-level=high`.
-- Local `npm audit --json` (2025-12-31): 0 vulnerabilities.
+- Local `npm audit --json` (2026-01-01): 0 vulnerabilities.
