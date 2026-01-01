@@ -23,6 +23,9 @@ function loadP5Library() {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.resolve();
   }
+  if (window.__CUBIXLES_P5_PROMISE__) {
+    return window.__CUBIXLES_P5_PROMISE__;
+  }
   if (typeof window.p5 === "function") {
     return Promise.resolve();
   }
@@ -62,6 +65,7 @@ function loadP5Library() {
     };
     document.head.appendChild(script);
   });
+  window.__CUBIXLES_P5_PROMISE__ = p5LoadPromise;
   return p5LoadPromise;
 }
 
