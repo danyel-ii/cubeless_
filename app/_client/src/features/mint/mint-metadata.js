@@ -127,8 +127,14 @@ export function buildMintMetadata({
     { trait_type: "LESS Supply At Mint", value: lessSupplyMint },
     { trait_type: "Selection Count", value: selection.length },
     { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
+    imageUrl
+      ? { trait_type: "Image URL", value: imageUrl, display_type: "url" }
+      : null,
+    imageIpfsUrl?.startsWith("ipfs://")
+      ? { trait_type: "Image IPFS", value: imageIpfsUrl, display_type: "url" }
+      : null,
     ...buildSelectionAttributes(selection),
-  ];
+  ].filter(Boolean);
   if (paletteEntry) {
     attributes.push(
       { trait_type: "Palette Index", value: paletteIndex ?? 0 },

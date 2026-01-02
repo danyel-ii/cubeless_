@@ -217,7 +217,12 @@ export function initLeaderboardUi() {
         : "Supply now: —";
       renderEntries(entries);
     } catch (error) {
-      resetList(error?.message || "Unable to load leaderboard.");
+      const message =
+        error?.code === "CALL_EXCEPTION" ||
+        String(error?.message || "").includes("missing revert data")
+          ? "Leaderboard call failed. Ensure your wallet is on Ethereum Mainnet."
+          : error?.message || "Unable to load leaderboard.";
+      resetList(message);
       supplyEl.textContent = "Supply now: —";
     }
   }
