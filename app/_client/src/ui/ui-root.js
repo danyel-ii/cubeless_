@@ -236,6 +236,7 @@ function initShareDialog() {
   }
 
   let currentUrl = "";
+  let lastOverlayClosedAt = 0;
 
   function closeModal() {
     modal.classList.add("is-hidden");
@@ -267,38 +268,23 @@ function initShareDialog() {
     modal.classList.remove("is-hidden");
   }
 
-  function openShare(url) {
-    if (!url) {
-      return;
-    }
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
   backdrop.addEventListener("click", closeModal);
   closeButton.addEventListener("click", closeModal);
   copyButton.addEventListener("click", copyLink);
-  farcasterLink.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(farcasterLink.href);
-  });
-  xLink.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(xLink.href);
-  });
-  baseLink.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(baseLink.href);
-  });
-  signalLink.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(signalLink.href);
+  document.addEventListener("overlay-closed", () => {
+    lastOverlayClosedAt = Date.now();
   });
 
   document.addEventListener("share-link-open", (event) => {
     const url = event?.detail?.url;
     const overlay = document.getElementById("overlay");
     const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
-    if (!url || !document.body.classList.contains("is-token-view") || !overlayHidden) {
+    if (
+      !url ||
+      !document.body.classList.contains("is-token-view") ||
+      !overlayHidden ||
+      Date.now() - lastOverlayClosedAt < 600
+    ) {
       return;
     }
     if (navigator.share) {

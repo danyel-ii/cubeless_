@@ -35,7 +35,7 @@ export default function AppShell() {
             <div className="overlay-section-title">What gets minted</div>
             <p className="overlay-text">
               An ERC-721 with hosted metadata and an{" "}
-              <span className="overlay-em">animation_url</span> pointing to an IPFS-hosted
+              <span className="overlay-em">animation_url</span> pointing to your IPFS-hosted
               interactive cube.
             </p>
           </div>
