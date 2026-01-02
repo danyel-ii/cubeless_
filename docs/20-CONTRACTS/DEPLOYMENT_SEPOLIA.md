@@ -1,12 +1,12 @@
-# cubeless Deployment (IceCubeMinter, Sepolia)
+# cubixles_ Deployment (CubixlesMinter, Mainnet + Sepolia)
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## Mint Signature
 
@@ -28,8 +28,8 @@ struct NftRef {
 - `mint` is payable.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
-- Mint pays the owner directly and refunds any excess.
-- If the owner transfer fails, the mint reverts (no partial transfers).
+- Mint pays the RoyaltySplitter and refunds any excess.
+- If the payout transfer fails, the mint reverts (no partial transfers).
 
 ## Gating Rules
 
@@ -39,12 +39,12 @@ struct NftRef {
 
 ## Royalty Policy
 
-- Mint-time payout goes to `owner()`.
+- Mint-time payout goes to `RoyaltySplitter`.
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
   - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
   - If the swap fails, the full amount is forwarded to owner.
-  - If the swap succeeds, any $LESS received is split 50% to burn address and 50% to owner before forwarding remaining ETH.
-  - If `ICECUBE_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
+  - If the swap succeeds, 50% of ETH goes to owner, the rest swaps to $LESS, then $LESS splits 90% owner / 10% burn, with remaining ETH forwarded.
+- If `CUBIXLES_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
 
@@ -53,14 +53,15 @@ struct NftRef {
 
 ## Deployment Inputs
 
-Environment variables read by `contracts/script/DeployIceCube.s.sol`:
+Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 
-- `ICECUBE_OWNER`
-- `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
-- `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `ICECUBE_POOL_FEE` (optional, defaults to 0)
-- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
-- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
-- `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
-- `ICECUBE_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_OWNER`
+- `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
+- `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)

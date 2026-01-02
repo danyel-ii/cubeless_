@@ -1,6 +1,6 @@
-# cubeless — for_prod (Sepolia → Mainnet)
+# cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2025-12-27
+Last updated: 2026-01-02
 
 ## 0) Pre-flight (local)
 
@@ -38,25 +38,28 @@ export HTTPS_PROXY=""
 npm run fork-test
 ```
 
-## 1) Sepolia deploy (contracts)
+## 1) Contract deploy (mainnet primary, Sepolia rehearsal optional)
 
 ### Required env (local)
-- `ICECUBE_OWNER`
-- `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
-- `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `ICECUBE_POOL_FEE` (optional, defaults to 0)
-- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
-- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
-- `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
-- `ICECUBE_RESALE_BPS` (optional, defaults to 500)
+- Environment variable names use `CUBIXLES_*` for contract/deploy compatibility.
+- `CUBIXLES_OWNER`
+- `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
+- `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
 
 ### Deploy
 ```sh
 cd contracts
-forge script script/DeployIceCube.s.sol \
-  --rpc-url "$SEPOLIA_RPC_URL" \
-  --private-key "$SEPOLIA_DEPLOYER_KEY" \
+forge script script/DeployCubixles.s.sol \
+  --rpc-url "$MAINNET_RPC_URL" \
+  --private-key "$MAINNET_DEPLOYER_KEY" \
   --broadcast
 ```
 
@@ -66,17 +69,17 @@ node contracts/scripts/export-abi.mjs
 ```
 
 ### Update frontend contract config
-- Update `app/_client/src/config/contracts.ts` with Sepolia address if needed.
-- Confirm `ICECUBE_CONTRACT.address` matches deployment.
+- Update `app/_client/src/config/contracts.ts` with the deployed address if needed.
+- Confirm `CUBIXLES_CONTRACT.address` matches deployment.
 
-## 2) Sepolia app setup
+## 2) App setup
 
 ### Server env (Vercel or local)
 - `PINATA_JWT`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT`
-- `ICECUBE_CONTRACT_ADDRESS`
-- `ICECUBE_CHAIN_ID=11155111`
+- `CUBIXLES_CONTRACT_ADDRESS`
+- `CUBIXLES_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
 
 ### Run dev + smoke
 ```sh
@@ -84,15 +87,15 @@ npm run dev
 npm run test:ui
 ```
 
-## 3) Sepolia mint flow (manual)
+## 3) Mainnet mint flow (manual)
 
 1) Open `http://127.0.0.1:3000`
-2) Connect wallet on Sepolia.
+2) Connect wallet on mainnet.
 3) Select 1–6 NFTs.
 4) Click Mint.
 5) Verify:
    - `tokenURI` resolves to `ipfs://<CID>`
-   - metadata includes `animation_url` and `image`
+   - metadata includes `external_url` and `image`
    - `/m/<tokenId>` loads the correct cube
    - `royaltyInfo` returns splitter + 5% amount
 
@@ -106,16 +109,15 @@ npm run check:no-client-secrets
 ```
 4) Update docs:
    - `docs/30-SECURITY/SECURITY_AUDIT.md`
-   - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
-6) Set `ICECUBE_CHAIN_ID=1` and mainnet contract address in config.
+6) Set `CUBIXLES_CHAIN_ID=1` and mainnet contract address in config.
 
 ## 5) Mainnet deploy (contracts)
 
 1) Deploy on mainnet:
 ```sh
 cd contracts
-forge script script/DeployIceCube.s.sol \
+forge script script/DeployCubixles.s.sol \
   --rpc-url "$MAINNET_RPC_URL" \
   --private-key "$MAINNET_DEPLOYER_KEY" \
   --broadcast
@@ -124,12 +126,12 @@ forge script script/DeployIceCube.s.sol \
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - IceCubeMinter: `0xdd81D5A0F7e82978cf9Da0DD29c7C6cA4187ffd6`
-   - RoyaltySplitter: `0x1BF35EC159fC3fD73D0EEc9BD52bBAA02FB76576`
+   - CubixlesMinter: `0x2FCC29B8Db193D8c5F1647Cbf1e5eCC03920D62B`
+   - RoyaltySplitter: `0x127AB77A7aB14d2Efb4D58249Ecc373f6e6d8dFF`
    - Deploy txs:
-     - `0xbb92ceb471132d2d29ed734e2a65a7ed290c15e2337b25d384c6989cc179f4b3`
-     - `0x5d1732a7333610ed33dd2c22c49b45ff40fb9814a753f9a544d4db060f27a21e`
-   - Ownership transfer (minter → splitter): completed (tx hash not recorded)
+     - RoyaltySplitter CREATE: `0xcf880be2f5adf318f328bd5a9702e2536be8372920e929db30e2bc11b2a49777`
+     - CubixlesMinter CREATE: `0xf1f1f1eb160bdc9d79ec2d274b0906235c191984a758246788d74a01055e7f50`
+   - Ownership transfer (minter → owner): `0x9cef0a4e1a8eb15f8cc29dfbc3d28cc541b5ab3b0ef07abc5941bd41e0f8f42c`
 
 ## 6) Mainnet launch validation
 

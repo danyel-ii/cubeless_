@@ -1,10 +1,10 @@
-# cubeless — Master Index
+# cubixles_ — Master Index
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Executive Overview
 
-This document is the single entry point for cubeless documentation. It explains what each document does, where to find it, and how to use it in a workflow (spec → build → test → deploy → monitor).
+This document is the single entry point for cubixles_ documentation. It explains what each document does, where to find it, and how to use it in a workflow (spec → build → test → deploy → monitor).
 
 ## System Map (Docs by Purpose)
 
@@ -15,7 +15,7 @@ This document is the single entry point for cubeless documentation. It explains 
 
 ### Contracts + Deployment
 - `docs/20-CONTRACTS/CONTRACT_DETAILS.md` — Contract architecture, mint flow, pricing, and royalty behavior.
-- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Sepolia deployment steps + environment variables.
+- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Sepolia rehearsal deployment steps + environment variables.
 
 ### Next.js (App Router)
 - `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
@@ -39,10 +39,7 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/40-OPERATIONS/RELEASE.md` — Release process and versioning.
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
 - `docs/40-OPERATIONS/DEPENDENCIES.md` — Dependency tracking policy.
-- `docs/40-OPERATIONS/FOR_PROD.md` — Sepolia deploy + mint test + mainnet launch checklist.
-
-### Project Status + Tasks
-- `docs/60-STATUS/STATE_OF_REVIEW.md` — Snapshot of repo alignment and current health.
+- `docs/40-OPERATIONS/FOR_PROD.md` — Mainnet deploy + launch checklist (Sepolia rehearsal optional).
 - `docs/00-OVERVIEW/STRUCTURE.md` — Repository layout and module responsibilities.
 
 ### Repository Policies
@@ -53,9 +50,6 @@ This document is the single entry point for cubeless documentation. It explains 
 - `SECURITY.md` — Vulnerability reporting policy.
 - `SUPPORT.md` — Defect reporting and support channels.
 - `CHANGELOG.md` — Release notes.
-
-### Generated Reports
-- `docs/50-REPORTS/COVERAGE_REPORT.md` — Solidity line coverage report (grouped by contract).
 
 ## Workflow (How to Use These Docs)
 
@@ -70,14 +64,14 @@ This document is the single entry point for cubeless documentation. It explains 
 4) **Security posture**
    - Review `docs/30-SECURITY/*` and update `docs/30-SECURITY/SECURITY_AUDIT.md`.
 5) **Status + next steps**
-   - Check `docs/60-STATUS/STATE_OF_REVIEW.md`.
+   - Track issues and releases in `CHANGELOG.md` and GitHub issues.
 
 ## Glossary
 
-- **cubeLess**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
+- **cubixles_**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
 - **refs / NftRef**: A list of NFT references (contractAddress + tokenId) used to texture the cube.
 - **provenance**: Metadata field recording refs and mint context for auditability.
-- **animation_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
+- **external_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
 - **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
 - **deltaFromLast**: Current metric used to rank tokens by $LESS supply delta from last transfer snapshot.
@@ -94,7 +88,7 @@ forge test -vvv
 # Unit + API tests (Vitest)
 npm test
 
-# Coverage (writes docs/50-REPORTS/COVERAGE_REPORT.md)
+# Coverage (generates a local report)
 npm run coverage:contracts
 
 # Frontend smoke (Playwright)
@@ -121,5 +115,3 @@ npm run check:no-client-secrets
 
 - `docs/30-SECURITY/SECURITY_AUDIT.md` updated with latest tool runs.
 - `docs/30-SECURITY/OSPS_BASELINE_2025-10-10.md` reviewed after policy changes.
-- `docs/50-REPORTS/COVERAGE_REPORT.md` regenerated after test updates.
-- `docs/60-STATUS/STATE_OF_REVIEW.md` reflects current status.

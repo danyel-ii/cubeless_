@@ -1,12 +1,12 @@
-# cubeless Miniapp v0 Spec — Provenance Shapes (Sepolia)
+# cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 This document defines the required data shapes and normalization rules for
 wallet inventory and provenance objects in v0. These rules are mandatory for
@@ -14,14 +14,14 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 
 ## Scope
 
-- Chain: Sepolia only (`chainId: 11155111`).
+- Chain: Ethereum mainnet (`chainId: 1`).
 - Two types: `NftItem` (inventory UI), `ProvenanceBundle` (mint metadata).
 - No UI or contract logic in this doc.
 - Inventory and metadata reads are proxied through server routes (`/api/nfts`), not direct client keys.
 
 ## Core Rules (v0)
 
-1. **Chain gating**: only allow `chainId === 11155111`.
+1. **Chain gating**: only allow `chainId === 1`.
    - If anything else is supplied, return a clear error and block selection.
 2. **tokenId**: must be a decimal string derived from `BigInt`.
    - Parse raw IDs as `BigInt` first.
@@ -129,7 +129,7 @@ v0 mapping order (fixed):
 ## Mint Metadata Schema (tokenURI JSON)
 
 Notes:
-- `animation_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
+- `external_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
 - `image` is an optional static thumbnail for marketplaces (GIF library).
 - `provenance` stores the full bundle for traceability.
 - `provenance.refsFaces` preserves face order; `provenance.refsCanonical` is the sorted list used for tokenId hashing.
@@ -140,7 +140,7 @@ type MintMetadata = {
   name: string;
   description: string;
   image: string | null; // pre-generated GIF thumbnail
-  animation_url: string | null; // https://<domain>/m/<tokenId>
+  external_url: string | null; // https://<domain>/m/<tokenId>
   gif: {
     variantIndex: number;
     selectionSeed: string;
@@ -186,7 +186,7 @@ type MintMetadata = {
 
 ## Deterministic TokenId
 
-- `tokenId = keccak256("cubeless:tokenid:v1", minter, salt, refsHash)`
+- `tokenId = keccak256("cubixles_:tokenid:v1", minter, salt, refsHash)`
 - `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
 - Clients call `previewTokenId(salt, refs)` to build metadata before mint.
 
@@ -198,5 +198,5 @@ type MintMetadata = {
 
 ## Token Viewer Route
 
-- `animation_url` resolves to `https://<domain>/m/<tokenId>`.
+- `external_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.

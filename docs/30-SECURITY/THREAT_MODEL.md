@@ -1,9 +1,9 @@
-# cubeless — Threat Model
+# cubixles_ — Threat Model
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Scope
-- Contracts: `IceCubeMinter`, `RoyaltySplitter`
+- Contracts: `CubixlesMinter`, `RoyaltySplitter`
 - Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity
 
 ## Actors
@@ -19,7 +19,7 @@ Last updated: 2025-12-26
 - ERC-20 transfer of $LESS (token contract behavior).
 
 ## Attack surfaces
-- `IceCubeMinter.mint` (external, payable, external calls + transfers).
+- `CubixlesMinter.mint` (external, payable, external calls + transfers).
 - `RoyaltySplitter.receive/fallback` (external, payable, PoolManager swap + token transfers).
 
 ## Threats
@@ -27,14 +27,18 @@ Last updated: 2025-12-26
    - Owner/minter receive hooks attempt reentrancy or state corruption.
 2. **Malicious ERC-721 contracts**
    - `ownerOf` reverts or returns incorrect owner.
-3. **Router misbehavior**
-   - Swap call reverts or consumes gas.
+3. **Router/PoolManager misbehavior**
+   - Swap call reverts, hooks misbehave, or pool state is stale.
 4. **Receiver failure**
    - Owner or minter refund reverts to block mint or royalty processing.
 5. **ERC-20 transfer failure**
    - $LESS transfer fails (token-specific behavior).
 6. **Value conservation**
    - Overpayment not refunded; mint price not paid to owner.
+7. **Deterministic tokenId collisions**
+   - Weak salts could cause predictable tokenId collisions or replay attempts.
+8. **Centralization risks**
+   - Owner-controlled parameters (royalty receiver, swap enablement, slippage) can be changed unilaterally.
 
 ## Security posture decisions
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.

@@ -1,6 +1,6 @@
-# cubeless — Static Analysis
+# cubixles_ — Static Analysis
 
-Last updated: 2025-12-29
+Last updated: 2026-01-02
 
 ## Tools
 - Slither (static analyzer)
@@ -40,4 +40,16 @@ slither .
 - If an issue is accepted, include rationale and severity.
 
 ## Current findings (triaged)
-- No active Slither findings after refactors in `IceCubeMinter` and `RoyaltySplitter`.
+Slither findings (8 total) grouped by category:
+- **Weak PRNG**: palette selection uses blockhash-based randomness (intentional, documented; not used for value transfers).
+- **Strict equality checks**: RoyaltySplitter `_send` flow depends on exact values; acceptable because it guards payout exactness.
+- **Unused return values**: `POOL_MANAGER.getSlot0()` return values read for state checks; no state impact.
+- **Naming convention**: immutable variable naming warnings (cosmetic).
+
+Mitigation posture:
+- Documented in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+- Re-run Slither after any contract changes; escalate if new findings appear.
+
+## Latest run notes (2026-01-02)
+- `slither .` failed because `slither` is not available in the local venv.
+- `npx solhint "src/**/*.sol"` returned 0 errors, 63 warnings (including legacy `src/icecube/*` import-path warnings).

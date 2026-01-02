@@ -1,21 +1,21 @@
-# cubeless Contract Details (IceCubeMinter)
+# cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
+CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. All ETH transfers revert on failure (`EthTransferFailed`), and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
 ## Contract Overview
 
-Contract: `contracts/src/icecube/IceCubeMinter.sol`
+Contract: `contracts/src/cubixles/CubixlesMinter.sol`
 
 - Inherits:
   - `ERC721URIStorage` for token URI storage.
@@ -35,6 +35,7 @@ mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external pa
 
 Key steps:
 
+0. **Commit required**: `commitMint(salt, refsHash)` must be called before mint (commit window is 256 blocks).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
@@ -43,10 +44,12 @@ Key steps:
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
-5. **Mint + metadata**: mint token and store `tokenURI`.
-6. **Mint payout**: transfers `currentMintPrice()` to `owner()` and refunds any excess to `msg.sender`.
+5. **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
+6. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
+7. **Mint + metadata**: mint token and store `tokenURI`.
+8. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 
-Mint payment uses a direct ETH transfer. If the owner transfer fails, the mint reverts. Overpayment is always refunded.
+Mint payment uses a direct ETH transfer to the RoyaltySplitter. If the payout transfer fails, the mint reverts. Overpayment is always refunded.
 
 ## $LESS Supply Snapshots + Deltas
 
@@ -62,7 +65,7 @@ Note: the UI “$LESS supply” HUD displays remaining supply as `totalSupply - 
 ## Deterministic TokenId Preview
 
 - `previewTokenId(bytes32 salt, NftRef[] refs)` returns the exact tokenId the mint will use.
-- Clients should call `previewTokenId` before pinning metadata to build a token-specific `animation_url`.
+- Clients should call `previewTokenId` before pinning metadata to build a token-specific `external_url`.
 - `totalMinted` and `tokenIdByIndex(index)` provide onchain enumeration for the leaderboard.
 
 ## Royalty Logic
@@ -82,7 +85,7 @@ Royalty splitter: `contracts/src/royalties/RoyaltySplitter.sol`
 
 ## Tests
 
-File: `contracts/test/IceCubeMinter.t.sol`
+File: `contracts/test/CubixlesMinter.t.sol`
 
 - Ownership gating (revert on non-owned refs)
 - Mint payout to owner + refund
@@ -92,21 +95,21 @@ File: `contracts/test/IceCubeMinter.t.sol`
 
 ## Deployment + ABI Export
 
-- Deploy script: `contracts/script/DeployIceCube.s.sol`
+- Deploy script: `contracts/script/DeployCubixles.s.sol`
   - Reads:
-    - `ICECUBE_OWNER`
-    - `ICECUBE_LESS_TOKEN` (optional; defaults to mainnet $LESS address)
-    - `ICECUBE_POOL_MANAGER` (optional)
-    - `ICECUBE_POOL_FEE` (optional)
-    - `ICECUBE_POOL_TICK_SPACING` (optional)
-    - `ICECUBE_POOL_HOOKS` (optional)
-    - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
-    - `ICECUBE_RESALE_BPS` (optional)
-  - Writes deployment to `contracts/deployments/sepolia.json`.
+    - `CUBIXLES_OWNER`
+    - `CUBIXLES_LESS_TOKEN` (optional; defaults to mainnet $LESS address)
+    - `CUBIXLES_POOL_MANAGER` (optional)
+    - `CUBIXLES_POOL_FEE` (optional)
+    - `CUBIXLES_POOL_TICK_SPACING` (optional)
+    - `CUBIXLES_POOL_HOOKS` (optional)
+    - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
+    - `CUBIXLES_RESALE_BPS` (optional)
+  - Writes deployment JSON to `CUBIXLES_DEPLOYMENT_PATH` (recommended: `deployments/mainnet.json` when running from `contracts/`).
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.
-  - Outputs `contracts/abi/IceCubeMinter.json`.
+  - Outputs `contracts/abi/CubixlesMinter.json`.
 
 ## Frontend Integration
 
@@ -115,14 +118,9 @@ File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` (GIF), `animation_url` (`/m/<tokenId>`), `gif` traits, and `provenance.refsFaces` + `provenance.refsCanonical`.
-- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on Sepolia with the resulting `ipfs://` URI.
+- Creates a JSON metadata object with `image` (GIF), `external_url` (`/m/<tokenId>`), palette traits, and `provenance.refsFaces` + `provenance.refsCanonical`.
+- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` with the resulting `ipfs://` URI.
 
-## Known Placeholders / TODOs
+## Known limitations
 
-- On-chain pool position management is not implemented.
-- RoyaltySplitter swaps via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
-- When the swap fails, all ETH is forwarded to owner.
-- When the swap succeeds, 50% of ETH is sent to owner, the rest is swapped to $LESS, then 90% $LESS goes to owner and 10% to burn address, followed by forwarding any remaining ETH balance to owner.
-- If PoolManager is unset, swaps are disabled and all ETH is forwarded.
-- Metadata is pinned to IPFS via the server route and references the token viewer via `animation_url`.
+See `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.

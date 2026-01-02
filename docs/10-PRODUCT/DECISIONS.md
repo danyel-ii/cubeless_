@@ -1,12 +1,12 @@
 # Decision Log
 
-Last updated: 2025-12-26
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## 2025-12-22 — T5 Spec Shapes
 
@@ -34,15 +34,15 @@ Last updated: 2025-12-26
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
 
-- Mint metadata includes `animation_url` pointing to the token viewer route (`/m/<tokenId>`).
+- Mint metadata includes `external_url` pointing to the token viewer route (`/m/<tokenId>`).
 - `image` is treated as an optional thumbnail, not the primary work.
 - Provenance bundle is stored under `provenance` in the tokenURI JSON.
 
 ## 2025-12-24 — Deterministic TokenId + Viewer Route
 
 - TokenId is derived from `msg.sender`, `salt`, and `refsHash` for safe pre-mint metadata.
-- `previewTokenId` is used client-side to build token-specific `animation_url`.
-- `animation_url` now points to `https://<domain>/m/<tokenId>` (Vercel viewer).
+- `previewTokenId` is used client-side to build token-specific `external_url`.
+- `external_url` now points to `https://<domain>/m/<tokenId>` (Vercel viewer).
 - Metadata includes GIF traits (`gif.*`) and an `image` pointing to the GIF library.
 
 ## 2025-12-25 — Server-Only Keys + Next.js Migration Start
