@@ -29,7 +29,9 @@ export function initEthHud() {
     if (timeEl) {
       timeEl.textContent = "";
       const isTokenView = document.body.classList.contains("is-token-view");
-      if (isTokenView && state.currentCubeTokenId) {
+      const overlay = document.getElementById("overlay");
+      const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
+      if (isTokenView && overlayHidden && state.currentCubeTokenId) {
         const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
         if (!url) {
           timeEl.textContent = "token: —";
@@ -54,4 +56,6 @@ export function initEthHud() {
 
   render();
   document.addEventListener("less-delta-change", render);
+  document.addEventListener("overlay-opened", render);
+  document.addEventListener("overlay-closed", render);
 }

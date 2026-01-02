@@ -10,10 +10,12 @@ export function initOverlay() {
 
   function show() {
     overlay.classList.remove("is-hidden");
+    document.dispatchEvent(new CustomEvent("overlay-opened"));
   }
 
   function dismiss() {
     overlay.classList.add("is-hidden");
+    document.dispatchEvent(new CustomEvent("overlay-closed"));
   }
 
   enterButton.addEventListener("click", () => dismiss());
