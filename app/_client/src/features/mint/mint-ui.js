@@ -506,7 +506,7 @@ export function initMintUi() {
       const params = decodeVariantIndex(variantIndex);
       const paletteImageUrl = buildPaletteImageUrl(paletteEntry);
       const imageUrl = paletteImageUrl || buildPalettePreviewGifUrl();
-      const animationUrl = buildPalettePreviewGifUrl();
+      const animationUrl = paletteImageUrl || imageUrl;
       const externalUrl = buildTokenViewUrl(tokenId.toString());
       if (!externalUrl) {
         throw new Error("Token viewer URL is not configured.");

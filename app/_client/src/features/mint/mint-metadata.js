@@ -126,7 +126,6 @@ export function buildMintMetadata({
     { trait_type: "LESS Supply At Mint", value: lessSupplyMint },
     { trait_type: "Selection Count", value: selection.length },
     { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
-    { trait_type: "Animation URL", value: animationUrl, display_type: "url" },
     ...buildSelectionAttributes(selection),
   ];
   if (paletteEntry) {
@@ -171,7 +170,6 @@ export function buildMintMetadata({
     ].join("\n"),
     image: imageUrl,
     external_url: externalUrl || animationUrl,
-    animation_url: animationUrl,
     palette: paletteEntry
       ? {
           index: paletteIndex ?? 0,
