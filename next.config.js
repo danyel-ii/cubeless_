@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
   async headers() {
     const frameAncestors =
       process.env.FRAME_ANCESTORS ||

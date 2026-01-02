@@ -15,6 +15,8 @@ import { recordMintAttempt, recordPinFailure } from "../../../../src/server/aler
 
 const MAX_BYTES = 50 * 1024;
 
+export const runtime = "nodejs";
+
 export async function POST(request) {
   const requestId = crypto.randomUUID();
   let bodySize = 0;
