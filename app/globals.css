@@ -407,6 +407,10 @@ body.wallet-modal-open canvas {
   touch-action: pan-y;
 }
 
+body.ui-pointer-active canvas {
+  pointer-events: none;
+}
+
 .ui-panel {
   position: fixed;
   top: 20px;
@@ -424,6 +428,12 @@ body.wallet-modal-open canvas {
   backdrop-filter: blur(8px);
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+}
+
+#leaderboard,
+#preview-bar,
+#overlay {
+  pointer-events: auto;
 }
 
 .is-hidden {
@@ -649,6 +659,56 @@ body.is-minted .preview-bar {
   margin-top: 6px;
   font-size: 11px;
   color: rgba(230, 233, 239, 0.55);
+}
+
+#mint-status {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(34, 8, 46, 0.72);
+  border: 1px solid rgba(255, 102, 204, 0.6);
+  color: #ff7ad9;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 18px rgba(255, 80, 200, 0.6);
+  box-shadow: 0 0 18px rgba(255, 80, 200, 0.25),
+    inset 0 0 18px rgba(255, 80, 200, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+#mint-status.is-error {
+  border-color: rgba(255, 120, 120, 0.6);
+  color: rgba(255, 170, 170, 0.95);
+  text-shadow: 0 0 16px rgba(255, 120, 120, 0.45);
+}
+
+#mint-status.is-success {
+  border-color: rgba(140, 220, 180, 0.7);
+  color: rgba(168, 220, 190, 0.95);
+  text-shadow: 0 0 16px rgba(140, 220, 180, 0.45);
+}
+
+.mint-status-pop {
+  animation: mint-status-pop 420ms ease-out;
+}
+
+@keyframes mint-status-pop {
+  0% {
+    transform: translateY(6px) scale(0.98);
+    opacity: 0.6;
+    box-shadow: 0 0 0 rgba(255, 80, 200, 0.15);
+  }
+  70% {
+    transform: translateY(-2px) scale(1.02);
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(255, 80, 200, 0.45);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    box-shadow: 0 0 18px rgba(255, 80, 200, 0.25),
+      inset 0 0 18px rgba(255, 80, 200, 0.18);
+  }
 }
 
 .ui-text {

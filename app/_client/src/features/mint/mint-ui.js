@@ -86,6 +86,9 @@ export function initMintUi() {
       typeof message === "string" &&
       message.toLowerCase().includes("please stay on this page");
     statusEl.classList.toggle("is-stay", isStay);
+    statusEl.classList.remove("mint-status-pop");
+    void statusEl.offsetHeight;
+    statusEl.classList.add("mint-status-pop");
   }
 
   function getToastRoot() {
