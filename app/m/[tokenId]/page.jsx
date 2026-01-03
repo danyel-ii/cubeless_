@@ -102,8 +102,10 @@ export async function generateMetadata({ params }) {
     : DEFAULT_IMAGE_PATH;
   let title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_ token";
   let description = DEFAULT_DESCRIPTION;
-  const ogRoute = tokenId ? `/m/${encodeURIComponent(tokenId)}/opengraph-image` : fallbackImage;
-  let ogImage = ogRoute;
+  const ogRoute = tokenId
+    ? `/m/${encodeURIComponent(tokenId)}/opengraph-image`
+    : fallbackImage;
+  const ogImage = baseUrl ? new URL(ogRoute, baseUrl).toString() : ogRoute;
 
   try {
     const metadata = await fetchTokenMetadata(tokenId);
