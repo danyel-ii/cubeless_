@@ -83,6 +83,14 @@ export default function AppShell() {
               cubixles_ reads your wallet address and NFT metadata to build provenance snapshots. No
               private keys are accessed; minting is a direct onchain transaction you sign.
             </p>
+            <a
+              className="deepwiki-badge"
+              href="https://deepwiki.com/danyel-ii/cubixles_"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
+            </a>
           </div>
         </div>
       </div>
@@ -210,12 +218,12 @@ export default function AppShell() {
           </span>
         </div>
         <a
-          className="ui-footer-link"
-          href="https://deepwiki.com/danyel-ii/cubixles_/1-overview#what-is-cubixles"
+          className="deepwiki-badge"
+          href="https://deepwiki.com/danyel-ii/cubixles_"
           target="_blank"
           rel="noreferrer"
         >
-          deepwiki cubixles_
+          <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
         </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">

@@ -19,6 +19,9 @@ export function initUiRoot() {
     return;
   }
   uiInitialized = true;
+  if (typeof window !== "undefined") {
+    window.__CUBIXLES_UI_READY__ = true;
+  }
   initOverlay();
   initLocalTextureUi();
   initExportUi();

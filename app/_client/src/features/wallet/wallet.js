@@ -1,14 +1,17 @@
 import { sdk } from "@farcaster/miniapp-sdk";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 
 const walletState = {
   status: "idle",
   address: null,
   provider: null,
   providerSource: null,
+  chainId: null,
   error: null,
 };
 
 const listeners = new Set();
+let walletConnectProviderPromise = null;
 
 function notify() {
   listeners.forEach((listener) => listener({ ...walletState }));
@@ -36,18 +39,27 @@ export async function connectWallet() {
       const inMiniApp = canUseMiniApp
         ? await sdk.isInMiniApp().catch(() => false)
         : false;
-      if (!inMiniApp) {
-        setState({
-          status: "unavailable",
-          address: null,
-          provider: null,
-          providerSource: null,
-          error: "Open in Warpcast or a wallet browser (MetaMask/Coinbase).",
-        });
-        return;
+      if (inMiniApp) {
+        try {
+          provider = await getWalletConnectProvider();
+          providerSource = "walletconnect";
+        } catch (error) {
+          provider = await sdk.wallet.getEthereumProvider();
+          providerSource = "farcaster";
+        }
+      } else {
+        provider = await getWalletConnectProvider();
+        providerSource = "walletconnect";
       }
-      provider = await sdk.wallet.getEthereumProvider();
-      providerSource = "farcaster";
+    }
+
+    const needsWalletConnect =
+      providerSource === "walletconnect" || isWalletConnectProvider(provider);
+    if (needsWalletConnect && providerSource !== "walletconnect") {
+      providerSource = "walletconnect";
+    }
+    if (needsWalletConnect) {
+      await ensureWalletConnectSession(provider);
     }
 
     const accounts = await requestAccounts(provider);
@@ -55,7 +67,10 @@ export async function connectWallet() {
     if (!address) {
       throw new Error("No accounts returned from provider.");
     }
-    setState({ status: "connected", address, provider, providerSource });
+    const chainId = await readChainId(provider);
+    setState({ status: "connected", address, provider, providerSource, chainId });
+    await ensureChain(provider, CUBIXLES_CONTRACT.chainId);
+    attachProviderListeners(provider);
   } catch (error) {
     if (typeof document !== "undefined") {
       document.dispatchEvent(
@@ -69,6 +84,7 @@ export async function connectWallet() {
       address: null,
       provider: null,
       providerSource: null,
+      chainId: null,
       error: error?.message || "Unable to connect wallet.",
     });
   }
@@ -80,6 +96,7 @@ export function disconnectWallet() {
     address: null,
     provider: null,
     providerSource: null,
+    chainId: null,
     error: null,
   });
 }
@@ -98,10 +115,127 @@ async function requestAccounts(provider) {
   throw new Error("Wallet provider does not support requests.");
 }
 
+function isWalletConnectProvider(provider) {
+  return Boolean(
+    provider &&
+      (provider.isWalletConnect ||
+        provider.session ||
+        provider.connector?.protocol === "wc" ||
+        provider.signer?.session)
+  );
+}
+
+async function ensureWalletConnectSession(provider) {
+  if (!provider) {
+    return;
+  }
+  const hasAccounts = Array.isArray(provider.accounts) && provider.accounts.length > 0;
+  const connected = provider.connected === true || hasAccounts;
+  if (connected) {
+    return;
+  }
+  if (typeof provider.connect === "function") {
+    await provider.connect();
+    return;
+  }
+  if (typeof provider.enable === "function") {
+    await provider.enable();
+  }
+}
+
+async function readChainId(provider) {
+  if (provider?.request) {
+    const chainIdHex = await provider.request({ method: "eth_chainId" });
+    if (typeof chainIdHex === "string") {
+      return Number.parseInt(chainIdHex, 16);
+    }
+  }
+  return null;
+}
+
+async function ensureChain(provider, desiredChainId) {
+  if (!provider?.request || !desiredChainId) {
+    return false;
+  }
+  const current = await readChainId(provider);
+  if (current === desiredChainId) {
+    setState({ chainId: current });
+    return true;
+  }
+  const chainHex = `0x${desiredChainId.toString(16)}`;
+  try {
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: chainHex }],
+    });
+    const updated = await readChainId(provider);
+    setState({ chainId: updated });
+    return updated === desiredChainId;
+  } catch (error) {
+    setState({ chainId: current });
+    return false;
+  }
+}
+
+function attachProviderListeners(provider) {
+  if (!provider?.on) {
+    return;
+  }
+  provider.on("accountsChanged", (accounts) => {
+    const address = accounts && accounts[0] ? accounts[0] : null;
+    setState({ address, status: address ? "connected" : "idle" });
+  });
+  provider.on("chainChanged", (chainIdHex) => {
+    if (typeof chainIdHex !== "string") {
+      return;
+    }
+    setState({ chainId: Number.parseInt(chainIdHex, 16) });
+  });
+}
+
 function getBrowserProvider() {
   if (typeof window === "undefined") {
     return null;
   }
   const provider = window.ethereum || null;
   return provider;
+}
+
+async function getWalletConnectProvider() {
+  if (walletConnectProviderPromise) {
+    return walletConnectProviderPromise;
+  }
+  if (typeof window === "undefined") {
+    throw new Error("WalletConnect is only available in the browser.");
+  }
+  const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+  if (!projectId) {
+    throw new Error(
+      "WalletConnect is not configured. Set NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID."
+    );
+  }
+  const metadata = {
+    name: "cubixles_",
+    description: "cubixles_ miniapp",
+    url: window.location.origin,
+    icons: [`${window.location.origin}/icon.png`],
+  };
+  walletConnectProviderPromise = import("@walletconnect/ethereum-provider").then(
+    ({ EthereumProvider }) =>
+      EthereumProvider.init({
+        projectId,
+        chains: [CUBIXLES_CONTRACT.chainId],
+        optionalChains: [11155111],
+        showQrModal: true,
+        metadata,
+      })
+  );
+  return walletConnectProviderPromise;
+}
+
+export async function switchToMainnet() {
+  if (!walletState.provider) {
+    return false;
+  }
+  return ensureChain(walletState.provider, CUBIXLES_CONTRACT.chainId);
 }

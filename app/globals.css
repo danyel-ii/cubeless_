@@ -515,6 +515,19 @@ button.ui-button {
   text-decoration: underline;
 }
 
+.deepwiki-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.deepwiki-badge img {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
 .share-modal {
   position: fixed;
   inset: 0;
