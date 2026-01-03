@@ -20,6 +20,11 @@ export function initUiRoot() {
   uiInitialized = true;
   if (typeof window !== "undefined") {
     window.__CUBIXLES_UI_READY__ = true;
+    const readyFlag = document.getElementById("ui-ready-flag");
+    if (readyFlag) {
+      readyFlag.setAttribute("data-ui-ready", "true");
+    }
+    console.info("[cubixles] ui root ready");
   }
   initOverlay();
   initLocalTextureUi();

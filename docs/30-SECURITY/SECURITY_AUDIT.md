@@ -78,7 +78,7 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: **Failed** (mint-flow mocked test timed out waiting for `.nft-card` after refresh).
+Result: PASS (3 tests)
 
 ### Client secret scan
 Command:

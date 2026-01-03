@@ -159,7 +159,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
 
   await page.goto("/");
-  await page.waitForTimeout(1000);
+  await page.waitForFunction(() => {
+    const flag = document.querySelector("#ui-ready-flag");
+    return flag?.getAttribute("data-ui-ready") === "true";
+  });
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");

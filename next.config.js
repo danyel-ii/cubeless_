@@ -3,6 +3,13 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
+    const scriptSrc = isProd
+      ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
+    const scriptSrcElem = isProd
+      ? "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
+      : "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
     const frameAncestors =
       process.env.FRAME_ANCESTORS ||
       "'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz";
@@ -15,8 +22,8 @@ const nextConfig = {
           "form-action 'self'",
           `frame-ancestors ${frameAncestors}`,
           "object-src 'none'",
-          "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-          "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+          scriptSrc,
+          scriptSrcElem,
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "img-src 'self' data: blob: https:",

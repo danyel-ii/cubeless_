@@ -8,6 +8,11 @@ export default function AppShell() {
     import("../_client/src/main.js").then(() => {
       if (active && typeof window !== "undefined") {
         window.__CUBIXLES_BOOTED__ = true;
+        window.__CUBIXLES_UI_READY__ = true;
+        const readyFlag = document.getElementById("ui-ready-flag");
+        if (readyFlag) {
+          readyFlag.setAttribute("data-ui-ready", "true");
+        }
       }
     });
     return () => {
@@ -70,6 +75,14 @@ export default function AppShell() {
               cubixles_ reads your wallet address and NFT metadata to build provenance snapshots. No
               private keys are accessed; minting is a direct onchain transaction you sign.
             </p>
+            <a
+              className="overlay-text"
+              href="https://deepwiki.com/danyel-ii/cubixles_"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
+            </a>
           </div>
         </div>
       </div>
@@ -198,6 +211,12 @@ export default function AppShell() {
           Back to controls
         </button>
       </div>
+      <div id="token-view-footer" className="token-view-footer">
+        <a href="https://deepwiki.com/danyel-ii/cubixles_" target="_blank" rel="noreferrer">
+          <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
+        </a>
+      </div>
+      <div id="ui-ready-flag" data-ui-ready="false" aria-hidden="true"></div>
       <div id="leaderboard" className="ui-panel is-hidden">
         <div className="ui-title">Leaderboard</div>
         <div className="ui-sub">Mint history powered by $LESS supply snapshots.</div>

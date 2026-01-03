@@ -18,6 +18,10 @@ if (typeof document !== "undefined") {
 }
 initTokenViewRoute();
 notifyFarcasterReady();
+if (typeof window !== "undefined") {
+  window.__CUBIXLES_BOOTED__ = true;
+  console.info("[cubixles] main boot");
+}
 
 let p5LoadPromise;
 
