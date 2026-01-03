@@ -109,6 +109,8 @@ function initUiPointerGuard() {
     "#preview-bar",
     "#overlay",
     "#wallet-picker",
+    "#share-cube",
+    "#share-modal",
     ".toast-root",
   ];
 

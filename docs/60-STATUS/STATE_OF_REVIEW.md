@@ -34,7 +34,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 ## Deployment status
 
 - Repo: `https://github.com/danyel-ii/cubixles_.git`
-- Vercel domain: `https://cubixles-red.vercel.app`
+- Vercel domain: `https://www.cubixles.xyz`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
 - Mainnet contracts (renamed, deployed 2026-01-02):
   - CubixlesMinter: `0x2FCC29B8Db193D8c5F1647Cbf1e5eCC03920D62B`

@@ -4,6 +4,7 @@ import { fetchLessDelta } from "../../data/chain/less-delta.js";
 
 export function initLessDeltaTracking() {
   let walletState = null;
+  let refreshTimer = null;
 
   async function refresh() {
     if (state.currentCubeTokenId === null || state.currentCubeTokenId === undefined) {
@@ -44,4 +45,8 @@ export function initLessDeltaTracking() {
   document.addEventListener("cube-token-change", () => {
     refresh();
   });
+
+  if (!refreshTimer && typeof window !== "undefined") {
+    refreshTimer = window.setInterval(refresh, 60000);
+  }
 }

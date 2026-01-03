@@ -172,7 +172,9 @@ function isUiTarget(event) {
       target.closest("#leaderboard") ||
       target.closest("#preview-bar") ||
       target.closest("#overlay") ||
-      target.closest("#wallet-picker")
+      target.closest("#wallet-picker") ||
+      target.closest("#share-cube") ||
+      target.closest("#share-modal")
   );
 }
 
@@ -190,6 +192,8 @@ function isUiPointed() {
       el.closest("#preview-bar") ||
       el.closest("#overlay") ||
       el.closest("#wallet-picker") ||
+      el.closest("#share-cube") ||
+      el.closest("#share-modal") ||
       el.closest(".toast-root") ||
       el.closest(".eth-hud") ||
       el.closest(".less-hud")

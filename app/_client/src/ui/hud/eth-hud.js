@@ -6,8 +6,8 @@ export function formatLess(value) {
   if (value === null || value === undefined) {
     return "—";
   }
-  if (value > 0n && value < 100_000_000_000_000n) {
-    return "<0.0001";
+  if (value > 0n && value < 1_000_000_000_000_000n) {
+    return "<0.001";
   }
   const whole = value / WAD;
   const decimals = value % WAD;
