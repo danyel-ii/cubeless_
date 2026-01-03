@@ -10,16 +10,6 @@ const DEFAULT_IMAGE_PATH = "/ogImage.png";
 
 export const dynamic = "force-dynamic";
 
-function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_TOKEN_VIEW_BASE_URL) {
-    return process.env.NEXT_PUBLIC_TOKEN_VIEW_BASE_URL;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
-
 function resolveImageUrl(imageUrl, baseUrl) {
   if (!imageUrl) {
     return null;
@@ -105,12 +95,17 @@ async function fetchTokenMetadata(tokenId) {
 }
 
 export async function generateMetadata({ params }) {
-  const tokenId = params?.tokenId;
+  const tokenId = params?.tokenId ? String(params.tokenId) : "";
   const baseUrl = getBaseUrl();
-  const fallbackImage = new URL(DEFAULT_IMAGE_PATH, baseUrl).toString();
-  let title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_";
+  const fallbackImage = baseUrl
+    ? new URL(DEFAULT_IMAGE_PATH, baseUrl).toString()
+    : DEFAULT_IMAGE_PATH;
+  let title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_ token";
   let description = DEFAULT_DESCRIPTION;
-  let ogImage = fallbackImage;
+  let ogImage =
+    baseUrl && tokenId
+      ? `${baseUrl}/m/${encodeURIComponent(tokenId)}/opengraph-image`
+      : fallbackImage;
 
   try {
     const metadata = await fetchTokenMetadata(tokenId);
@@ -134,14 +129,15 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title,
       description,
-      url: `/m/${tokenId}`,
-      images: [{ url: ogImage }],
+      type: "website",
+      url: baseUrl ? `${baseUrl}/m/${tokenId}` : `/m/${tokenId}`,
+      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [ogImage],
+      images: ogImage ? [ogImage] : [],
     },
   };
 }
@@ -157,35 +153,6 @@ function getBaseUrl() {
   }
   const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   return normalized.replace(/\/$/, "");
-}
-
-export function generateMetadata({ params }) {
-  const tokenId = params?.tokenId ? String(params.tokenId) : "";
-  const title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_ token";
-  const description =
-    "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.";
-  const baseUrl = getBaseUrl();
-  const ogImage = baseUrl
-    ? `${baseUrl}/m/${encodeURIComponent(tokenId)}/opengraph-image`
-    : undefined;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      url: baseUrl ? `${baseUrl}/m/${tokenId}` : undefined,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ogImage ? [ogImage] : [],
-    },
-  };
 }
 
 export default function TokenViewPage() {
