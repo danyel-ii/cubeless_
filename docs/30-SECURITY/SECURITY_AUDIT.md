@@ -62,7 +62,9 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: **Not rerun in this audit** (missing `MAINNET_RPC_URL`).
+Result: PASS (2 tests)
+- `ownerOf` reverted (non-standard or restricted), logged and allowed.
+- `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
 ### Frontend tests
 Command:
@@ -76,7 +78,7 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: **Failed to run** (port 3000 already in use).
+Result: **Failed** (mint-flow mocked test timed out waiting for `.nft-card` after refresh).
 
 ### Client secret scan
 Command:

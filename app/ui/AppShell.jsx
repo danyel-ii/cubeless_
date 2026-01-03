@@ -4,7 +4,15 @@ import { useEffect } from "react";
 
 export default function AppShell() {
   useEffect(() => {
-    import("../_client/src/main.js");
+    let active = true;
+    import("../_client/src/main.js").then(() => {
+      if (active && typeof window !== "undefined") {
+        window.__CUBIXLES_BOOTED__ = true;
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

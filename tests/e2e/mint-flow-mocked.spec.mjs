@@ -21,10 +21,26 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const { selectors, responses } = buildEthereumMock();
 
   await page.addInitScript(({ selectors, responses }) => {
+    let chainId = "0x1";
     window.ethereum = {
       request: async ({ method, params }) => {
         if (method === "eth_chainId") {
-          return "0xaa36a7";
+          return chainId;
+        }
+        if (method === "wallet_switchEthereumChain") {
+          const desired = params?.[0]?.chainId;
+          if (desired) {
+            chainId = desired;
+            return null;
+          }
+          throw new Error("Missing chainId");
+        }
+        if (method === "wallet_addEthereumChain") {
+          const desired = params?.[0]?.chainId;
+          if (desired) {
+            chainId = desired;
+          }
+          return null;
         }
         if (method === "eth_requestAccounts" || method === "eth_accounts") {
           return ["0x000000000000000000000000000000000000dEaD"];
@@ -143,6 +159,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.waitForTimeout(1000);
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
