@@ -547,11 +547,18 @@ button.ui-button {
 
 .minted-link {
   text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(18, 24, 34, 0.7);
 }
 
-.minted-copied {
-  font-size: 11px;
-  color: rgba(230, 233, 239, 0.65);
+.minted-link img {
+  width: 22px;
+  height: 22px;
 }
 
 .wallet-picker {

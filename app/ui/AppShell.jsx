@@ -19,7 +19,8 @@ export default function AppShell() {
         <div className="overlay-card">
           <div className="overlay-title">cubixles_</div>
           <div className="overlay-sub">
-            Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.
+            Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered
+            to NFTs you already own.
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
@@ -140,7 +141,10 @@ export default function AppShell() {
       </div>
       <div id="ui" className="ui-panel">
         <div className="ui-title">cubixles_</div>
-        <div className="ui-sub">Choose 1 to 6 Ethereum Mainnet NFTs to wrap the cube.</div>
+        <div className="ui-sub">
+          Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to
+          NFTs you already own.
+        </div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button" type="button">
             Connect Wallet
@@ -225,12 +229,14 @@ export default function AppShell() {
           </button>
         </div>
         <div id="minted-banner" className="ui-row minted-banner is-hidden">
-          <button id="minted-link" className="ui-button is-ghost minted-link" type="button">
-            cubelink
-          </button>
-          <span id="minted-copied" className="minted-copied is-hidden">
-            copied
-          </span>
+          <a
+            className="minted-link"
+            href="https://opensea.io/collection/cubixles"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img src="https://static.seadn.io/logos/Logomark-Blue.png" alt="OpenSea" />
+          </a>
         </div>
         <a
           className="deepwiki-badge"

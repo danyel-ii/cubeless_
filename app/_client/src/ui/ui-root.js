@@ -168,57 +168,20 @@ function initLandingReturn() {
 function initMintedBanner() {
   const banner = document.getElementById("minted-banner");
   const linkButton = document.getElementById("minted-link");
-  const copiedEl = document.getElementById("minted-copied");
-  if (!banner || !linkButton || !copiedEl) {
+  if (!banner || !linkButton) {
     return;
   }
 
-  let copyTimeout = null;
-
   function updateLink() {
     if (!state.currentCubeTokenId) {
-      linkButton.dataset.url = "";
-      linkButton.disabled = true;
       return;
     }
-    const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
-    linkButton.dataset.url = url;
-    linkButton.disabled = !url;
+    void buildTokenViewUrl(state.currentCubeTokenId.toString());
   }
-
-  async function copyLink() {
-    const url = linkButton.dataset.url;
-    if (!url) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch (error) {
-      const textarea = document.createElement("textarea");
-      textarea.value = url;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      textarea.remove();
-    }
-    copiedEl.classList.remove("is-hidden");
-    if (copyTimeout) {
-      window.clearTimeout(copyTimeout);
-    }
-    copyTimeout = window.setTimeout(() => {
-      copiedEl.classList.add("is-hidden");
-    }, 1500);
-  }
-
-  linkButton.addEventListener("click", copyLink);
 
   document.addEventListener("mint-complete", () => {
     updateLink();
-    if (linkButton.dataset.url) {
-      banner.classList.remove("is-hidden");
-    }
+    banner.classList.remove("is-hidden");
   });
 
   document.addEventListener("cube-token-change", updateLink);

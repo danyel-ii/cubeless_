@@ -5,6 +5,7 @@ import abi from "../../../contracts/abi/CubixlesMinter.json";
 import { buildGatewayUrls } from "../../../src/shared/ipfs-fetch.js";
 
 const DEFAULT_DESCRIPTION = "remix your nfts into cubixles_";
+const SHARE_TITLE = "remixed and cubed nft mints";
 const DEFAULT_IMAGE_PATH = "/ogImage.png";
 
 export const dynamic = "force-dynamic";
@@ -125,7 +126,7 @@ export async function generateMetadata({ params }) {
     title,
     description,
     openGraph: {
-      title,
+      title: SHARE_TITLE,
       description,
       type: "website",
       url: baseUrl ? `${baseUrl}/m/${tokenId}` : `/m/${tokenId}`,
@@ -133,7 +134,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: SHARE_TITLE,
       description,
       images: ogImage ? [ogImage] : [],
     },

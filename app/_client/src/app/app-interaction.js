@@ -141,6 +141,9 @@ export function applyRotationInertia() {
 
 function isOverlayActive() {
   const overlay = document.getElementById("overlay");
+  if (document.body.classList.contains("is-token-view")) {
+    return false;
+  }
   return Boolean(overlay && !overlay.classList.contains("is-hidden"));
 }
 

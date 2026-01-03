@@ -9,8 +9,9 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const DEFAULT_DESCRIPTION =
-  "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.";
+  "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.";
 const DEFAULT_IMAGE_PATH = "/ogImage.png";
+const SHARE_TITLE = "remixed and cubed nft mints";
 
 function resolveImageUrl(imageUrl, baseUrl) {
   if (!imageUrl) {
@@ -115,15 +116,13 @@ export default async function OpenGraphImage({ params }) {
   const fallbackImage = baseUrl
     ? new URL(DEFAULT_IMAGE_PATH, baseUrl).toString()
     : DEFAULT_IMAGE_PATH;
-  let title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_ token";
+  let title = SHARE_TITLE;
   let description = DEFAULT_DESCRIPTION;
   let imageUrl = fallbackImage;
 
   try {
     const metadata = await fetchTokenMetadata(tokenId);
-    if (metadata?.name) {
-      title = metadata.name;
-    }
+    void metadata?.name;
     if (metadata?.description) {
       description = metadata.description;
     }

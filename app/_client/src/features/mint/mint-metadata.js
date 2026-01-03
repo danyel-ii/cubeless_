@@ -171,7 +171,7 @@ export function buildMintMetadata({
     name: tokenId ? `cubixles_ #${tokenId}` : "cubixles_",
     tokenId,
     description: [
-      "cubixles_ mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
+      "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.",
       "Interactive cube:",
       externalUrl || animationUrl,
     ].join("\n"),
