@@ -104,6 +104,8 @@ export async function getNftsForOwner(
     const response = await alchemyGet<AlchemyGetNftsResponse>(chainId, "getNFTsForOwner", {
       owner: ownerAddress,
       withMetadata: "true",
+      excludeFilters: ["SPAM", "AIRDROP"],
+      pageSize: 100,
       pageKey,
     });
     const owned = response.ownedNfts ?? [];
