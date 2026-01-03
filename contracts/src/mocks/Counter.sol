@@ -16,6 +16,6 @@ contract Counter {
 
     /// @notice Increment the stored number.
     function increment() public {
-        number++;
+        ++number;
     }
 }

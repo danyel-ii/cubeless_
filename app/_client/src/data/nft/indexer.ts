@@ -29,7 +29,7 @@ type AlchemyMetadataResponse = AlchemyNft & {
   raw?: { metadata?: Record<string, unknown> | null } | Record<string, unknown>;
 };
 
-function assertMainnet(chainId: number) {
+function assertConfiguredChain(chainId: number) {
   if (chainId !== CUBIXLES_CONTRACT.chainId) {
     throw new Error(`Configured for chain ${CUBIXLES_CONTRACT.chainId}.`);
   }
@@ -83,7 +83,7 @@ function extractImageUri(nft: AlchemyNft): string | null {
 }
 
 export {
-  assertMainnet,
+  assertConfiguredChain,
   parseTokenId,
   normalizeAddress,
   extractTokenUri,
@@ -94,7 +94,7 @@ export async function getNftsForOwner(
   ownerAddress: string,
   chainId: number
 ): Promise<NftItem[]> {
-  assertMainnet(chainId);
+  assertConfiguredChain(chainId);
   const items: NftItem[] = [];
   let pageKey: string | undefined;
   let pages = 0;
@@ -142,7 +142,7 @@ export async function getProvenance(
   tokenId: string,
   chainId: number
 ): Promise<ProvenanceNft> {
-  assertMainnet(chainId);
+  assertConfiguredChain(chainId);
   const checksumAddress = normalizeAddress(contractAddress);
   const response = await alchemyGet<AlchemyMetadataResponse>(chainId, "getNFTMetadata", {
     contractAddress: checksumAddress,
@@ -173,7 +173,7 @@ export async function buildProvenanceBundle(
   selectedByAddress: string,
   chainId: number
 ): Promise<ProvenanceBundle> {
-  assertMainnet(chainId);
+  assertConfiguredChain(chainId);
   if (selected.length < 1 || selected.length > 6) {
     throw new Error("Provenance bundle requires 1 to 6 NFTs.");
   }

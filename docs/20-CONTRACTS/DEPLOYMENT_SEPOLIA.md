@@ -14,6 +14,12 @@ Last updated: 2026-01-02
 mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external payable returns (uint256 tokenId)
 ```
 
+Commit signature (required before mint):
+
+```solidity
+commitMint(bytes32 salt, bytes32 refsHash) external
+```
+
 `NftRef` shape:
 
 ```solidity
@@ -26,6 +32,7 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
+- `commitMint` must be called first; reveal must occur within 256 blocks.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the RoyaltySplitter and refunds any excess.
@@ -43,8 +50,8 @@ struct NftRef {
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
   - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
   - If the swap fails, the full amount is forwarded to owner.
-  - If the swap succeeds, 50% of ETH goes to owner, the rest swaps to $LESS, then $LESS splits 90% owner / 10% burn, with remaining ETH forwarded.
-- If `CUBIXLES_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
+  - If the swap succeeds, 50% of ETH is sent to owner, the remaining ETH is swapped to $LESS, then $LESS is split 90% owner / 10% burn.
+  - If `CUBIXLES_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
 
@@ -55,6 +62,7 @@ struct NftRef {
 
 Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 
+- Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
 - `CUBIXLES_OWNER`
 - `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
 - `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
@@ -64,4 +72,5 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)

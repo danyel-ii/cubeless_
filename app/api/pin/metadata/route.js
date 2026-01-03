@@ -6,13 +6,16 @@ import { logRequest } from "../../../../src/server/log.js";
 import { pinRequestSchema, readJsonWithLimit, formatZodError } from "../../../../src/server/validate.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
 import { canonicalJson } from "../../../../src/server/json.js";
-import { hashPayload, getCachedCid, setCachedCid, pinJson } from "../../../../src/server/pinata.js";
+import { generateCubeGif } from "../../../../src/server/cube-gif.js";
+import { hashPayload, getCachedCid, setCachedCid, pinJson, pinFile } from "../../../../src/server/pinata.js";
 import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
 import { recordMintAttempt, recordPinFailure } from "../../../../src/server/alerts.js";
 
 const MAX_BYTES = 50 * 1024;
+
+export const runtime = "nodejs";
 
 export async function POST(request) {
   const requestId = crypto.randomUUID();
@@ -103,7 +106,30 @@ export async function POST(request) {
       );
     }
 
-    const payloadText = canonicalJson(payload);
+    let finalPayload = payload;
+    const tokenId = payload?.tokenId ? String(payload.tokenId) : null;
+    const paletteColors = Array.isArray(payload?.palette?.hex_colors)
+      ? payload.palette.hex_colors
+      : Array.isArray(payload?.palette?.used_hex_colors)
+        ? payload.palette.used_hex_colors
+        : [];
+    if (paletteColors.length >= 3 && tokenId) {
+      try {
+        const gifBuffer = await generateCubeGif({ colors: paletteColors });
+        const gifName = `cubixles_${tokenId}.gif`;
+        const gifCid = await pinFile(gifBuffer, { name: gifName });
+        if (gifCid) {
+          finalPayload = {
+            ...payload,
+            preview_gif: `ipfs://${gifCid}`,
+          };
+        }
+      } catch (error) {
+        recordMetric("mint.pin.gif_failed");
+      }
+    }
+
+    const payloadText = canonicalJson(finalPayload);
     const payloadHash = hashPayload(payloadText);
     const cachedCid = await getCachedCid(payloadHash);
     if (cachedCid) {
@@ -123,7 +149,8 @@ export async function POST(request) {
       );
     }
 
-    const cid = await pinJson(payloadText);
+    const name = tokenId ? `cubixles_${tokenId}.json` : "cubixles_metadata.json";
+    const cid = await pinJson(payloadText, { name });
     if (!cid) {
       recordMetric("mint.pin.pinata_missing_cid");
       await recordPinFailure({ reason: "missing_cid" });

@@ -77,7 +77,7 @@ are split into smaller modules.
 - `app/_client/src/features/mint/token-uri-provider.js`
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
-  - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Sepolia).
+  - Alchemy NFT API wrapper via `/api/nfts` (mainnet; optional Sepolia via env).
 - `app/_client/src/data/chain/cubixles-reader.js`
   - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
@@ -108,7 +108,7 @@ are split into smaller modules.
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
 - `contracts/script/DeployCubixles.s.sol`
-  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON.
+  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (path via `CUBIXLES_DEPLOYMENT_PATH`).
 - `contracts/scripts/export-abi.mjs`
   - Exports CubixlesMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`

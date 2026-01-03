@@ -10,7 +10,7 @@ Last updated: 2026-01-02
 
 ## 2025-12-22 — T5 Spec Shapes
 
-- v0 chain is Sepolia only (`chainId: 11155111`).
+- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed.
 - `tokenId` stored as base-10 string (from `BigInt`) to allow large IDs.
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.
@@ -29,7 +29,7 @@ Last updated: 2026-01-02
   - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
-- RoyaltySplitter can attempt a $LESS buy, then splits $LESS 50% burn / 50% owner and forwards remaining ETH to owner.
+- RoyaltySplitter can attempt a $LESS buy, then splits $LESS 90% owner / 10% burn and forwards remaining ETH to owner (50% ETH sent upfront).
 - The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
@@ -43,7 +43,7 @@ Last updated: 2026-01-02
 - TokenId is derived from `msg.sender`, `salt`, and `refsHash` for safe pre-mint metadata.
 - `previewTokenId` is used client-side to build token-specific `external_url`.
 - `external_url` now points to `https://<domain>/m/<tokenId>` (Vercel viewer).
-- Metadata includes GIF traits (`gif.*`) and an `image` pointing to the GIF library.
+- Metadata includes palette traits and an `image` pointing to the palette image (gateway URL).
 
 ## 2025-12-25 — Server-Only Keys + Next.js Migration Start
 

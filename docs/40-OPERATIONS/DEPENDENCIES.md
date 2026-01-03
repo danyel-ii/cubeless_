@@ -1,10 +1,11 @@
 # Dependency Management
 
-Last updated: 2025-12-26
+Last updated: 2026-01-01
 
 ## Node/Frontend
 - Dependencies are declared in `package.json`.
 - Exact versions are locked in `package-lock.json`.
+- `solhint` is pinned to an exact version for reproducible lint output.
 - Update using `npm update` or explicit version bumps in PRs.
 
 ## Solidity/Foundry

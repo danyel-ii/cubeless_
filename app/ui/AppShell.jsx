@@ -4,20 +4,13 @@ import { useEffect } from "react";
 
 export default function AppShell() {
   useEffect(() => {
-    let active = true;
-    import("../_client/src/main.js").then(() => {
-      if (active && typeof window !== "undefined") {
-        window.__CUBIXLES_BOOTED__ = true;
-        window.__CUBIXLES_UI_READY__ = true;
-        const readyFlag = document.getElementById("ui-ready-flag");
-        if (readyFlag) {
-          readyFlag.setAttribute("data-ui-ready", "true");
-        }
+    if (typeof window !== "undefined") {
+      if (window.__CUBIXLES_MAIN_IMPORTED__) {
+        return;
       }
-    });
-    return () => {
-      active = false;
-    };
+      window.__CUBIXLES_MAIN_IMPORTED__ = true;
+    }
+    import("../_client/src/main.js");
   }, []);
 
   return (
@@ -42,7 +35,7 @@ export default function AppShell() {
             <div className="overlay-section-title">What gets minted</div>
             <p className="overlay-text">
               An ERC-721 with hosted metadata and an{" "}
-              <span className="overlay-em">animation_url</span> pointing to an IPFS-hosted
+              <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
               interactive cube.
             </p>
           </div>
@@ -56,6 +49,21 @@ export default function AppShell() {
             <div className="overlay-section-title">Notes</div>
             <p className="overlay-text">
               If floor data is unavailable, we display 0. Your selection is embedded as provenance.
+            </p>
+          </div>
+          <div className="overlay-section">
+            <div className="overlay-section-title">Mint price</div>
+            <p className="overlay-text">
+              Mint cost is calculated as a function of current{" "}
+              <a
+                className="ui-link"
+                href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
+                target="_blank"
+                rel="noreferrer"
+              >
+                $LESS
+              </a>{" "}
+              supply.
             </p>
           </div>
           <div className="overlay-actions">
@@ -76,7 +84,7 @@ export default function AppShell() {
               private keys are accessed; minting is a direct onchain transaction you sign.
             </p>
             <a
-              className="overlay-text"
+              className="deepwiki-badge"
               href="https://deepwiki.com/danyel-ii/cubixles_"
               target="_blank"
               rel="noreferrer"
@@ -87,6 +95,7 @@ export default function AppShell() {
         </div>
       </div>
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
+      <div id="confetti-root" className="confetti-root" aria-hidden="true"></div>
       <div id="eth-hud" className="eth-hud" aria-hidden="true">
         <div className="eth-hud-body">
           <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">
@@ -123,9 +132,6 @@ export default function AppShell() {
           </button>
           <button id="wallet-disconnect" className="ui-button is-ghost" type="button">
             Disconnect
-          </button>
-          <button id="wallet-switch" className="ui-button is-ghost is-hidden" type="button">
-            Switch to Mainnet
           </button>
         </div>
         <div id="wallet-status" className="ui-hint">
@@ -182,12 +188,18 @@ export default function AppShell() {
           <div id="mint-price" className="ui-hint">
             Mint price: —
           </div>
-          <div className="ui-row">
-            <button id="mint-share-copy" className="ui-button is-ghost is-hidden" type="button">
-              Copy share link
-            </button>
+          <div className="ui-hint is-accent">
+            Mint price rises as{" "}
+            <a
+              className="ui-link"
+              href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
+              target="_blank"
+              rel="noreferrer"
+            >
+              $LESS
+            </a>{" "}
+            supply drops (more burns = higher cost).
           </div>
-          <div id="mint-share-link" className="ui-hint"></div>
         </div>
         <div className="ui-row">
           <button id="ui-preview" className="ui-button is-ghost ui-preview-btn" type="button">
@@ -197,13 +209,21 @@ export default function AppShell() {
             Landing
           </button>
         </div>
+        <div id="minted-banner" className="ui-row minted-banner is-hidden">
+          <button id="minted-link" className="ui-button is-ghost minted-link" type="button">
+            cubelink
+          </button>
+          <span id="minted-copied" className="minted-copied is-hidden">
+            copied
+          </span>
+        </div>
         <a
-          className="ui-footer-link"
-          href="https://deepwiki.com/danyel-ii/cubixles_/1-overview#what-is-cubixles_"
+          className="deepwiki-badge"
+          href="https://deepwiki.com/danyel-ii/cubixles_"
           target="_blank"
           rel="noreferrer"
         >
-          deepwiki cubixles_
+          <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
         </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">
@@ -211,12 +231,6 @@ export default function AppShell() {
           Back to controls
         </button>
       </div>
-      <div id="token-view-footer" className="token-view-footer">
-        <a href="https://deepwiki.com/danyel-ii/cubixles_" target="_blank" rel="noreferrer">
-          <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
-        </a>
-      </div>
-      <div id="ui-ready-flag" data-ui-ready="false" aria-hidden="true"></div>
       <div id="leaderboard" className="ui-panel is-hidden">
         <div className="ui-title">Leaderboard</div>
         <div className="ui-sub">Mint history powered by $LESS supply snapshots.</div>
@@ -232,8 +246,8 @@ export default function AppShell() {
           <div className="ui-section-title">How the leaderboard works</div>
           <p className="ui-text">
             Each mint snapshots total $LESS supply. The leaderboard ranks tokens by ΔLESS — the
-            drop in total supply since the token’s last transfer. Bigger burns → bigger ΔLESS →
-            higher rank.
+            drop in total supply since the token’s last transfer. Earlier mint and longer holds
+            contribute to bigger ΔLESS.
           </p>
         </div>
         <div className="ui-section">

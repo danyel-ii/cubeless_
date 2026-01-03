@@ -2,14 +2,22 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push("@napi-rs/canvas", "gif-encoder-2");
+    }
+    return config;
+  },
   async headers() {
     const isProd = process.env.NODE_ENV === "production";
     const scriptSrc = isProd
-      ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
+      ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://vercel.live";
     const scriptSrcElem = isProd
-      ? "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
-      : "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
+      ? "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live"
+      : "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://vercel.live";
     const frameAncestors =
       process.env.FRAME_ANCESTORS ||
       "'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz";
@@ -22,6 +30,7 @@ const nextConfig = {
           "form-action 'self'",
           `frame-ancestors ${frameAncestors}`,
           "object-src 'none'",
+          "frame-src 'self' https://vercel.live",
           scriptSrc,
           scriptSrcElem,
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",

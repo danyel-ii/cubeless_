@@ -1,6 +1,6 @@
 # cubixles_
 
-Last updated: 2025-12-29
+Last updated: 2025-12-31
 
 cubixles_ is a miniapp that lets users mint interactive cubes whose provenance is tied to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.

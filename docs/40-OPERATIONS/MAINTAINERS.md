@@ -1,6 +1,6 @@
 # Maintainers
 
-Last updated: 2025-12-26
+Last updated: 2026-01-01
 
 ## Maintainers with sensitive access
 - **danyel-ii** (GitHub) — owner/maintainer

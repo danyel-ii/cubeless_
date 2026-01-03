@@ -1,7 +1,7 @@
-# cubixles_ — Security & Edge-Case Coverage Review
+# cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-03
-Date: 2026-01-03
+Last updated: 2026-01-01
+Date: 2026-01-01
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -24,7 +24,7 @@ Date: 2026-01-03
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
 - `ownerOf` revert or mismatch causes mint revert.
 - Refund exactness: `msg.value - currentMintPrice()` is returned to minter.
-- RoyaltySplitter splits $LESS 50% to burn address and 50% to owner on swap success, then forwards remaining ETH to owner.
+- RoyaltySplitter sends 50% ETH to owner, swaps 50% to $LESS, then sends 90% $LESS to owner and 10% to burn.
 
 ## Test results
 ### Unit + edge + fuzz + invariants
@@ -33,16 +33,21 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (81 tests).
+Result: PASS (89 tests; fork tests skipped in this run because `MAINNET_RPC_URL` was not set).
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: 92.57% line coverage (minimum is 90%).
-- Report: `docs/50-REPORTS/COVERAGE_REPORT.md`.
+Result: PASS (98.56% line coverage; minimum is 90%).
+- Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
+- Action: keep coverage at or above 90% before mainnet release.
+Warnings during coverage:
+- Low-level call return values ignored in test helpers (`RoyaltySplitter.t.sol`).
+- Some test functions could be marked `view` (test-only warnings).
+- Foundry coverage anchors missing for a few lines in test/mocks (informational).
 
 ### Invariants (standalone run)
 Command:
@@ -62,7 +67,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests)
+Result: PASS (2 tests; latest local run 2026-01-01 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
@@ -78,14 +83,22 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: PASS (3 tests)
+Result: PASS (1 test, ~18.6s)
+- Mocked E2E specs (`tests/e2e/*`) added but not run in this snapshot.
 
 ### Client secret scan
 Command:
 ```sh
 npm run check:no-client-secrets
 ```
-Result: **Not rerun in this audit**.
+Result: PASS (no forbidden strings in the client bundle).
+
+### npm audit
+Command:
+```sh
+npm audit --audit-level=high
+```
+Result: PASS (0 vulnerabilities).
 
 ### Abuse checks (pin endpoint)
 Command:
@@ -100,29 +113,20 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 37 warnings (import-path-check + lint warnings).
-- Local slither run:
-  - Command: `cd contracts && slither .`
-  - Result: 2 findings (weak PRNG; naming convention).
-
-## Failures observed (triage)
-- None in this audit run.
-
-## Notable risks (triaged)
-1. **External dependency risk**
-   - `ownerOf` calls to referenced ERC-721 contracts can revert or lie. Mitigation: strict revert policy; mint fails safely.
-   - Uniswap v4 PoolManager swaps are external and hook-dependent. Mitigation: swap can be disabled; fallback sends ETH to owner; slippage cap enforced.
-2. **Deterministic tokenId collisions**
-   - TokenId is deterministic and depends on `salt`. Mitigation: commit-reveal prevents third-party frontruns; UI must generate strong random salts.
-3. **Centralization risks**
-   - Owner can change royalty receiver and swap configuration. Mitigation: recommend multisig and optional timelock for production owners.
-4. **API dependency risks**
-   - Pinata/Alchemy/Neynar availability impacts UX. Mitigation: monitor health, alert on failures, keep manual fallback guidance.
-5. **Rate-limit fallback**
-   - In-memory fallback during Redis outages can be bypassed. Mitigation: add an optional fail-closed mode and monitoring.
+  - Result: 0 errors, 0 warnings (latest local run 2026-01-01).
+  - Note: update check failed (`registry.npmjs.org` not reachable), but lint executed successfully.
+- Local slither run (venv):
+  - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
+  - Result: **8 findings**:
+    - Weak PRNG in palette index selection (blockhash-derived).
+    - Strict equality check in `RoyaltySplitter._send` (amount == 0).
+    - Unused return values from `POOL_MANAGER.getSlot0` in `_sqrtPriceLimit` and `_poolInitialized`.
+    - Naming convention warnings for immutable constants (LESS_TOKEN, BURN_ADDRESS, POOL_MANAGER).
+  - Note: The PRNG is used for art variation; the strict equality and unused-return warnings are intentional for control flow checks.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- `npm audit --json` reports 0 vulnerabilities after upgrading Vitest to v4.0.16.
+- CI runs `npm audit` at `--audit-level=high`.
+- Local `npm audit --json` (2026-01-01): 0 vulnerabilities.

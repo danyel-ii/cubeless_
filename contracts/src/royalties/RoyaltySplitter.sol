@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IPoolManager } from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import { IUnlockCallback } from "@uniswap/v4-core/src/interfaces/callback/IUnlockCallback.sol";
-import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
 import { PoolIdLibrary } from "@uniswap/v4-core/src/types/PoolId.sol";
 import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
@@ -14,6 +12,12 @@ import { BalanceDelta, BalanceDeltaLibrary } from "@uniswap/v4-core/src/types/Ba
 import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+
+interface IWETH {
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address to, uint256 value) external returns (bool);
+    function withdraw(uint256 value) external;
+}
 
 /// @title RoyaltySplitter
 /// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
@@ -25,11 +29,11 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using StateLibrary for IPoolManager;
 
     /// @notice LESS token address.
-    address public immutable lessToken;
+    address public immutable LESS_TOKEN;
     /// @notice Burn address for LESS.
-    address public immutable burnAddress;
+    address public immutable BURN_ADDRESS;
     /// @notice Uniswap v4 PoolManager.
-    IPoolManager public immutable poolManager;
+    IPoolManager public immutable POOL_MANAGER;
     /// @notice PoolKey for the ETH/LESS pool.
     PoolKey public poolKey;
     /// @notice Whether swap to LESS is enabled.
@@ -41,6 +45,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @notice LESS token address is required.
     error LessTokenRequired();
+    /// @notice Owner is required.
+    error OwnerRequired();
+    /// @notice Burn address is required.
+    error BurnAddressRequired();
     /// @notice PoolManager is required when enabling swaps.
     error PoolManagerRequired();
     /// @notice PoolKey does not match expected ETH/LESS pool.
@@ -55,17 +63,25 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     error SettleMismatch(uint256 expected, uint256 paid);
     /// @notice Only PoolManager can call unlockCallback.
     error PoolManagerOnly();
+    /// @notice Recipient is required.
+    error RecipientRequired();
 
     /// @notice Emitted when swap enabled toggles.
     /// @param enabled Whether swap is enabled.
-    event SwapEnabledUpdated(bool enabled);
+    event SwapEnabledUpdated(bool indexed enabled);
     /// @notice Emitted when slippage config changes.
     /// @param maxSlippageBps Max slippage in bps.
-    event SwapSlippageUpdated(uint16 maxSlippageBps);
+    event SwapSlippageUpdated(uint16 indexed maxSlippageBps);
     /// @notice Emitted when swap fails and ETH is forwarded to owner.
     /// @param amount ETH amount forwarded.
     /// @param reasonHash Hash of the revert reason.
-    event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
+    event SwapFailedFallbackToOwner(uint256 indexed amount, bytes32 reasonHash);
+    /// @notice Emitted when WETH is swept from the splitter.
+    /// @param weth WETH token address.
+    /// @param recipient Recipient of the sweep.
+    /// @param amount Amount swept.
+    /// @param unwrapped Whether the sweep unwrapped WETH to ETH.
+    event WethSwept(address indexed weth, address indexed recipient, uint256 amount, bool unwrapped);
 
     /// @notice Create a new royalty splitter.
     /// @param owner_ Owner who receives ETH and can configure settings.
@@ -82,8 +98,12 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         uint16 swapMaxSlippageBps_,
         address burnAddress_
     ) Ownable(owner_) {
-        require(owner_ != address(0), "Owner required");
-        require(burnAddress_ != address(0), "Burn address required");
+        if (owner_ == address(0)) {
+            revert OwnerRequired();
+        }
+        if (burnAddress_ == address(0)) {
+            revert BurnAddressRequired();
+        }
         if (lessToken_ == address(0)) {
             revert LessTokenRequired();
         }
@@ -96,10 +116,10 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (swapMaxSlippageBps_ > MAX_SWAP_SLIPPAGE_BPS) {
             revert InvalidSlippageBps();
         }
-        lessToken = lessToken_;
-        poolManager = poolManager_;
+        LESS_TOKEN = lessToken_;
+        POOL_MANAGER = poolManager_;
         poolKey = poolKey_;
-        burnAddress = burnAddress_;
+        BURN_ADDRESS = burnAddress_;
         swapEnabled = address(poolManager_) != address(0);
         swapMaxSlippageBps = swapMaxSlippageBps_;
     }
@@ -117,7 +137,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     /// @notice Toggle swap behavior.
     /// @param enabled Whether swap to LESS is enabled.
     function setSwapEnabled(bool enabled) external onlyOwner {
-        if (enabled && address(poolManager) == address(0)) {
+        if (enabled && address(POOL_MANAGER) == address(0)) {
             revert PoolManagerRequired();
         }
         if (enabled && !_poolInitialized()) {
@@ -137,6 +157,27 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         emit SwapSlippageUpdated(maxSlippageBps);
     }
 
+    /// @notice Sweep WETH sent to this contract.
+    /// @param weth WETH token address.
+    /// @param recipient Recipient of ETH or WETH.
+    /// @param unwrap Whether to unwrap to ETH before sending.
+    function sweepWeth(address weth, address recipient, bool unwrap) external onlyOwner nonReentrant {
+        if (recipient == address(0)) {
+            revert RecipientRequired();
+        }
+        uint256 amount = IWETH(weth).balanceOf(address(this));
+        if (amount == 0) {
+            return;
+        }
+        if (unwrap) {
+            IWETH(weth).withdraw(amount);
+            _send(recipient, amount);
+        } else {
+            IWETH(weth).transfer(recipient, amount);
+        }
+        emit WethSwept(weth, recipient, amount, unwrap);
+    }
+
     /// @dev Entry for ETH royalty handling.
     function _handleRoyalty() internal {
         uint256 amount = msg.value;
@@ -144,7 +185,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             return;
         }
 
-        if (!swapEnabled || address(poolManager) == address(0)) {
+        if (!swapEnabled || address(POOL_MANAGER) == address(0)) {
             _send(owner(), amount);
             return;
         }
@@ -157,10 +198,40 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
 
         _send(owner(), ethToOwner);
-        try poolManager.unlock(abi.encode(ethToSwap)) returns (bytes memory unlockResult) {
+        _swapAndDistribute(ethToSwap);
+    }
+
+    /// @notice PoolManager callback to perform swap settlement.
+    /// @param data Encoded ETH amount input.
+    /// @return Encoded balance delta.
+    function unlockCallback(bytes calldata data) external override returns (bytes memory) {
+        if (msg.sender != address(POOL_MANAGER)) {
+            revert PoolManagerOnly();
+        }
+        uint256 amountIn = abi.decode(data, (uint256));
+        if (amountIn == 0) {
+            return bytes("");
+        }
+        uint160 sqrtPriceLimitX96 = _sqrtPriceLimit();
+        BalanceDelta delta = _swapForLess(amountIn, sqrtPriceLimitX96);
+        _settleSwap(delta);
+
+        return abi.encode(delta.amount0(), delta.amount1());
+    }
+
+    /// @dev Send ETH and revert on failure.
+    function _send(address recipient, uint256 amount) internal {
+        if (amount == 0) {
+            return;
+        }
+        Address.sendValue(payable(recipient), amount);
+    }
+
+    function _swapAndDistribute(uint256 ethToSwap) private {
+        try POOL_MANAGER.unlock(abi.encode(ethToSwap)) returns (bytes memory unlockResult) {
             if (unlockResult.length == 64) {
                 (, int128 amount1) = abi.decode(unlockResult, (int128, int128));
-                if (amount1 <= 0) {
+                if (amount1 < 1) {
                     revert SwapOutputTooLow();
                 }
             }
@@ -171,30 +242,33 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
     }
 
-    /// @notice PoolManager callback to perform swap settlement.
-    /// @param data Encoded ETH amount input.
-    /// @return Encoded balance delta.
-    function unlockCallback(bytes calldata data) external override returns (bytes memory) {
-        if (msg.sender != address(poolManager)) {
-            revert PoolManagerOnly();
+    /// @dev Compute sqrtPrice limit based on slippage bps.
+    function _slippageLimit(uint160 sqrtPriceX96) internal view returns (uint160) {
+        if (swapMaxSlippageBps == 0) {
+            return sqrtPriceX96;
         }
-        uint256 amountIn = abi.decode(data, (uint256));
-        if (amountIn == 0) {
-            return bytes("");
+        uint256 bps = swapMaxSlippageBps;
+        uint256 limit = (uint256(sqrtPriceX96) * (10_000 - bps)) / 10_000;
+        if (limit < TickMath.MIN_SQRT_PRICE + 1) {
+            return TickMath.MIN_SQRT_PRICE + 1;
         }
+        return uint160(limit);
+    }
 
+    function _sqrtPriceLimit() private view returns (uint160) {
         uint160 sqrtPriceLimitX96 = TickMath.MIN_SQRT_PRICE + 1;
         if (swapMaxSlippageBps != 0) {
-            (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee) = poolManager.getSlot0(
-                poolKey.toId()
-            );
-            if (protocolFee != 0 || lpFee != 0 || tick != 0) {
-                sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
-            } else {
-                sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
-            }
+            (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
+            sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
         }
-        BalanceDelta delta = poolManager.swap(
+        return sqrtPriceLimitX96;
+    }
+
+    function _swapForLess(
+        uint256 amountIn,
+        uint160 sqrtPriceLimitX96
+    ) private returns (BalanceDelta) {
+        return POOL_MANAGER.swap(
             poolKey,
             IPoolManager.SwapParams({
                 zeroForOne: true,
@@ -203,15 +277,17 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             }),
             bytes("")
         );
+    }
 
+    function _settleSwap(BalanceDelta delta) private {
         int128 amount0 = delta.amount0();
         int128 amount1 = delta.amount1();
-        if (amount1 <= 0) {
+        if (amount1 < 1) {
             revert SwapOutputTooLow();
         }
 
         if (amount0 < 0) {
-            uint256 paid = poolManager.settle{ value: uint256(uint128(-amount0)) }();
+            uint256 paid = POOL_MANAGER.settle{ value: uint256(uint128(-amount0)) }();
             if (paid != uint256(uint128(-amount0))) {
                 revert SettleMismatch(uint256(uint128(-amount0)), paid);
             }
@@ -221,48 +297,20 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             uint256 burnAmount = (output * 10) / 100;
             uint256 ownerAmount = output - burnAmount;
             if (burnAmount > 0) {
-                poolManager.take(poolKey.currency1, burnAddress, burnAmount);
+                POOL_MANAGER.take(poolKey.currency1, BURN_ADDRESS, burnAmount);
             }
             if (ownerAmount > 0) {
-                poolManager.take(poolKey.currency1, owner(), ownerAmount);
+                POOL_MANAGER.take(poolKey.currency1, owner(), ownerAmount);
             }
         }
-
-        return abi.encode(amount0, amount1);
-    }
-
-    /// @dev Send ETH and revert on failure.
-    function _send(address recipient, uint256 amount) internal {
-        if (amount < 1) {
-            return;
-        }
-        Address.sendValue(payable(recipient), amount);
-    }
-
-    /// @dev Compute sqrtPrice limit based on slippage bps.
-    function _slippageLimit(uint160 sqrtPriceX96) internal view returns (uint160) {
-        if (swapMaxSlippageBps == 0) {
-            return sqrtPriceX96;
-        }
-        uint256 bps = swapMaxSlippageBps;
-        uint256 limit = (uint256(sqrtPriceX96) * (10_000 - bps)) / 10_000;
-        if (limit <= TickMath.MIN_SQRT_PRICE) {
-            return TickMath.MIN_SQRT_PRICE + 1;
-        }
-        return uint160(limit);
     }
 
     /// @dev Check that the pool has been initialized.
     function _poolInitialized() internal view returns (bool) {
-        if (address(poolManager) == address(0)) {
+        if (address(POOL_MANAGER) == address(0)) {
             return false;
         }
-        (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee) = poolManager.getSlot0(
-            poolKey.toId()
-        );
-        if (protocolFee != 0 || lpFee != 0 || tick != 0) {
-            return sqrtPriceX96 != 0;
-        }
+        (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
         return sqrtPriceX96 != 0;
     }
 }

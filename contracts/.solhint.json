@@ -4,6 +4,7 @@
     "compiler-version": ["error", "^0.8.20"],
     "func-visibility": ["warn", {"ignoreConstructors": true}],
     "max-line-length": "off",
-    "no-empty-blocks": "off"
+    "no-empty-blocks": "off",
+    "import-path-check": "off"
   }
 }

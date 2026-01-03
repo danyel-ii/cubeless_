@@ -1,6 +1,6 @@
 # cubixles_ — Fork Testing
 
-Last updated: 2026-01-02
+Last updated: 2026-01-01
 
 ## Purpose
 Validate `ownerOf` and optional `royaltyInfo` behavior against real mainnet contracts.

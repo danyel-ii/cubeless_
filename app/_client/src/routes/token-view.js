@@ -67,6 +67,85 @@ async function waitForFrostedTexture() {
   });
 }
 
+function initTokenShareDialog() {
+  const modal = document.createElement("div");
+  modal.id = "share-modal";
+  modal.className = "share-modal is-hidden";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.innerHTML = `
+    <div id="share-backdrop" class="share-backdrop" aria-hidden="true"></div>
+      <div class="share-card">
+        <div class="share-title">Share this cube</div>
+        <div class="share-actions">
+        <a id="share-x" class="share-button" target="_blank" rel="noreferrer">X</a>
+        <button id="share-copy" class="share-button is-ghost" type="button">Copy link</button>
+        </div>
+        <button id="share-close" class="share-close" type="button">Close</button>
+      </div>
+  `;
+  document.body.appendChild(modal);
+  modal.style.display = "none";
+
+  const backdrop = modal.querySelector("#share-backdrop");
+  const closeButton = modal.querySelector("#share-close");
+  const copyButton = modal.querySelector("#share-copy");
+  const xLink = modal.querySelector("#share-x");
+
+  let currentUrl = "";
+
+  function closeModal() {
+    modal.classList.add("is-hidden");
+    modal.style.display = "none";
+  }
+
+  async function copyLink() {
+    if (!currentUrl) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      copyButton.textContent = "Copied!";
+    } catch (error) {
+      copyButton.textContent = "Copy failed";
+    }
+    window.setTimeout(() => {
+      copyButton.textContent = "Copy link";
+    }, 1200);
+  }
+
+  function openModal(url) {
+    currentUrl = url;
+    const encoded = encodeURIComponent(url);
+    const text = encodeURIComponent("Check out this cubixles_ cube");
+    xLink.href = `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`;
+    modal.classList.remove("is-hidden");
+    modal.style.display = "flex";
+  }
+
+  backdrop?.addEventListener("click", closeModal);
+  closeButton?.addEventListener("click", closeModal);
+  copyButton?.addEventListener("click", copyLink);
+
+  const shareButton = document.createElement("button");
+  shareButton.id = "share-cube";
+  shareButton.className = "share-cube-button";
+  shareButton.type = "button";
+  shareButton.textContent = "share cube";
+  document.body.appendChild(shareButton);
+
+  shareButton.addEventListener("click", () => {
+    if (!currentUrl) {
+      return;
+    }
+    openModal(currentUrl);
+  });
+
+  return (url) => {
+    currentUrl = url;
+  };
+}
+
 export async function initTokenViewRoute() {
   if (typeof window === "undefined") {
     return false;
@@ -77,6 +156,7 @@ export async function initTokenViewRoute() {
   }
   document.body.classList.add("is-token-view");
   setStatus("Loading token metadata...");
+  const setShareUrl = initTokenShareDialog();
 
   let tokenId;
   try {
@@ -91,6 +171,9 @@ export async function initTokenViewRoute() {
 
   try {
     const tokenUri = await fetchTokenUri(tokenId);
+    if (typeof setShareUrl === "function") {
+      setShareUrl(`${window.location.origin}/m/${tokenId.toString()}`);
+    }
     const resolved = resolveUri(tokenUri);
     if (!resolved?.resolved) {
       throw new Error("Token URI could not be resolved.");

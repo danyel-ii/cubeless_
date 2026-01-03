@@ -21,26 +21,33 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const { selectors, responses } = buildEthereumMock();
 
   await page.addInitScript(({ selectors, responses }) => {
-    let chainId = "0x1";
+    const mockBlock = {
+      number: "0x1",
+      hash: "0x" + "11".repeat(32),
+      parentHash: "0x" + "22".repeat(32),
+      nonce: "0x0000000000000000",
+      sha3Uncles: "0x" + "33".repeat(32),
+      logsBloom: "0x" + "00".repeat(256),
+      transactionsRoot: "0x" + "44".repeat(32),
+      stateRoot: "0x" + "55".repeat(32),
+      receiptsRoot: "0x" + "66".repeat(32),
+      miner: "0x0000000000000000000000000000000000000000",
+      difficulty: "0x0",
+      totalDifficulty: "0x0",
+      extraData: "0x",
+      size: "0x1",
+      gasLimit: "0x1c9c380",
+      gasUsed: "0x0",
+      timestamp: "0x0",
+      transactions: [],
+      uncles: [],
+      baseFeePerGas: "0x0",
+      mixHash: "0x" + "77".repeat(32),
+    };
     window.ethereum = {
       request: async ({ method, params }) => {
         if (method === "eth_chainId") {
-          return chainId;
-        }
-        if (method === "wallet_switchEthereumChain") {
-          const desired = params?.[0]?.chainId;
-          if (desired) {
-            chainId = desired;
-            return null;
-          }
-          throw new Error("Missing chainId");
-        }
-        if (method === "wallet_addEthereumChain") {
-          const desired = params?.[0]?.chainId;
-          if (desired) {
-            chainId = desired;
-          }
-          return null;
+          return "0x1";
         }
         if (method === "eth_requestAccounts" || method === "eth_accounts") {
           return ["0x000000000000000000000000000000000000dEaD"];
@@ -78,7 +85,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           };
         }
         if (method === "eth_getBlockByNumber") {
-          return { number: "0x1", timestamp: "0x0" };
+          return mockBlock;
         }
         if (method === "eth_blockNumber") {
           return "0x1";
@@ -103,6 +110,14 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ tokenURI: "ipfs://cid123" }),
+    });
+  });
+
+  await page.route("**/api/ipfs**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([{ output: "palette.png" }]),
     });
   });
 
@@ -159,10 +174,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
 
   await page.goto("/");
-  await page.waitForFunction(() => {
-    const flag = document.querySelector("#ui-ready-flag");
-    return flag?.getAttribute("data-ui-ready") === "true";
-  });
+  await page.waitForFunction(() => window.__CUBIXLES_UI_READY__ === true);
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
@@ -175,7 +187,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.getByRole("button", { name: /mint nft/i }).click();
 
   await expect(page.locator("#mint-status")).toContainText(
-    /submitting mint transaction|waiting for confirmation|mint confirmed/i,
+    /step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed/i,
     {
       timeout: 5000,
     }

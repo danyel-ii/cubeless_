@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
-  assertMainnet,
+  assertConfiguredChain,
   parseTokenId,
   normalizeAddress,
   buildProvenanceBundle,
 } from "../../app/_client/src/data/nft/indexer.ts";
+import { CUBIXLES_CONTRACT } from "../../app/_client/src/config/contracts";
 
 describe("provenance shaping", () => {
   it("normalizes addresses and tokenIds", () => {
@@ -15,17 +16,24 @@ describe("provenance shaping", () => {
     );
   });
 
-  it("rejects non-mainnet chainId", () => {
-    expect(() => assertMainnet(11155111)).toThrow(/chain 1/i);
+  it("rejects non-configured chainId", () => {
+    const wrongChain = CUBIXLES_CONTRACT.chainId === 1 ? 11155111 : 1;
+    expect(() => assertConfiguredChain(wrongChain)).toThrow(/configured/i);
   });
 
   it("enforces selection bounds for provenance bundles", async () => {
-    await expect(buildProvenanceBundle([], "0x000000000000000000000000000000000000dEaD", 1))
+    await expect(
+      buildProvenanceBundle(
+        [],
+        "0x000000000000000000000000000000000000dEaD",
+        CUBIXLES_CONTRACT.chainId
+      )
+    )
       .rejects.toThrow(/1 to 6/i);
     await expect(
       buildProvenanceBundle(
         new Array(7).fill(null).map((_, idx) => ({
-          chainId: 1,
+          chainId: CUBIXLES_CONTRACT.chainId,
           contractAddress: "0x000000000000000000000000000000000000dEaD",
           tokenId: String(idx + 1),
           name: null,
@@ -35,7 +43,7 @@ describe("provenance shaping", () => {
           source: "alchemy",
         })),
         "0x000000000000000000000000000000000000dEaD",
-        1
+        CUBIXLES_CONTRACT.chainId
       )
     ).rejects.toThrow(/1 to 6/i);
   });

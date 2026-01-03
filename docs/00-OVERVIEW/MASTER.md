@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-02
+Last updated: 2026-01-01
 
 ## Executive Overview
 
@@ -15,7 +15,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 
 ### Contracts + Deployment
 - `docs/20-CONTRACTS/CONTRACT_DETAILS.md` — Contract architecture, mint flow, pricing, and royalty behavior.
-- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Sepolia rehearsal deployment steps + environment variables.
+- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Deployment steps + environment variables (mainnet primary, Sepolia rehearsal).
 
 ### Next.js (App Router)
 - `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
@@ -39,7 +39,10 @@ This document is the single entry point for cubixles_ documentation. It explains
 - `docs/40-OPERATIONS/RELEASE.md` — Release process and versioning.
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
 - `docs/40-OPERATIONS/DEPENDENCIES.md` — Dependency tracking policy.
-- `docs/40-OPERATIONS/FOR_PROD.md` — Mainnet deploy + launch checklist (Sepolia rehearsal optional).
+- `docs/40-OPERATIONS/FOR_PROD.md` — Mainnet deploy + launch checklist (with optional Sepolia rehearsal).
+
+### Project Status + Tasks
+- `docs/60-STATUS/STATE_OF_REVIEW.md` — Snapshot of repo alignment and current health.
 - `docs/00-OVERVIEW/STRUCTURE.md` — Repository layout and module responsibilities.
 
 ### Repository Policies
@@ -50,6 +53,9 @@ This document is the single entry point for cubixles_ documentation. It explains
 - `SECURITY.md` — Vulnerability reporting policy.
 - `SUPPORT.md` — Defect reporting and support channels.
 - `CHANGELOG.md` — Release notes.
+
+### Generated Reports
+- `docs/50-REPORTS/COVERAGE_REPORT.md` — Solidity line coverage report (grouped by contract).
 
 ## Workflow (How to Use These Docs)
 
@@ -64,7 +70,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 4) **Security posture**
    - Review `docs/30-SECURITY/*` and update `docs/30-SECURITY/SECURITY_AUDIT.md`.
 5) **Status + next steps**
-   - Track issues and releases in `CHANGELOG.md` and GitHub issues.
+   - Check `docs/60-STATUS/STATE_OF_REVIEW.md`.
 
 ## Glossary
 
@@ -88,7 +94,7 @@ forge test -vvv
 # Unit + API tests (Vitest)
 npm test
 
-# Coverage (generates a local report)
+# Coverage (writes docs/50-REPORTS/COVERAGE_REPORT.md)
 npm run coverage:contracts
 
 # Frontend smoke (Playwright)
@@ -115,3 +121,5 @@ npm run check:no-client-secrets
 
 - `docs/30-SECURITY/SECURITY_AUDIT.md` updated with latest tool runs.
 - `docs/30-SECURITY/OSPS_BASELINE_2025-10-10.md` reviewed after policy changes.
+- `docs/50-REPORTS/COVERAGE_REPORT.md` regenerated after test updates.
+- `docs/60-STATUS/STATE_OF_REVIEW.md` reflects current status.

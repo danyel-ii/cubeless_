@@ -34,7 +34,7 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
 6. **Raw metadata**: provenance stores full source metadata as received.
 7. **Floor snapshot (optional)**: store collection floor ETH + retrieval timestamp at mint time.
-   - Sepolia default: `0` when floor data is unavailable.
+   - Default: `0` when floor data is unavailable.
 
 ## Types
 
@@ -51,7 +51,7 @@ type ResolvedUri = {
 
 ```ts
 type NftItem = {
-  chainId: 11155111;
+  chainId: 1;
   contractAddress: string; // EIP-55 checksum
   tokenId: string; // base-10 string
   name: string | null;
@@ -72,7 +72,7 @@ Notes:
 
 ```ts
 type ProvenanceNft = {
-  chainId: 11155111;
+  chainId: 1;
   contractAddress: string; // EIP-55 checksum
   tokenId: string; // base-10 string
   tokenUri: ResolvedUri | null;
@@ -91,7 +91,7 @@ type ProvenanceNft = {
 
 ```ts
 type ProvenanceBundle = {
-  chainId: 11155111;
+  chainId: 1;
   selectedBy: string; // EIP-55 checksum wallet address
   retrievedAt: string; // ISO timestamp
   nfts: ProvenanceNft[]; // length 1..6
@@ -130,7 +130,7 @@ v0 mapping order (fixed):
 
 Notes:
 - `external_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
-- `image` is an optional static thumbnail for marketplaces (GIF library).
+- `image` is the palette image (gateway URL), and `image_ipfs` holds the ipfs:// URI for wallets.
 - `provenance` stores the full bundle for traceability.
 - `provenance.refsFaces` preserves face order; `provenance.refsCanonical` is the sorted list used for tokenId hashing.
 
@@ -139,19 +139,9 @@ type MintMetadata = {
   schemaVersion: 1;
   name: string;
   description: string;
-  image: string | null; // pre-generated GIF thumbnail
+  image: string | null; // palette image (gateway URL)
+  image_ipfs?: string | null; // ipfs://... for wallets
   external_url: string | null; // https://<domain>/m/<tokenId>
-  gif: {
-    variantIndex: number;
-    selectionSeed: string;
-    params: {
-      rgb_sep_px: number;
-      band_shift_px: number;
-      grain_intensity: number;
-      contrast_flicker: number;
-      solarization_strength: number;
-    };
-  };
   attributes: Array<{ trait_type: string; value: string | number }>;
   provenance: ProvenanceBundle & {
     schemaVersion: 1;
@@ -161,7 +151,7 @@ type MintMetadata = {
     refsCanonical?: Array<{ contractAddress: string; tokenId: string }>;
   };
   references: Array<{
-    chainId: 11155111;
+    chainId: 1;
     contractAddress: string;
     tokenId: string;
     tokenIdNumber: number | null; // null if > MAX_SAFE_INTEGER
@@ -182,7 +172,9 @@ type MintMetadata = {
   - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
-- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (splits $LESS 50% burn / 50% owner on successful swap).
+- Mint supply is capped at 32,768 total mints.
+- Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
+- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
 ## Deterministic TokenId
 
@@ -190,13 +182,40 @@ type MintMetadata = {
 - `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
 - Clients call `previewTokenId(salt, refs)` to build metadata before mint.
 
+## Commit-Reveal Mint Flow
+
+- Minting uses a two-step commit-reveal:
+  1. `commitMint(salt, refsHash)` stores a commitment and block number.
+  2. `mint(salt, tokenURI, refs)` reveals refs + salt and completes the mint.
+- The reveal must occur within 256 blocks of the commit.
+- Random palette index is derived from `refsHash`, `salt`, minter, and the commit block hash.
+- The UI prompts two wallet confirmations and auto-advances to the mint step after the commit is confirmed.
+
 ## $LESS Delta Metric (UI/Leaderboard)
 
 - The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
 - The canonical UI/leaderboard metric is `deltaFromLast(tokenId)` (snapshot minus current supply, clamped to 0).
- - The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
+- The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
 
 ## Token Viewer Route
 
 - `external_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.
+
+## Palette Mapping
+
+- The in-wallet static image is chosen from a 10,000-image IPFS folder using the onchain random index.
+- A manifest JSON maps random indices to filenames and palette metadata.
+- `image` points to the palette image (gateway URL).
+- The palette-specific image URL is stored under `palette.image_url`.
+
+## Farcaster Frame Embed
+
+- The home page includes an `fc:frame` definition in the HTML head.
+- The home page also includes an `fc:miniapp` definition for discovery.
+- Frame definition fields:
+  - `imageUrl` (3:2) points to the social preview image.
+  - `button.title` is the CTA label.
+  - `button.action.type` is `launch_frame`.
+  - `button.action.url` is the home URL.
+  - `splashImageUrl` + `splashBackgroundColor` are set for the miniapp launch screen.

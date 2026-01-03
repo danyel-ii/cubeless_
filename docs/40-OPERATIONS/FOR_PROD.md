@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-03
+Last updated: 2026-01-02
 
 ## 0) Pre-flight (local)
 
@@ -51,7 +51,7 @@ npm run fork-test
 - `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
-- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
+- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
 
 ### Deploy
@@ -60,6 +60,15 @@ cd contracts
 forge script script/DeployCubixles.s.sol \
   --rpc-url "$MAINNET_RPC_URL" \
   --private-key "$MAINNET_DEPLOYER_KEY" \
+  --broadcast
+```
+
+Optional Sepolia rehearsal:
+```sh
+cd contracts
+forge script script/DeployCubixles.s.sol \
+  --rpc-url "$SEPOLIA_RPC_URL" \
+  --private-key "$SEPOLIA_DEPLOYER_KEY" \
   --broadcast
 ```
 
@@ -80,11 +89,6 @@ node contracts/scripts/export-abi.mjs
 - `SERVER_AUTH_SALT`
 - `CUBIXLES_CONTRACT_ADDRESS`
 - `CUBIXLES_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
-- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (required for mobile browser wallet connections)
-
-### Farcaster manifest (production)
-- Publish `public/.well-known/farcaster.json` with `requiredChains: [1]`.
-- Ensure `accountAssociation` is signed for the production domain.
 
 ### Run dev + smoke
 ```sh
@@ -114,6 +118,7 @@ npm run check:no-client-secrets
 ```
 4) Update docs:
    - `docs/30-SECURITY/SECURITY_AUDIT.md`
+   - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
 6) Set `CUBIXLES_CHAIN_ID=1` and mainnet contract address in config.
 

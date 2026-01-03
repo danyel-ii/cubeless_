@@ -11,7 +11,7 @@ Last updated: 2026-01-02
 ## Executive Summary
 
 CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
-Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. All ETH transfers revert on failure (`EthTransferFailed`), and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
+Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
 ## Contract Overview
 
@@ -35,7 +35,7 @@ mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external pa
 
 Key steps:
 
-0. **Commit required**: `commitMint(salt, refsHash)` must be called before mint (commit window is 256 blocks).
+0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit window is 256 blocks).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
@@ -44,10 +44,10 @@ Key steps:
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
-5. **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
-6. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
-7. **Mint + metadata**: mint token and store `tokenURI`.
-8. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
+4.5 **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
+5. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
+6. **Mint + metadata**: mint token and store `tokenURI`.
+7. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 
 Mint payment uses a direct ETH transfer to the RoyaltySplitter. If the payout transfer fails, the mint reverts. Overpayment is always refunded.
 
@@ -97,6 +97,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
 
 - Deploy script: `contracts/script/DeployCubixles.s.sol`
   - Reads:
+    - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
     - `CUBIXLES_OWNER`
     - `CUBIXLES_LESS_TOKEN` (optional; defaults to mainnet $LESS address)
     - `CUBIXLES_POOL_MANAGER` (optional)
@@ -118,9 +119,14 @@ File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` (GIF), `external_url` (`/m/<tokenId>`), palette traits, and `provenance.refsFaces` + `provenance.refsCanonical`.
-- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` with the resulting `ipfs://` URI.
+- Creates a JSON metadata object with `image` (palette image via gateway), `image_ipfs` (ipfs:// for wallets), `external_url` (`/m/<tokenId>`), and `provenance.refsFaces` + `provenance.refsCanonical`.
+- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on mainnet with the resulting `ipfs://` URI.
 
-## Known limitations
+## Known Placeholders / TODOs
 
-See `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+- On-chain pool position management is not implemented.
+- RoyaltySplitter swaps via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
+- When the swap fails, all ETH is forwarded to owner.
+- When the swap succeeds, 50% of ETH is sent to owner, the rest is swapped to $LESS, then 90% $LESS goes to owner and 10% to burn address, followed by forwarding any remaining ETH balance to owner.
+- If PoolManager is unset, swaps are disabled and all ETH is forwarded.
+- Metadata is pinned to IPFS via the server route and references the token viewer via `external_url`.

@@ -31,10 +31,8 @@ export function subscribeWallet(listener) {
 export async function connectWallet() {
   setState({ status: "connecting", error: null });
   try {
-    setWalletModalOpen(true);
     let provider = getBrowserProvider();
     let providerSource = provider ? "browser" : null;
-    let walletModalLock = false;
 
     if (!provider) {
       const canUseMiniApp = Boolean(sdk?.isInMiniApp && sdk?.wallet?.getEthereumProvider);
@@ -61,7 +59,6 @@ export async function connectWallet() {
       providerSource = "walletconnect";
     }
     if (needsWalletConnect) {
-      walletModalLock = true;
       await ensureWalletConnectSession(provider);
     }
 
@@ -74,7 +71,6 @@ export async function connectWallet() {
     setState({ status: "connected", address, provider, providerSource, chainId });
     await ensureChain(provider, CUBIXLES_CONTRACT.chainId);
     attachProviderListeners(provider);
-    setWalletModalOpen(false);
   } catch (error) {
     if (typeof document !== "undefined") {
       document.dispatchEvent(
@@ -91,7 +87,6 @@ export async function connectWallet() {
       chainId: null,
       error: error?.message || "Unable to connect wallet.",
     });
-    setWalletModalOpen(false);
   }
 }
 
@@ -204,13 +199,6 @@ function getBrowserProvider() {
   }
   const provider = window.ethereum || null;
   return provider;
-}
-
-function setWalletModalOpen(open) {
-  if (typeof document === "undefined") {
-    return;
-  }
-  document.body.classList.toggle("wallet-modal-open", Boolean(open));
 }
 
 async function getWalletConnectProvider() {

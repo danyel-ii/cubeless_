@@ -104,7 +104,12 @@ export function buildMintMetadata({
   refsCanonical,
   salt,
   animationUrl,
+  externalUrl,
   imageUrl,
+  imageIpfsUrl,
+  paletteEntry,
+  paletteIndex,
+  paletteImageUrl,
   lessSupplyMint,
 }) {
   const provenance = sanitizeProvenance(
@@ -122,9 +127,44 @@ export function buildMintMetadata({
     { trait_type: "LESS Supply At Mint", value: lessSupplyMint },
     { trait_type: "Selection Count", value: selection.length },
     { trait_type: "Selected NFTs", value: buildSelectionSummary(selection) || "None" },
-    { trait_type: "Animation URL", value: animationUrl, display_type: "url" },
+    imageUrl
+      ? { trait_type: "Image URL", value: imageUrl, display_type: "url" }
+      : null,
+    imageIpfsUrl?.startsWith("ipfs://")
+      ? { trait_type: "Image IPFS", value: imageIpfsUrl, display_type: "url" }
+      : null,
     ...buildSelectionAttributes(selection),
-  ];
+  ].filter(Boolean);
+  if (paletteEntry) {
+    attributes.push(
+      { trait_type: "Palette Index", value: paletteIndex ?? 0 },
+      { trait_type: "Palette ID", value: paletteEntry.palette_id },
+      {
+        trait_type: "Palette Hex Colors",
+        value: Array.isArray(paletteEntry.hex_colors)
+          ? paletteEntry.hex_colors.join(", ")
+          : "",
+      },
+      {
+        trait_type: "Palette Used Hex Colors",
+        value: Array.isArray(paletteEntry.used_hex_colors)
+          ? paletteEntry.used_hex_colors.join(", ")
+          : "",
+      },
+      {
+        trait_type: "Palette Rarity Inverse Frequency",
+        value: paletteEntry.rarity_inverse_frequency ?? 0,
+      },
+      {
+        trait_type: "Palette Rarity Color Sum",
+        value: paletteEntry.rarity_color_rarity_sum ?? 0,
+      },
+      {
+        trait_type: "Palette Rarity Unique Count",
+        value: paletteEntry.rarity_unique_count ?? 0,
+      }
+    );
+  }
 
   return {
     schemaVersion: 1,
@@ -133,11 +173,18 @@ export function buildMintMetadata({
     description: [
       "cubixles_ mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
       "Interactive cube:",
-      animationUrl,
+      externalUrl || animationUrl,
     ].join("\n"),
     image: imageUrl,
-    external_url: animationUrl,
-    animation_url: animationUrl,
+    image_ipfs: imageIpfsUrl?.startsWith("ipfs://") ? imageIpfsUrl : undefined,
+    external_url: externalUrl || animationUrl,
+    palette: paletteEntry
+      ? {
+          index: paletteIndex ?? 0,
+          image_url: paletteImageUrl || null,
+          ...paletteEntry,
+        }
+      : undefined,
     provenance: {
       schemaVersion: 1,
       ...provenance,

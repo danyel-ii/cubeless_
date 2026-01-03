@@ -10,21 +10,30 @@ export function initOverlay() {
 
   function show() {
     overlay.classList.remove("is-hidden");
+    document.dispatchEvent(new CustomEvent("overlay-opened"));
   }
 
   function dismiss() {
-    overlay.classList.add("is-hidden");
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-hidden");
+      document.dispatchEvent(new CustomEvent("overlay-closed"));
+    });
   }
 
-  enterButton.addEventListener("click", () => dismiss());
+  enterButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    dismiss();
+  });
   if (leaderboardButton) {
-    leaderboardButton.addEventListener("click", () => {
+    leaderboardButton.addEventListener("click", (event) => {
+      event.preventDefault();
       dismiss();
       document.dispatchEvent(new CustomEvent("open-leaderboard"));
     });
   }
   if (aboutButton && aboutPanel) {
-    aboutButton.addEventListener("click", () => {
+    aboutButton.addEventListener("click", (event) => {
+      event.preventDefault();
       aboutPanel.classList.toggle("is-open");
     });
   }

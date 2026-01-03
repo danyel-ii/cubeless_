@@ -6,6 +6,9 @@ export function formatLess(value) {
   if (value === null || value === undefined) {
     return "—";
   }
+  if (value > 0n && value < 100_000_000_000_000n) {
+    return "<0.0001";
+  }
   const whole = value / WAD;
   const decimals = value % WAD;
   const decimalStr = (decimals / 10_000_000_000_000n).toString().padStart(4, "0");
@@ -23,8 +26,8 @@ export function initEthHud() {
   function render() {
     valueEl.textContent = `ΔLESS ${formatLess(state.lessDeltaLast)}`;
     if (timeEl) {
-      timeEl.textContent = state.currentCubeTokenId
-        ? `token #${state.currentCubeTokenId.toString()}`
+      timeEl.textContent = document.body.classList.contains("is-token-view")
+        ? "token view"
         : "token: —";
     }
   }

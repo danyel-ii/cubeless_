@@ -1,6 +1,6 @@
 # cubixles_ — Known Limitations
 
-Last updated: 2026-01-02
+Last updated: 2026-01-01
 
 1. **Strict receiver failure policy**
    - Mint and royalty distribution revert if ETH or $LESS transfers fail.
@@ -22,17 +22,4 @@ Last updated: 2026-01-02
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
 
 7. **Static analysis**
-   - Slither findings (2 total) are documented in `docs/30-SECURITY/STATIC_ANALYSIS.md`.
-   - Solhint still reports warnings (mostly import-path-check).
-
-8. **Deterministic tokenId salts**
-   - TokenId depends on user-provided `salt`; weak salts increase collision/replay risk.
-   - UI should generate cryptographically strong salts and warn on reuse.
-
-9. **Owner-controlled parameters**
-   - Swap enablement, slippage cap, and royalty receiver are owner-controlled.
-   - Recommend multisig and/or timelock for production operations.
-
-10. **API key dependencies**
-   - The app relies on Alchemy/Pinata/Neynar keys; outages or key exposure impact availability.
-   - Maintain rotation procedures and monitor for failures.
+   - Slither currently reports no findings; solhint still reports warnings (mostly NatSpec + import-path-check).
