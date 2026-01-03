@@ -62,7 +62,19 @@ export async function connectWallet() {
       await ensureWalletConnectSession(provider);
     }
 
-    const accounts = await requestAccounts(provider);
+    let accounts = null;
+    try {
+      accounts = await requestAccountsWithTimeout(provider);
+    } catch (error) {
+      if (providerSource === "browser") {
+        provider = await getWalletConnectProvider();
+        providerSource = "walletconnect";
+        await ensureWalletConnectSession(provider);
+        accounts = await requestAccountsWithTimeout(provider);
+      } else {
+        throw error;
+      }
+    }
     const address = accounts && accounts[0] ? accounts[0] : null;
     if (!address) {
       throw new Error("No accounts returned from provider.");
@@ -113,6 +125,22 @@ async function requestAccounts(provider) {
     return provider.send("eth_requestAccounts");
   }
   throw new Error("Wallet provider does not support requests.");
+}
+
+async function requestAccountsWithTimeout(provider, timeoutMs = 5000) {
+  let timeoutId = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("Wallet request timed out."));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([requestAccounts(provider), timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 function isWalletConnectProvider(provider) {
