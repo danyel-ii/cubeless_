@@ -30,31 +30,45 @@ function setStatus(message, tone = "neutral") {
   statusEl.classList.toggle("is-error", tone === "error");
 }
 
-async function loadImages(urls) {
+async function loadImages(urlSets) {
   if (typeof loadImage !== "function") {
     throw new Error("Image loader unavailable.");
   }
   const maxSize = getMaxTextureSize();
-  const loaders = urls.map(
-    (url) =>
+  const loaders = urlSets.map(
+    (urls) =>
       new Promise((resolve) => {
-        loadImage(
-          url,
-          (img) => resolve(downscaleImageToMax(img, maxSize)),
-          () => resolve(null)
-        );
+        const candidates = Array.isArray(urls) ? urls.filter(Boolean) : [];
+        if (!candidates.length) {
+          resolve(null);
+          return;
+        }
+        const tryLoad = (index) => {
+          if (index >= candidates.length) {
+            resolve(null);
+            return;
+          }
+          const url = candidates[index];
+          loadImage(
+            url,
+            (img) => resolve(downscaleImageToMax(img, maxSize)),
+            () => tryLoad(index + 1)
+          );
+        };
+        tryLoad(0);
       })
   );
   return Promise.all(loaders);
 }
 
-async function resolveMetadataImage(nft) {
+async function resolveMetadataImageCandidates(nft) {
+  const candidates = [];
   if (nft?.image?.resolved) {
-    return nft.image.resolved;
+    candidates.push(nft.image.resolved);
   }
   const tokenUri = nft?.tokenUri?.resolved;
   if (!tokenUri) {
-    return null;
+    return candidates;
   }
   try {
     let response;
@@ -64,28 +78,34 @@ async function resolveMetadataImage(nft) {
       response = await fetch(tokenUri);
     }
     if (!response?.ok) {
-      return null;
+      return candidates;
     }
     const metadata = await response.json();
-    const image =
-      metadata?.image ||
-      metadata?.image_url ||
-      metadata?.imageUrl ||
-      null;
-    if (typeof image === "string" && image.trim()) {
-      return resolveUri(image)?.resolved ?? null;
-    }
+    const imageCandidates = [
+      metadata?.image,
+      metadata?.image_url,
+      metadata?.imageUrl,
+    ];
+    imageCandidates.forEach((candidate) => {
+      if (typeof candidate !== "string" || !candidate.trim()) {
+        return;
+      }
+      const resolved = resolveUri(candidate)?.resolved ?? null;
+      if (resolved) {
+        candidates.push(resolved);
+      }
+    });
     if (typeof metadata?.image_data === "string") {
       const svg = metadata.image_data.trim();
       if (!svg) {
-        return null;
+        return candidates;
       }
-      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      candidates.push(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
     }
   } catch (error) {
-    return null;
+    return candidates;
   }
-  return null;
+  return Array.from(new Set(candidates));
 }
 
 async function waitForFrostedTexture() {
@@ -202,6 +222,7 @@ function initTokenShareDialog() {
   closeButton?.addEventListener("touchstart", closeModal, { passive: false });
   copyButton?.addEventListener("touchstart", copyLink, { passive: false });
   xLink?.addEventListener("touchstart", openShareLink, { passive: false });
+  xLink?.addEventListener("click", openShareLink);
 
   const shareButton = document.createElement("button");
   shareButton.id = "share-cube";
@@ -290,18 +311,25 @@ export async function initTokenViewRoute() {
         )
       )
     );
-    const urls = await Promise.all(nfts.map((nft) => resolveMetadataImage(nft)));
-    if (urls.some((url) => !url)) {
+    const urlSets = await Promise.all(
+      nfts.map((nft) => resolveMetadataImageCandidates(nft))
+    );
+    if (urlSets.some((urls) => !urls || urls.length === 0)) {
       throw new Error("One or more referenced NFTs are missing images.");
     }
-    const images = await loadImages(urls);
-    const usable = images.filter((img) => img);
-    if (usable.length !== images.length) {
-      throw new Error("Failed to load one or more NFT images.");
-    }
+    const images = await loadImages(urlSets);
 
     await waitForFrostedTexture();
-    state.faceTextures = mapSelectionToFaceTextures(usable, state.frostedTexture);
+    const fallbackTexture = state.frostedTexture || null;
+    const filled = images.map((img) => img || fallbackTexture);
+    if (filled.some((img) => !img)) {
+      throw new Error("Failed to load NFT images.");
+    }
+    if (images.some((img) => !img)) {
+      console.warn("Some NFT images failed to load; using fallback texture.");
+    }
+
+    state.faceTextures = mapSelectionToFaceTextures(filled, state.frostedTexture);
     state.nftSelection = nfts;
     setStatus("Loaded.", "success");
   } catch (error) {
