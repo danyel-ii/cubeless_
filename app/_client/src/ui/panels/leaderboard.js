@@ -87,6 +87,9 @@ export function initLeaderboardUi() {
   }
 
   function getReadProvider(provider) {
+    if (walletState?.providerSource === "walletconnect") {
+      return new JsonRpcProvider("https://cloudflare-eth.com");
+    }
     if (provider) {
       return new BrowserProvider(provider);
     }

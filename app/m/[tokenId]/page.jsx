@@ -4,8 +4,7 @@ import deployment from "../../../contracts/deployments/mainnet.json";
 import abi from "../../../contracts/abi/CubixlesMinter.json";
 import { buildGatewayUrls } from "../../../src/shared/ipfs-fetch.js";
 
-const DEFAULT_DESCRIPTION =
-  "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.";
+const DEFAULT_DESCRIPTION = "remix your nfts into cubixles_";
 const DEFAULT_IMAGE_PATH = "/ogImage.png";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +121,7 @@ export async function generateMetadata({ params }) {
   }
 
   return {
+    ...(baseUrl ? { metadataBase: new URL(baseUrl) } : {}),
     title,
     description,
     openGraph: {

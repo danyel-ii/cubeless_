@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { buildPalettePreviewGifUrl, buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
@@ -50,6 +50,16 @@ function formatChainName(chainId) {
   return `Chain ${chainId}`;
 }
 
+function getRpcUrl(chainId) {
+  if (chainId === 1) {
+    return "https://cloudflare-eth.com";
+  }
+  if (chainId === 11155111) {
+    return "https://rpc.sepolia.org";
+  }
+  return null;
+}
+
 function generateSalt() {
   if (typeof crypto === "undefined" || !crypto.getRandomValues) {
     throw new Error("Secure random unavailable.");
@@ -77,6 +87,20 @@ export function initMintUi() {
   let currentMintPriceWei = null;
 
   amountInput.readOnly = true;
+
+  function getReadProvider() {
+    const rpcUrl = getRpcUrl(CUBIXLES_CONTRACT.chainId);
+    if (walletState?.providerSource === "walletconnect" && rpcUrl) {
+      return new JsonRpcProvider(rpcUrl);
+    }
+    if (walletState?.provider) {
+      return new BrowserProvider(walletState.provider);
+    }
+    if (rpcUrl) {
+      return new JsonRpcProvider(rpcUrl);
+    }
+    return null;
+  }
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -223,15 +247,18 @@ export function initMintUi() {
       return null;
     }
     try {
-      const provider = new BrowserProvider(walletState.provider);
-      const network = await provider.getNetwork();
+      const readProvider = getReadProvider();
+      if (!readProvider) {
+        return null;
+      }
+      const network = await readProvider.getNetwork();
       if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
         return null;
       }
       const contract = new Contract(
         CUBIXLES_CONTRACT.address,
         CUBIXLES_CONTRACT.abi,
-        provider
+        readProvider
       );
       const price = await contract.currentMintPrice();
       return price;
@@ -415,8 +442,11 @@ export function initMintUi() {
     setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
-      const provider = new BrowserProvider(walletState.provider);
-      const network = await provider.getNetwork();
+      const readProvider = getReadProvider();
+      if (!readProvider) {
+        throw new Error("Read-only RPC unavailable. Try again shortly.");
+      }
+      const network = await readProvider.getNetwork();
       if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
         throw new Error(
           `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
@@ -425,7 +455,13 @@ export function initMintUi() {
       if (!currentMintPriceWei) {
         throw new Error("Mint price unavailable. Try again shortly.");
       }
+      const provider = new BrowserProvider(walletState.provider);
       const signer = await provider.getSigner();
+      const readContract = new Contract(
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
+        readProvider
+      );
       const contract = new Contract(
         CUBIXLES_CONTRACT.address,
         CUBIXLES_CONTRACT.abi,
@@ -447,12 +483,12 @@ export function initMintUi() {
       }));
       const refsCanonical = sortRefsCanonically(refsForContract);
       const refsHash = computeRefsHash(refsCanonical);
-      const latestBlock = BigInt(await provider.getBlockNumber());
+      const latestBlock = BigInt(await readProvider.getBlockNumber());
       let supportsCommitReveal = true;
       let existingCommit = null;
       let existingBlock = 0n;
       try {
-        existingCommit = await contract.mintCommitByMinter(walletState.address);
+        existingCommit = await readContract.mintCommitByMinter(walletState.address);
         existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
       } catch (error) {
         supportsCommitReveal = false;
@@ -480,7 +516,7 @@ export function initMintUi() {
       if (!salt) {
         salt = generateSalt();
       }
-      const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
+      const previewTokenId = await readContract.previewTokenId(salt, refsCanonical);
       const lessSupplyMint = await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
@@ -522,7 +558,7 @@ export function initMintUi() {
         setStatus("Preparing mint...");
         commitBlockNumber = Number(latestBlock);
       }
-      const commitBlock = await provider.getBlock(commitBlockNumber);
+      const commitBlock = await readProvider.getBlock(commitBlockNumber);
       commitBlockHash = commitBlock?.hash;
       if (!commitBlockHash) {
         throw new Error("Commit hash unavailable.");
