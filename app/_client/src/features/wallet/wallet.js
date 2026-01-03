@@ -48,6 +48,14 @@ export async function connectWallet() {
       }
     }
 
+    if (providerSource === "walletconnect") {
+      if (typeof provider.connect === "function") {
+        await provider.connect();
+      } else if (typeof provider.enable === "function") {
+        await provider.enable();
+      }
+    }
+
     const accounts = await requestAccounts(provider);
     const address = accounts && accounts[0] ? accounts[0] : null;
     if (!address) {
