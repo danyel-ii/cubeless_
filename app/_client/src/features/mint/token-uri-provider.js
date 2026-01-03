@@ -47,26 +47,33 @@ export async function pinTokenMetadata({ metadata, signer, address }) {
   if (!signer || !address) {
     throw new Error("Wallet signer unavailable.");
   }
-  const nonce = await fetchNonce();
-  const signature = await signer.signMessage(buildNonceMessage(nonce));
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const nonce = await fetchNonce();
+    const signature = await signer.signMessage(buildNonceMessage(nonce));
 
-  const response = await fetch("/api/pin/metadata", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      address,
-      nonce,
-      signature,
-      payload: metadata,
-    }),
-  });
-  if (!response.ok) {
+    const response = await fetch("/api/pin/metadata", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        nonce,
+        signature,
+        payload: metadata,
+      }),
+    });
+    if (response.ok) {
+      const json = await response.json();
+      if (!json?.tokenURI) {
+        throw new Error("Pinning failed to return a token URI.");
+      }
+      return json.tokenURI;
+    }
     const text = await response.text();
-    throw new Error(text || `Pinning failed (${response.status})`);
+    lastError = text || `Pinning failed (${response.status})`;
+    if (!/nonce already used/i.test(lastError)) {
+      break;
+    }
   }
-  const json = await response.json();
-  if (!json?.tokenURI) {
-    throw new Error("Pinning failed to return a token URI.");
-  }
-  return json.tokenURI;
+  throw new Error(lastError || "Pinning failed.");
 }
