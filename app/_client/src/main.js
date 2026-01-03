@@ -37,7 +37,7 @@ function loadP5Library() {
   }
   p5LoadPromise = new Promise((resolve, reject) => {
     const existingScripts = Array.from(
-      document.querySelectorAll('script[src*="p5.min.js"]')
+      document.querySelectorAll('script[src*="p5"]')
     );
     const existing = document.getElementById("p5-lib") || existingScripts[0];
     if (existing) {

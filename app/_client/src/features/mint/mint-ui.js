@@ -96,10 +96,28 @@ export function initMintUi() {
     commitProgressEl.classList.toggle("is-visible", visible);
   }
 
-  function getReadProvider() {
+  let readProviderPromise = null;
+
+  async function getReadProvider() {
     const rpcUrl = getRpcUrl(CUBIXLES_CONTRACT.chainId);
     if (rpcUrl) {
-      return new JsonRpcProvider(rpcUrl);
+      if (readProviderPromise) {
+        return readProviderPromise;
+      }
+      const fallbacks = [rpcUrl, "https://eth.llamarpc.com", "https://rpc.ankr.com/eth"];
+      readProviderPromise = (async () => {
+        for (const url of fallbacks) {
+          const candidate = new JsonRpcProvider(url);
+          try {
+            await candidate.getBlockNumber();
+            return candidate;
+          } catch (error) {
+            continue;
+          }
+        }
+        return null;
+      })();
+      return readProviderPromise;
     }
     if (walletState?.provider) {
       return new BrowserProvider(walletState.provider);
@@ -252,7 +270,7 @@ export function initMintUi() {
       return null;
     }
     try {
-      const readProvider = getReadProvider();
+      const readProvider = await getReadProvider();
       if (!readProvider) {
         return null;
       }
@@ -447,7 +465,7 @@ export function initMintUi() {
     setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
-      const readProvider = getReadProvider();
+      const readProvider = await getReadProvider();
       if (!readProvider) {
         throw new Error("Read-only RPC unavailable. Try again shortly.");
       }
