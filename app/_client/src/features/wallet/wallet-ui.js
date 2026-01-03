@@ -137,7 +137,7 @@ export function initWalletUi() {
   const pickerList = document.getElementById("wallet-picker-list");
   const pickerClose = document.getElementById("wallet-picker-close");
 
-  if (!connectButton || !disconnectButton || !statusEl || !switchButton) {
+  if (!connectButton || !disconnectButton || !statusEl) {
     return;
   }
 
@@ -152,7 +152,9 @@ export function initWalletUi() {
   startProviderDiscovery();
   connectButton.addEventListener("click", () => requestWalletConnection());
   disconnectButton.addEventListener("click", () => disconnectWallet());
-  switchButton.addEventListener("click", () => switchToMainnet());
+  if (switchButton) {
+    switchButton.addEventListener("click", () => switchToMainnet());
+  }
   if (pickerClose) {
     pickerClose.addEventListener("click", hideWalletPicker);
   }
@@ -190,12 +192,16 @@ export function initWalletUi() {
       const expected = CUBIXLES_CONTRACT.chainId;
       if (chainId && chainId !== expected) {
         statusEl.textContent = `Wallet: connected (wrong network: ${formatChainName(chainId)})`;
-        switchButton.classList.remove("is-hidden");
-        switchButton.disabled = false;
+        if (switchButton) {
+          switchButton.classList.remove("is-hidden");
+          switchButton.disabled = false;
+        }
       } else {
         statusEl.textContent = "Wallet: connected";
-        switchButton.classList.add("is-hidden");
-        switchButton.disabled = true;
+        if (switchButton) {
+          switchButton.classList.add("is-hidden");
+          switchButton.disabled = true;
+        }
       }
       connectButton.disabled = true;
       disconnectButton.disabled = false;
@@ -206,8 +212,10 @@ export function initWalletUi() {
       statusEl.textContent = "Wallet: connecting…";
       connectButton.disabled = true;
       disconnectButton.disabled = true;
-      switchButton.classList.add("is-hidden");
-      switchButton.disabled = true;
+      if (switchButton) {
+        switchButton.classList.add("is-hidden");
+        switchButton.disabled = true;
+      }
       return;
     }
 
@@ -215,8 +223,10 @@ export function initWalletUi() {
       statusEl.textContent = `Wallet: ${safeState.error || "Connection failed."}`;
       connectButton.disabled = false;
       disconnectButton.disabled = true;
-      switchButton.classList.add("is-hidden");
-      switchButton.disabled = true;
+      if (switchButton) {
+        switchButton.classList.add("is-hidden");
+        switchButton.disabled = true;
+      }
       return;
     }
 
@@ -224,15 +234,19 @@ export function initWalletUi() {
       statusEl.textContent = `Wallet: ${safeState.error || "Unavailable."}`;
       connectButton.disabled = false;
       disconnectButton.disabled = true;
-      switchButton.classList.add("is-hidden");
-      switchButton.disabled = true;
+      if (switchButton) {
+        switchButton.classList.add("is-hidden");
+        switchButton.disabled = true;
+      }
       return;
     }
 
     statusEl.textContent = "Wallet: not connected.";
     connectButton.disabled = false;
     disconnectButton.disabled = true;
-    switchButton.classList.add("is-hidden");
-    switchButton.disabled = true;
+    if (switchButton) {
+      switchButton.classList.add("is-hidden");
+      switchButton.disabled = true;
+    }
   });
 }
