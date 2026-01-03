@@ -7,6 +7,7 @@ import { initEthHud } from "./hud/eth-hud.js";
 import { initLessSupplyHud } from "./hud/less-hud.js";
 import { initLessDeltaTracking } from "./hud/less-delta.js";
 import { initWalletUi } from "../features/wallet/wallet-ui.js";
+import { connectWallet } from "../features/wallet/wallet.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { state } from "../app/app-state.js";
@@ -35,6 +36,8 @@ export function initUiRoot() {
   initPreviewUi();
   initMintedBanner();
   initUiTouchGuards();
+  initWalletClickGuard();
+  initUiPointerGuard();
   initTokenIdFromUrl();
   initLandingReturn();
   initDebugPanel();
@@ -56,6 +59,64 @@ function initUiTouchGuards() {
         { passive: true }
       );
     });
+  });
+}
+
+function initWalletClickGuard() {
+  const connectButton = document.getElementById("wallet-connect");
+  const statusEl = document.getElementById("wallet-status");
+  if (!connectButton || !statusEl) {
+    return;
+  }
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+      if (!connectButton.contains(event.target)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      statusEl.textContent = "Wallet: connecting…";
+      connectWallet().catch((error) => {
+        const message = error instanceof Error ? error.message : "Connection failed.";
+        statusEl.textContent = `Wallet: ${message}`;
+      });
+    },
+    true
+  );
+}
+
+function initUiPointerGuard() {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const root = document.body;
+  const selectors = ["#ui", "#leaderboard", "#preview-bar", "#overlay", ".toast-root"];
+
+  function isUiElement(el) {
+    if (!(el instanceof Element)) {
+      return false;
+    }
+    return selectors.some((selector) => el.closest(selector));
+  }
+
+  function updatePointerState(event) {
+    const point = event?.touches?.[0] || event;
+    const x = point?.clientX;
+    const y = point?.clientY;
+    if (typeof x !== "number" || typeof y !== "number") {
+      root.classList.remove("ui-pointer-active");
+      return;
+    }
+    const el = document.elementFromPoint(x, y);
+    root.classList.toggle("ui-pointer-active", isUiElement(el));
+  }
+
+  ["pointermove", "pointerdown", "touchstart"].forEach((eventName) => {
+    document.addEventListener(eventName, updatePointerState, { passive: true });
   });
 }
 
