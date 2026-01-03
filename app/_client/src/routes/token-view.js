@@ -48,6 +48,46 @@ async function loadImages(urls) {
   return Promise.all(loaders);
 }
 
+async function resolveMetadataImage(nft) {
+  if (nft?.image?.resolved) {
+    return nft.image.resolved;
+  }
+  const tokenUri = nft?.tokenUri?.resolved;
+  if (!tokenUri) {
+    return null;
+  }
+  try {
+    let response;
+    if (tokenUri.startsWith("ipfs://")) {
+      ({ response } = await fetchWithGateways(tokenUri));
+    } else {
+      response = await fetch(tokenUri);
+    }
+    if (!response?.ok) {
+      return null;
+    }
+    const metadata = await response.json();
+    const image =
+      metadata?.image ||
+      metadata?.image_url ||
+      metadata?.imageUrl ||
+      null;
+    if (typeof image === "string" && image.trim()) {
+      return resolveUri(image)?.resolved ?? null;
+    }
+    if (typeof metadata?.image_data === "string") {
+      const svg = metadata.image_data.trim();
+      if (!svg) {
+        return null;
+      }
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    }
+  } catch (error) {
+    return null;
+  }
+  return null;
+}
+
 async function waitForFrostedTexture() {
   if (typeof window !== "undefined" && window.__CUBIXLES_SKIP_FROSTED__) {
     return;
@@ -93,6 +133,22 @@ function initTokenShareDialog() {
   const xLink = modal.querySelector("#share-x");
 
   let currentUrl = "";
+
+  function openShareLink(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
+    if (!xLink?.href) {
+      return;
+    }
+    const opened = window.open(xLink.href, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      window.location.href = xLink.href;
+    }
+  }
 
   function closeModal(event) {
     if (event?.stopPropagation) {
@@ -141,9 +197,11 @@ function initTokenShareDialog() {
   backdrop?.addEventListener("pointerdown", closeModal);
   closeButton?.addEventListener("pointerdown", closeModal);
   copyButton?.addEventListener("pointerdown", copyLink);
+  xLink?.addEventListener("pointerdown", openShareLink);
   backdrop?.addEventListener("touchstart", closeModal, { passive: false });
   closeButton?.addEventListener("touchstart", closeModal, { passive: false });
   copyButton?.addEventListener("touchstart", copyLink, { passive: false });
+  xLink?.addEventListener("touchstart", openShareLink, { passive: false });
 
   const shareButton = document.createElement("button");
   shareButton.id = "share-cube";
@@ -232,7 +290,7 @@ export async function initTokenViewRoute() {
         )
       )
     );
-    const urls = nfts.map((nft) => nft.image?.resolved ?? null);
+    const urls = await Promise.all(nfts.map((nft) => resolveMetadataImage(nft)));
     if (urls.some((url) => !url)) {
       throw new Error("One or more referenced NFTs are missing images.");
     }
