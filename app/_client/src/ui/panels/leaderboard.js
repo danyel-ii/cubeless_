@@ -87,14 +87,11 @@ export function initLeaderboardUi() {
   }
 
   function getReadProvider(provider) {
-    if (walletState?.providerSource === "walletconnect") {
+    if (CUBIXLES_CONTRACT.chainId === 1) {
       return new JsonRpcProvider("https://cloudflare-eth.com");
     }
     if (provider) {
       return new BrowserProvider(provider);
-    }
-    if (CUBIXLES_CONTRACT.chainId === 1) {
-      return new JsonRpcProvider("https://cloudflare-eth.com");
     }
     return null;
   }

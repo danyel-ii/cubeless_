@@ -187,6 +187,9 @@ export default function AppShell() {
           <div id="mint-status" className="ui-hint">
             Connect your wallet to mint.
           </div>
+          <div id="commit-progress" className="commit-progress">
+            <div className="commit-progress-bar"></div>
+          </div>
           <div id="mint-floor-summary" className="ui-hint">
             Total floor (snapshot): 0.0000 ETH
           </div>

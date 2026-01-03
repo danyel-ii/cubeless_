@@ -117,7 +117,7 @@ function initTokenShareDialog() {
   function openModal(url) {
     currentUrl = url;
     const encoded = encodeURIComponent(url);
-    const text = encodeURIComponent("Check out this cubixles_ cube");
+    const text = encodeURIComponent("remix your nfts into cubixles_");
     xLink.href = `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`;
     modal.classList.remove("is-hidden");
     modal.style.display = "flex";
@@ -146,6 +146,22 @@ function initTokenShareDialog() {
   };
 }
 
+function initTokenBackButton() {
+  const existing = document.getElementById("token-back");
+  if (existing) {
+    return;
+  }
+  const button = document.createElement("button");
+  button.id = "token-back";
+  button.className = "token-back-button";
+  button.type = "button";
+  button.textContent = "Back to app";
+  document.body.appendChild(button);
+  button.addEventListener("click", () => {
+    window.location.href = window.location.origin;
+  });
+}
+
 export async function initTokenViewRoute() {
   if (typeof window === "undefined") {
     return false;
@@ -157,6 +173,7 @@ export async function initTokenViewRoute() {
   document.body.classList.add("is-token-view");
   setStatus("Loading token metadata...");
   const setShareUrl = initTokenShareDialog();
+  initTokenBackButton();
 
   let tokenId;
   try {
@@ -169,11 +186,12 @@ export async function initTokenViewRoute() {
   state.currentCubeTokenId = tokenId;
   document.dispatchEvent(new CustomEvent("cube-token-change"));
 
+  if (typeof setShareUrl === "function") {
+    setShareUrl(`${window.location.origin}/m/${tokenId.toString()}`);
+  }
+
   try {
     const tokenUri = await fetchTokenUri(tokenId);
-    if (typeof setShareUrl === "function") {
-      setShareUrl(`${window.location.origin}/m/${tokenId.toString()}`);
-    }
     const resolved = resolveUri(tokenUri);
     if (!resolved?.resolved) {
       throw new Error("Token URI could not be resolved.");

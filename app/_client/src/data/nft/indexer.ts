@@ -98,7 +98,7 @@ export async function getNftsForOwner(
   const items: NftItem[] = [];
   let pageKey: string | undefined;
   let pages = 0;
-  const MAX_PAGES = 20;
+  const MAX_PAGES = 60;
 
   do {
     const response = await alchemyGet<AlchemyGetNftsResponse>(chainId, "getNFTsForOwner", {

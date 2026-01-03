@@ -76,6 +76,7 @@ export function initMintUi() {
   const mintPriceEl = document.getElementById("mint-price");
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
+  const commitProgressEl = document.getElementById("commit-progress");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -87,6 +88,13 @@ export function initMintUi() {
   let currentMintPriceWei = null;
 
   amountInput.readOnly = true;
+
+  function setCommitProgress(visible) {
+    if (!commitProgressEl) {
+      return;
+    }
+    commitProgressEl.classList.toggle("is-visible", visible);
+  }
 
   function getReadProvider() {
     const rpcUrl = getRpcUrl(CUBIXLES_CONTRACT.chainId);
@@ -516,7 +524,7 @@ export function initMintUi() {
       if (!salt) {
         salt = generateSalt();
       }
-      const previewTokenId = await readContract.previewTokenId(salt, refsCanonical);
+      const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
       const lessSupplyMint = await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
@@ -541,7 +549,9 @@ export function initMintUi() {
         setStatus(
           "Waiting for commit confirmation. Please stay on this page while the transaction is being committed."
         );
+        setCommitProgress(true);
         const commitReceipt = await commitTx.wait();
+        setCommitProgress(false);
         commitBlockNumber = commitReceipt?.blockNumber;
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
@@ -666,6 +676,7 @@ export function initMintUi() {
         tone: "error",
       });
     } finally {
+      setCommitProgress(false);
       setDisabled(false);
       updateEligibility();
     }
