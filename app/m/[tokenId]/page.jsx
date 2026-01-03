@@ -4,7 +4,7 @@ import deployment from "../../../contracts/deployments/mainnet.json";
 import abi from "../../../contracts/abi/CubixlesMinter.json";
 import { buildGatewayUrls } from "../../../src/shared/ipfs-fetch.js";
 
-const DEFAULT_DESCRIPTION = "remix your nfts into cubixles_";
+const DEFAULT_DESCRIPTION = "cubixles_ and curtains";
 const SHARE_TITLE = "remixed and cubed nft mints";
 const DEFAULT_IMAGE_PATH = "/ogImage.png";
 
@@ -102,10 +102,7 @@ export async function generateMetadata({ params }) {
     : DEFAULT_IMAGE_PATH;
   let title = tokenId ? `cubixles_ #${tokenId}` : "cubixles_ token";
   let description = DEFAULT_DESCRIPTION;
-  const ogRoute =
-    baseUrl && tokenId
-      ? `${baseUrl}/m/${encodeURIComponent(tokenId)}/opengraph-image`
-      : fallbackImage;
+  const ogRoute = tokenId ? `/m/${encodeURIComponent(tokenId)}/opengraph-image` : fallbackImage;
   let ogImage = ogRoute;
 
   try {
