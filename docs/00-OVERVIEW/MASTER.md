@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-03
+Last updated: 2026-01-05
 
 ## Executive Overview
 
@@ -22,6 +22,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 - `app/api/pin/metadata/route.js` — Server-side Pinata pinning for metadata.
 - `app/api/nfts/route.js` — Alchemy NFT proxy + RPC batch (cached, minimized).
 - `app/api/identity/route.js` — Farcaster/ENS identity lookup for the leaderboard.
+- `app/api/csp-report/route.js` — CSP violation report endpoint (telemetry only).
 
 ### Security + Audit
 - `docs/30-SECURITY/THREAT_MODEL.md` — Threats, assets, trust boundaries.
@@ -81,7 +82,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 - **opengraph-image**: Server-rendered OG image at `/m/<tokenId>/opengraph-image` for link previews.
 - **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
-- **fixedMintPriceWei**: Fixed ETH price used when LESS pricing is disabled (Base ETH-only mode).
+- **fixedMintPriceWei**: Fixed ETH price used when LESS pricing is disabled (ETH-only mode, commonly Base).
 - **deltaFromLast**: Current metric used to rank tokens by $LESS supply delta from last transfer snapshot.
 - **currentMintPrice**: Mint price computed from $LESS totalSupply and rounded up to `0.0001 ETH`.
 - **coverage gate**: Minimum 90% Solidity line coverage enforced by `npm run coverage:contracts`.
@@ -108,11 +109,13 @@ npm run test:ui
 # Static analysis
 cd contracts
 npx solhint "src/**/*.sol"
-slither .
+python3 -m slither .
 
 # Fork tests (release gate)
 export MAINNET_RPC_URL=...
 export FORK_BLOCK_NUMBER=19000000
+export BASE_RPC_URL=...
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""
@@ -120,6 +123,9 @@ npm run fork-test
 
 # Client secret scan
 npm run check:no-client-secrets
+
+# Repo secret scan
+npm run check:no-repo-secrets
 ```
 
 ## Quick Health Checklist

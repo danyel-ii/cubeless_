@@ -1,11 +1,11 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-04
+Last updated: 2026-01-05
 
 ## Review Status
 
-- Last reviewed: 2026-01-02
-- Review status: Needs confirmation
+- Last reviewed: 2026-01-05
+- Review status: Updated
 - Owner: danyel-ii
 
 ## Executive Summary
@@ -98,18 +98,20 @@ File: `contracts/test/CubixlesMinter.t.sol`
 ## Deployment + ABI Export
 
 - Deploy script: `contracts/script/DeployCubixles.s.sol`
-  - Reads:
-    - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
+  - Env vars (names use `CUBIXLES_*` for deploy tooling compatibility):
     - `CUBIXLES_OWNER`
-  - `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
-  - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS is disabled)
+    - `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
+    - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS is disabled)
+    - `CUBIXLES_BURN_ADDRESS` (optional; defaults to `0x000000000000000000000000000000000000dEaD`)
     - `CUBIXLES_POOL_MANAGER` (optional)
     - `CUBIXLES_POOL_FEE` (optional)
     - `CUBIXLES_POOL_TICK_SPACING` (optional)
     - `CUBIXLES_POOL_HOOKS` (optional)
     - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `CUBIXLES_RESALE_BPS` (optional)
-  - Writes deployment JSON to a chain-specific default path (mainnet → `contracts/deployments/mainnet.json`, base → `contracts/deployments/base.json`) unless `CUBIXLES_DEPLOYMENT_PATH` is set.
+    - `CUBIXLES_CHAIN_ID` (optional; defaults to `block.chainid`)
+    - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
+  - Writes deployment JSON to the chain-specific default path unless `CUBIXLES_DEPLOYMENT_PATH` is set.
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.

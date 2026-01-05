@@ -1,6 +1,6 @@
 # cubixles_ — Static Analysis
 
-Last updated: 2026-01-03
+Last updated: 2026-01-05
 
 ## Tools
 - Slither (static analyzer)
@@ -17,8 +17,7 @@ npx solhint "src/**/*.sol"
 ```
 
 ```sh
-. .venv-slither/bin/activate
-slither contracts
+python3 -m slither .
 ```
 
 ## Related coverage gate
@@ -27,10 +26,12 @@ Coverage is enforced separately via:
 npm run coverage:contracts
 ```
 
-If `slither` is not on PATH, activate the local venv:
+If `slither` is not on PATH, use a local venv:
 
 ```sh
-. .venv-slither/bin/activate
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install slither-analyzer
 slither .
 ```
 
@@ -39,7 +40,7 @@ slither .
 - If an issue is accepted, include rationale and severity.
 
 ## Slither status
-Latest run: 2026-01-03 (`slither contracts`) — PASS (project findings are suppressed inline).
+Latest run: 2026-01-05 (`python3 -m slither .`) — PASS (project findings are suppressed inline).
 
 ### Suppressed findings (intentional)
 1. **Weak PRNG** — `CubixlesMinter._assignPaletteIndex`

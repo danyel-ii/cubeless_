@@ -1,6 +1,6 @@
 # cubixles_ Code Structure
 
-Last updated: 2026-01-02
+Last updated: 2026-01-05
 
 ## Review Status
 
@@ -108,11 +108,11 @@ are split into smaller modules.
 - `contracts/src/cubixles/CubixlesMinter.sol`
   - ERC-721 minting contract with ownership gating + ERC-2981.
 - `contracts/src/royalties/RoyaltySplitter.sol`
-  - Royalty receiver that can swap for $LESS and forward proceeds (ETH-only mode when swaps disabled).
+  - Royalty receiver that can swap for $LESS and forward proceeds (no-swap mode forwards ETH only).
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
 - `contracts/script/DeployCubixles.s.sol`
-  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (chain-specific default path, override via `CUBIXLES_DEPLOYMENT_PATH`).
+  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (defaults to `contracts/deployments/<chain>.json`, override via `CUBIXLES_DEPLOYMENT_PATH`).
 - `contracts/scripts/export-abi.mjs`
   - Exports CubixlesMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`
@@ -167,6 +167,8 @@ are split into smaller modules.
   - Alchemy NFT proxy + RPC batch (caching + minimized responses).
 - `app/api/identity/route.js`
   - Resolves Farcaster/ENS identity for leaderboard display.
+- `app/api/csp-report/route.js`
+  - Receives CSP violation reports (telemetry only).
 - `docs/30-SECURITY/SECURITY_RUNBOOK.md`
 - `docs/30-SECURITY/FORK_TESTING.md`
 
@@ -194,6 +196,15 @@ are split into smaller modules.
   - Safe request logging.
 - `src/server/request.js`
   - Client IP detection.
+
+## Scripts
+
+- `scripts/fork-test.sh`
+  - Fork test harness (short path for Foundry).
+- `scripts/check-client-secrets.mjs`
+  - Scans client bundle for forbidden keys.
+- `scripts/check-repo-secrets.mjs`
+  - Scans repo files for forbidden secrets.
 
 ## Shared Schemas
 

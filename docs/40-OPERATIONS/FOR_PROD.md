@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-04
+Last updated: 2026-01-05
 
 ## 0) Pre-flight (local)
 
@@ -32,10 +32,17 @@ python3 -m slither .
 ```sh
 export MAINNET_RPC_URL="https://your-mainnet-rpc"
 export FORK_BLOCK_NUMBER=19000000
+export BASE_RPC_URL="https://your-base-rpc"
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
+```
+
+6) Repo secret scan
+```sh
+npm run check:no-repo-secrets
 ```
 
 ## 1) Contract deploy (mainnet primary, Sepolia rehearsal optional)
@@ -53,6 +60,7 @@ npm run fork-test
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
 - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required only when LESS is disabled)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional, overrides default `contracts/deployments/<chain>.json`)
 
 ### Deploy
 ```sh

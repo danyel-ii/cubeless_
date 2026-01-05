@@ -1,7 +1,7 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-03
-Date: 2026-01-03
+Last updated: 2026-01-05
+Date: 2026-01-05
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -18,7 +18,9 @@ Date: 2026-01-03
 - Invariants: `contracts/test/invariants/CubixlesMinterInvariants.t.sol`
 - Fork tests: `contracts/test/fork/MainnetFork.t.sol`, `contracts/test/fork/BaseFork.t.sol`
 - Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
+- CSP telemetry: `middleware.js`, `app/api/csp-report/route.js`
 - Client secret scan: `scripts/check-client-secrets.mjs`
+- Repo secret scan: `scripts/check-repo-secrets.mjs`
 
 ## Policy decisions captured
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
@@ -33,14 +35,14 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (89 tests; fork tests skipped in this run because `MAINNET_RPC_URL` was not set).
+Result: PASS (93 tests; fork tests skipped in this run because RPC env vars were not set).
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (98.56% line coverage; minimum is 90%).
+Result: PASS (92.53% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
@@ -67,7 +69,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-01 with `MAINNET_RPC_URL` set)
+Result: PASS (2 tests; latest local run 2026-01-05 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
@@ -79,9 +81,9 @@ export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""
-FORK_RPC_URL="$BASE_RPC_URL" npm run fork-test
+npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-03 with `BASE_RPC_URL` set)
+Result: PASS (2 tests; latest local run 2026-01-05 with `BASE_RPC_URL` set)
 - Punkology `ownerOf`/`royaltyInfo` checks logged as expected.
 
 ### Frontend tests
@@ -106,6 +108,13 @@ npm run check:no-client-secrets
 ```
 Result: PASS (no forbidden strings in the client bundle).
 
+### Repo secret scan
+Command:
+```sh
+npm run check:no-repo-secrets
+```
+Result: PASS (no forbidden secrets in the repo).
+
 ### npm audit
 Command:
 ```sh
@@ -126,15 +135,10 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 0 warnings (latest local run 2026-01-01).
-  - Note: update check failed (`registry.npmjs.org` not reachable), but lint executed successfully.
+  - Result: 0 errors, 24 warnings (Natspec + gas-indexing); latest local run 2026-01-05.
 - Local slither run (venv):
-  - Command: `. .venv-slither/bin/activate && slither contracts`
-  - Result: **project findings**:
-    - Weak PRNG in palette index selection (blockhash-derived).
-    - Unused return values from `POOL_MANAGER.getSlot0` in `_sqrtPriceLimit` and `_poolInitialized`.
-    - Local variable shadowing of `tokenURI` inside `CubixlesMinter.mint`.
-    - Missing zero-check on `LESS_TOKEN` (intentional: fixed-price mode when address is zero).
+  - Command: `cd contracts && python3 -m slither .`
+  - Result: 0 project findings (latest local run 2026-01-05).
   - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
 
 ## Formal verification
@@ -151,5 +155,5 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` or `BASE_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK`.
 - CI includes `forge test`, `npm test`, `npm run test:ui`, `solhint`, `slither`, coverage (90% minimum),
-  `npm audit --audit-level=high`, and `npm run check:no-client-secrets`.
+  `npm audit --audit-level=high`, `npm run check:no-client-secrets`, and `npm run check:no-repo-secrets`.
 - Local `npm audit --json` (2026-01-01): 0 vulnerabilities.

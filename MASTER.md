@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-03
+Last updated: 2026-01-05
 
 This is the top-level entry point for project documentation.
 
@@ -13,4 +13,6 @@ Quick commands:
 - `npm run dev`
 - `npm run coverage:contracts`
 - `npm run check:no-client-secrets`
+- `npm run check:no-repo-secrets`
 - `cd contracts && forge test -vvv`
+- `npm run fork-test`

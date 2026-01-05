@@ -1,11 +1,11 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-02
+Last updated: 2026-01-05
 
 ## Review Status
 
-- Last reviewed: 2026-01-02
-- Review status: Needs confirmation
+- Last reviewed: 2026-01-05
+- Review status: Updated
 - Owner: danyel-ii
 
 This plan defines the tests needed to trust the system end-to-end:

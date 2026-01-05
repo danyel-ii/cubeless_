@@ -1,6 +1,6 @@
 # cubixles_
 
-Last updated: 2026-01-04
+Last updated: 2026-01-05
 
 cubixles_ lets users mint NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.
@@ -9,7 +9,7 @@ The frontend runs on Next.js, and the contracts are built and tested with Foundr
 - Wallet connect supports EIP-6963 browser wallets and WalletConnect fallback.
 - Token viewer routes live at `/m/<tokenId>` with OG previews at `/m/<tokenId>/opengraph-image`.
 - NFT picker filters spam/airdrops and surfaces purchased/minted ERC-721s.
-- Multi-chain UI supports mainnet + Base; Base runs in ETH-only mode with fixed mint pricing.
+- Multi-chain UI supports mainnet + Base; Base can run in ETH-only mode with fixed mint pricing when LESS is disabled.
 
 ## Repository layout
 - `app/` — Next.js app router, API routes, and UI.
@@ -35,6 +35,7 @@ npm test
 npm run coverage:contracts
 npm run test:ui
 npm run check:no-client-secrets
+npm run check:no-repo-secrets
 cd contracts
 npx solhint "src/**/*.sol"
 python3 -m slither .
@@ -45,6 +46,8 @@ python3 -m slither .
 ```sh
 export MAINNET_RPC_URL=...
 export FORK_BLOCK_NUMBER=19000000
+export BASE_RPC_URL=...
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""
@@ -52,7 +55,7 @@ npm run fork-test
 ```
 
 ## Configuration
-Copy `.env.example` to `.env` for non-secret defaults. Put secrets and mainnet-only settings in `.env.local` (git-ignored). The Next.js server reads server-only keys and exposes only what is required to the client.
+Copy `.env.example` to `.env` for non-secret defaults. Put secrets and mainnet-only settings in `.env.local` (git-ignored). For CI and production, store secrets in GitHub Actions and Vercel instead of local env files.
 
 Base mint price updater:
 ```sh

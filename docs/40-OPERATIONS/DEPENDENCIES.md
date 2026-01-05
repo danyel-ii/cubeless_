@@ -1,6 +1,6 @@
 # Dependency Management
 
-Last updated: 2026-01-01
+Last updated: 2026-01-05
 
 ## Node/Frontend
 - Dependencies are declared in `package.json`.
@@ -15,3 +15,5 @@ Last updated: 2026-01-01
 ## Review process
 - Dependency updates must be reviewed and tested.
 - Security fixes should be prioritized.
+- Dependabot security alerts/updates are enabled; treat high/critical alerts as release blockers.
+- `npm audit --audit-level=high` runs in CI.

@@ -1,6 +1,6 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-03
+Last updated: 2026-01-05
 
 ## Local commands
 
@@ -46,6 +46,8 @@ BENCH_BASE_URL="http://127.0.0.1:3000" npm run bench:api
 ```sh
 export MAINNET_RPC_URL="https://your-mainnet-rpc"
 export FORK_BLOCK_NUMBER=19000000
+export BASE_RPC_URL="https://your-base-rpc"
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""
@@ -90,7 +92,8 @@ python3 -m slither .
 - Enforce CSP with `frame-ancestors` allowlist to support Farcaster embedding.
 - Configure the allowlist via `FRAME_ANCESTORS` (see `.env.example`).
 - CSP uses per-request nonces; production script-src disallows `unsafe-inline`.
-- CSP Report-Only telemetry posts to `POST /api/csp-report`.
+- Middleware sets both enforced CSP and Report-Only telemetry.
+- Report-Only telemetry posts to `POST /api/csp-report`.
 
 ## Circuit breakers
 - `DISABLE_PINNING` or `DISABLE_MINTING` to pause pinning/mints.

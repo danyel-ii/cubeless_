@@ -1,13 +1,14 @@
 # Secrets and Credentials Policy
 
-Last updated: 2026-01-01
+Last updated: 2026-01-05
 
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 
 ## Storage
 - Store secrets only in the hosting provider's secret manager (Vercel, GitHub Actions).
-- Never commit secrets to the repository.
+- Use `.env` / `.env.local` only for local development; never commit them.
+- Never echo secrets in logs or build output.
 - Use `.env.example` for non-sensitive placeholders.
 
 ## Rotation
@@ -17,16 +18,27 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 ## Access control
 - Limit secret access to maintainers listed in `docs/40-OPERATIONS/MAINTAINERS.md`.
 
-## Required secrets
+## Required secrets (app)
 - `PINATA_JWT`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT` (HMAC nonce signing)
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 
-## Optional secrets
+## Optional secrets (app)
+- `NEYNAR_API_KEY`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
+- `ALERT_WEBHOOK_URL`
+
+## Deployment and CI secrets
+- `MAINNET_RPC_URL`
+- `BASE_RPC_URL`
+- `SEPOLIA_RPC_URL` (if rehearsing on Sepolia)
+- `MAINNET_DEPLOYER_KEY`
+- `BASE_DEPLOYER_KEY`
+- `SEPOLIA_DEPLOYER_KEY` (if rehearsing on Sepolia)
 
 ## Incident response
 - Remove compromised keys from providers.
 - Audit recent deployments and access logs.
-- Document incident in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+- Document incident in `docs/30-SECURITY/KNOWN_LIMITATIONS.md` and update `docs/30-SECURITY/SECURITY_AUDIT.md`.

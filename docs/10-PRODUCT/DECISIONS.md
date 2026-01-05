@@ -1,16 +1,16 @@
 # Decision Log
 
-Last updated: 2026-01-04
+Last updated: 2026-01-05
 
 ## Review Status
 
-- Last reviewed: 2026-01-02
-- Review status: Needs confirmation
+- Last reviewed: 2026-01-05
+- Review status: Updated
 - Owner: danyel-ii
 
 ## 2025-12-22 — T5 Spec Shapes
 
-- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs in ETH-only mode with fixed mint pricing.
+- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base can run in ETH-only mode with fixed mint pricing when LESS is disabled.
 - `tokenId` stored as base-10 string (from `BigInt`) to allow large IDs.
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.

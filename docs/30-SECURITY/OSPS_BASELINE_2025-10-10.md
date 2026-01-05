@@ -1,6 +1,6 @@
 # OSPS Baseline (2025-10-10) Compliance Review
 
-Last updated: 2026-01-01
+Last updated: 2026-01-05
 
 This document maps repo practices to the OpenSSF OSPS Baseline (2025-10-10).
 Status labels:
@@ -25,7 +25,7 @@ Status labels:
 - OSPS-BR-04.01 (release notes/log): **Planned** — `CHANGELOG.md` in place.
 - OSPS-BR-05.01 (standard dependency tooling): **Met** — npm + Foundry locks.
 - OSPS-BR-06.01 (signed releases or signed manifest): **Planned** — not yet implemented.
-- OSPS-BR-07.01 (prevent secrets in VCS): **Met** — `.gitignore` + `.env.example` + policy.
+- OSPS-BR-07.01 (prevent secrets in VCS): **Met** — `.gitignore` + `.env.example` + policy + GitHub secret scanning/push protection.
 - OSPS-BR-07.02 (secrets policy): **Met** — `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md`.
 
 ## Documentation

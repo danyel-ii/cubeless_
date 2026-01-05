@@ -1,6 +1,6 @@
 # cubixles_ — Known Limitations
 
-Last updated: 2026-01-03
+Last updated: 2026-01-05
 
 1. **Strict receiver failure policy**
    - Mint and royalty distribution revert if ETH or $LESS transfers fail.
@@ -34,5 +34,6 @@ Last updated: 2026-01-03
 10. **RPC/provider availability**
    - Fork tests, floor snapshots, and some app views depend on upstream RPCs; outages reduce functionality.
 
-11. **Static analysis**
-   - Slither reports project findings (see `docs/30-SECURITY/STATIC_ANALYSIS.md`) plus dependency noise.
+11. **Static analysis noise**
+   - Solhint reports Natspec and gas-index warnings that are tracked but not enforced.
+   - Slither reports dependency noise only (project findings are suppressed inline).

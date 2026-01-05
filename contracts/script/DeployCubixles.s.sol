@@ -61,10 +61,10 @@ contract DeployCubixles is Script {
         string memory root = vm.projectRoot();
         uint256 chainId = vm.envOr("CUBIXLES_CHAIN_ID", block.chainid);
         string memory defaultPath = chainId == 1
-            ? string.concat(root, "/contracts/deployments/mainnet.json")
+            ? string.concat(root, "/deployments/mainnet.json")
             : chainId == 8453
-                ? string.concat(root, "/contracts/deployments/base.json")
-                : string.concat(root, "/contracts/deployments/sepolia.json");
+                ? string.concat(root, "/deployments/base.json")
+                : string.concat(root, "/deployments/sepolia.json");
         string memory path = vm.envOr("CUBIXLES_DEPLOYMENT_PATH", defaultPath);
         string memory obj = "deployment";
         vm.serializeUint(obj, "chainId", chainId);

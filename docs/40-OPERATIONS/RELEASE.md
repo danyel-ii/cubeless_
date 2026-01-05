@@ -1,6 +1,6 @@
 # Release Process
 
-Last updated: 2026-01-02
+Last updated: 2026-01-05
 
 ## Versioning
 - Use Semantic Versioning: MAJOR.MINOR.PATCH
@@ -9,7 +9,9 @@ Last updated: 2026-01-02
 1. Ensure CI passes (forge tests, solhint, slither, coverage gate).
 2. Run fork tests with a pinned block:
    - `MAINNET_RPC_URL` set
-   - Optional `FORK_BLOCK_NUMBER` (defaults in test)
+   - `BASE_RPC_URL` set
+   - Optional `FORK_BLOCK_NUMBER` (mainnet; defaults in test)
+   - Optional `BASE_FORK_BLOCK` (Base; defaults in test)
    - If on macOS, set `NO_PROXY="*"`, `HTTP_PROXY=""`, `HTTPS_PROXY=""`
    - Command: `npm run fork-test`
    - Release rule: do not ship if fork tests are skipped or fail.

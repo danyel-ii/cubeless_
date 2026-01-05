@@ -9,11 +9,11 @@ Excluded: contracts/script/**, contracts/test/**
 
 - src/cubixles/CubixlesMinter.sol
   - Coverage: 168/176 = 95.45%
-  - Missed lines: 367, 368, 369, 371, 372, 374, 375, 519
+  - Missed lines: 369, 370, 371, 373, 374, 376, 377, 521
 
 ### RoyaltySplitter.sol
 
 - src/royalties/RoyaltySplitter.sol
   - Coverage: 110/125 = 88.00%
-  - Missed lines: 104, 169, 170, 171, 173, 174, 175, 177, 178, 179, 181, 182, 185, 203, 204
+  - Missed lines: 107, 172, 173, 174, 176, 177, 178, 180, 181, 182, 184, 185, 188, 206, 207
 
