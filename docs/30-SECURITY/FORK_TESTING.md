@@ -28,7 +28,7 @@ npm run fork-test
 ### Base fork
 ```sh
 export BASE_RPC_URL="https://your-base-rpc"
-export BASE_FORK_BLOCK=10000000
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""

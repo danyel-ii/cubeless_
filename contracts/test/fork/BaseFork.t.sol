@@ -9,7 +9,7 @@ contract BaseForkTest is Test {
     bool private forkReady;
 
     address private constant PUNKOLOGY = 0x5795060201B64970A02a043A29dA1aedabFa0b35;
-    uint256 private constant DEFAULT_FORK_BLOCK = 10_000_000;
+    uint256 private constant DEFAULT_FORK_BLOCK = 30_919_316;
 
     function setUp() public {
         string memory url = vm.envOr("BASE_RPC_URL", string(""));

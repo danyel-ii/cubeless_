@@ -75,7 +75,7 @@ Result: PASS (2 tests; latest local run 2026-01-01 with `MAINNET_RPC_URL` set)
 Command:
 ```sh
 export BASE_RPC_URL="https://your-base-rpc"
-export BASE_FORK_BLOCK=10000000
+export BASE_FORK_BLOCK=30919316
 export NO_PROXY="*"
 export HTTP_PROXY=""
 export HTTPS_PROXY=""

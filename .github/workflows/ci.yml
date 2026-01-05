@@ -156,7 +156,7 @@ jobs:
     env:
       FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
       FORK_RPC_URL: ${{ secrets.BASE_RPC_URL }}
-      BASE_FORK_BLOCK: ${{ secrets.BASE_FORK_BLOCK || '10000000' }}
+      BASE_FORK_BLOCK: ${{ secrets.BASE_FORK_BLOCK || '30919316' }}
     steps:
       - uses: actions/checkout@v4
         with:
