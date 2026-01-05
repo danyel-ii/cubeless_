@@ -15,6 +15,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-ln -s "${PWD}/contracts" "${temp_dir}/contracts"
+# copy contracts to shorten all paths (symlinks would still resolve to the long repo path)
+cp -a "${PWD}/contracts" "${temp_dir}/contracts"
 cd "${temp_dir}/contracts"
 forge test --match-path "test/fork/*" --fork-url "${FORK_RPC_URL}" -vvv

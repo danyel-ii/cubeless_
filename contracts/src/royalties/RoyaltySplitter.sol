@@ -29,10 +29,13 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using StateLibrary for IPoolManager;
 
     /// @notice LESS token address.
+    // slither-disable-next-line naming-convention
     address public immutable LESS_TOKEN;
     /// @notice Burn address for LESS.
+    // slither-disable-next-line naming-convention
     address public immutable BURN_ADDRESS;
     /// @notice Uniswap v4 PoolManager.
+    // slither-disable-next-line naming-convention
     IPoolManager public immutable POOL_MANAGER;
     /// @notice PoolKey for the ETH/LESS pool.
     PoolKey public poolKey;
