@@ -12,6 +12,7 @@ def run_forge_coverage() -> None:
     env.setdefault("NO_PROXY", "*")
     env.setdefault("HTTP_PROXY", "")
     env.setdefault("HTTPS_PROXY", "")
+    env.setdefault("FOUNDRY_DISABLE_NIGHTLY_WARNING", "1")
     result = subprocess.run(
         ["forge", "coverage", "--report", "lcov"],
         check=False,

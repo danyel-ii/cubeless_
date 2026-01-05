@@ -7,6 +7,9 @@ remappings = [
   "@uniswap/v4-core/=lib/v4-core/"
 ]
 fs_permissions = [{ access = "read-write", path = "./deployments" }]
-env = { CUBIXLES_DEPLOYMENT_PATH = "deployments/base.json" }
+solc_version = "0.8.20"
+
+[profile.default.env]
+CUBIXLES_DEPLOYMENT_PATH = "deployments/base.json"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

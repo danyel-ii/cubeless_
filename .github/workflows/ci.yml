@@ -10,6 +10,8 @@ permissions:
 jobs:
   forge-test:
     runs-on: ubuntu-latest
+    env:
+      FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,6 +26,8 @@ jobs:
 
   forge-coverage:
     runs-on: ubuntu-latest
+    env:
+      FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -129,6 +133,7 @@ jobs:
   fork-test-mainnet:
     runs-on: ubuntu-latest
     env:
+      FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
       MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
       FORK_BLOCK_NUMBER: ${{ secrets.FORK_BLOCK_NUMBER || '19000000' }}
     steps:
@@ -149,6 +154,7 @@ jobs:
   fork-test-base:
     runs-on: ubuntu-latest
     env:
+      FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
       FORK_RPC_URL: ${{ secrets.BASE_RPC_URL }}
       BASE_FORK_BLOCK: ${{ secrets.BASE_FORK_BLOCK || '10000000' }}
     steps:
