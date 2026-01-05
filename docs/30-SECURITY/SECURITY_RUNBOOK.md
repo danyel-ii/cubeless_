@@ -1,6 +1,6 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-01
+Last updated: 2026-01-03
 
 ## Local commands
 
@@ -56,9 +56,14 @@ python3 -m slither .
 
 ## CI gates
 - `forge test`
+- `npm test` (Vitest)
+- `npm run test:ui` (Playwright)
 - `solhint` (Solidity lint)
 - `slither` (static analysis)
-- `forge coverage` (minimum 90% line coverage; report at `docs/50-REPORTS/COVERAGE_REPORT.md`)
+- `npm audit --audit-level=high`
+- `npm run check:no-client-secrets`
+- `npm run coverage:contracts` (minimum 90% line coverage; report at `docs/50-REPORTS/COVERAGE_REPORT.md`)
+- `npm run fork-test` (mainnet + Base, only when RPC secrets are configured in CI)
 
 ## Incident response
 1. Freeze deployments if a critical issue is found.

@@ -148,8 +148,8 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - Base price updates are owner-set; trust is centralized to the owner and visible on-chain.
 
 ## Notes
-- Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
-- Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
-- CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- CI runs `npm audit` at `--audit-level=high`.
+- Fork tests are optional; they skip unless `MAINNET_RPC_URL` or `BASE_RPC_URL` is provided.
+- Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK`.
+- CI includes `forge test`, `npm test`, `npm run test:ui`, `solhint`, `slither`, coverage (90% minimum),
+  `npm audit --audit-level=high`, and `npm run check:no-client-secrets`.
 - Local `npm audit --json` (2026-01-01): 0 vulnerabilities.

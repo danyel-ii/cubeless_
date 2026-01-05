@@ -39,3 +39,4 @@ FORK_RPC_URL="$BASE_RPC_URL" npm run fork-test
 - `FORK_RPC_URL` can override the default mainnet RPC for ad-hoc runs.
 - Base fork uses Punkology (0x5795060201B64970A02a043A29dA1aedabFa0b35) for `ownerOf`/`royaltyInfo` checks.
 - Only read-only calls are used.
+- In CI, `MAINNET_RPC_URL` and `BASE_RPC_URL` are expected to be provided as GitHub secrets.
