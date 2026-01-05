@@ -8,7 +8,6 @@ def run_forge_coverage() -> None:
     env = dict(os.environ)
     env.setdefault("FOUNDRY_DISABLE_SIGNATURES", "1")
     env.setdefault("FOUNDRY_DISABLE_ETHERSCAN", "1")
-    env.setdefault("FOUNDRY_OFFLINE", "true")
     env.setdefault("NO_PROXY", "*")
     env.setdefault("HTTP_PROXY", "")
     env.setdefault("HTTPS_PROXY", "")
