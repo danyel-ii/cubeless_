@@ -89,6 +89,9 @@ This document is the single entry point for cubixles_ documentation. It explains
 ## Key Commands
 
 ```sh
+# Ensure submodules are initialized (required for forge imports)
+git submodule update --init --recursive
+
 # Unit + fuzz + invariants
 cd contracts
 forge test -vvv

@@ -1,6 +1,6 @@
 # Solidity Coverage Report
 
-Total: 285/307 lines = 92.83%
+Total: 285/308 lines = 92.53%
 Excluded: contracts/script/**, contracts/test/**
 
 ## Uncovered Lines (by contract)
@@ -14,6 +14,6 @@ Excluded: contracts/script/**, contracts/test/**
 ### RoyaltySplitter.sol
 
 - src/royalties/RoyaltySplitter.sol
-  - Coverage: 110/124 = 88.71%
-  - Missed lines: 102, 167, 168, 169, 171, 172, 173, 175, 176, 177, 179, 181, 199, 200
+  - Coverage: 110/125 = 88.00%
+  - Missed lines: 104, 169, 170, 171, 173, 174, 175, 177, 178, 179, 181, 182, 185, 203, 204
 
