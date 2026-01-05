@@ -97,6 +97,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(address => MintCommit) public mintCommitByMinter;
 
     /// @notice LESS token address.
+    // slither-disable-next-line missing-zero-check
     address public immutable LESS_TOKEN;
     /// @notice Whether LESS pricing + snapshots are enabled.
     bool public immutable lessEnabled;
@@ -168,6 +169,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
             revert RoyaltyTooHigh();
         }
         resaleSplitter = resaleSplitter_;
+        // slither-disable-next-line missing-zero-check
         LESS_TOKEN = lessToken_;
         if (lessToken_ == address(0)) {
             if (fixedMintPriceWei_ == 0) {
@@ -185,12 +187,12 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Mint a new NFT tied to provenance refs.
     /// @dev Requires a prior commit within the expiry window.
     /// @param salt User-provided salt for tokenId derivation.
-    /// @param tokenURI IPFS metadata URI to store.
+    /// @param metadataURI IPFS metadata URI to store.
     /// @param refs Provenance references (1..6).
     /// @return tokenId Newly minted token ID.
     function mint(
         bytes32 salt,
-        string calldata tokenURI,
+        string calldata metadataURI,
         NftRef[] calldata refs
     ) external payable nonReentrant returns (uint256 tokenId) {
         MintCommit memory commit = mintCommitByMinter[msg.sender];
@@ -223,7 +225,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
         paletteIndexByTokenId[tokenId] = paletteIndex;
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, metadataURI);
         _snapshotSupply(tokenId, true);
         delete mintCommitByMinter[msg.sender];
 
@@ -518,6 +520,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (commitBlockHash == bytes32(0)) {
             revert MintCommitHashMissing();
         }
+        // slither-disable-next-line weak-prng
         return uint256(
             keccak256(abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash))
         ) % PALETTE_SIZE;

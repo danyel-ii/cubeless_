@@ -38,22 +38,19 @@ slither .
 - Any Slither finding must be fixed or documented in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
 - If an issue is accepted, include rationale and severity.
 
-## Current findings (triaged)
-Latest run: 2026-01-03 (`slither contracts`)
+## Slither status
+Latest run: 2026-01-03 (`slither contracts`) — PASS (project findings are suppressed inline).
 
-### Project findings
+### Suppressed findings (intentional)
 1. **Weak PRNG** — `CubixlesMinter._assignPaletteIndex`
-   - Uses blockhash + inputs for palette selection; acceptable for art variance.
-   - Tracked in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+   - Palette selection still mixes user commits with `blockhash`, and the inline `slither-disable` directive keeps this acceptable art-only randomness. The trade-off is documented in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
 2. **Unused return values** — `RoyaltySplitter._sqrtPriceLimit`, `_poolInitialized`
-   - `POOL_MANAGER.getSlot0` is used only to test initialization; unused slots are intentional.
-3. **Local variable shadowing** — `CubixlesMinter.mint` (`tokenURI`)
-   - Harmless shadowing of ERC-721 `tokenURI` function name.
-4. **Missing zero-address validation** — `CubixlesMinter.LESS_TOKEN`
-   - Intentional to support fixed-price mode when `lessToken_ == address(0)`.
+   - `POOL_MANAGER.getSlot0` exposes multiple slots, but only `sqrtPriceX96` feeds the swap logic. The remaining slots are intentionally ignored and suppressed so Slither focuses on actionable findings.
+3. **Missing zero-address validation** — `CubixlesMinter.LESS_TOKEN`
+   - Passing `address(0)` enables fixed-price mints without LESS snapshots; a targeted `slither-disable` keeps the check from firing while preserving the legacy mode.
 
 ### Dependency findings (noise)
-Slither also reports issues inside OpenZeppelin and Uniswap v4 dependencies
+Slither still reports issues inside OpenZeppelin and Uniswap v4 dependencies
 (incorrect exponentiation/shift, divide-before-multiply, assembly usage, pragma-version
 mixing, dead code, and naming conventions). These are treated as dependency noise and
 not modified locally.

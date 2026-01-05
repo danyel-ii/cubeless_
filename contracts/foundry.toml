@@ -8,9 +8,5 @@ remappings = [
 ]
 fs_permissions = [{ access = "read-write", path = "./deployments" }]
 solc_version = "0.8.24"
-solc_versions = ["0.8.20"]
-
-[profile.default.env]
-CUBIXLES_DEPLOYMENT_PATH = "deployments/base.json"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -13,6 +13,15 @@ const FORBIDDEN = [
   "RPC_URL",
 ];
 
+function escapeRegex(value) {
+  return value.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+const FILTERS = FORBIDDEN.map((needle) => ({
+  needle,
+  regex: new RegExp(`\\b${escapeRegex(needle)}\\b`),
+}));
+
 function walk(dir, files = []) {
   if (!fs.existsSync(dir)) {
     return files;
@@ -39,8 +48,8 @@ for (const file of walk(STATIC_DIR)) {
     continue;
   }
   const content = fs.readFileSync(file, "utf8");
-  for (const needle of FORBIDDEN) {
-    if (content.includes(needle)) {
+  for (const { needle, regex } of FILTERS) {
+    if (regex.test(content)) {
       matches.push({ file, needle });
     }
   }

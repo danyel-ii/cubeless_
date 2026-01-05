@@ -265,6 +265,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     function _sqrtPriceLimit() private view returns (uint160) {
         uint160 sqrtPriceLimitX96 = TickMath.MIN_SQRT_PRICE + 1;
         if (swapMaxSlippageBps != 0) {
+            // slither-disable-next-line unused-return
             (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
             sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
         }
@@ -317,6 +318,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (address(POOL_MANAGER) == address(0)) {
             return false;
         }
+        // slither-disable-next-line unused-return
         (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
         return sqrtPriceX96 != 0;
     }

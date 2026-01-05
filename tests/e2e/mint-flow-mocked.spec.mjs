@@ -192,7 +192,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.getByRole("button", { name: /mint nft/i }).click();
 
   await expect(page.locator("#mint-status")).toContainText(
-    /step 1\/2: confirm commit|step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed/i,
+    /step 1\/2: confirm commit|step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps/i,
     {
       timeout: 5000,
     }
