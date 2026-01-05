@@ -2,6 +2,7 @@ const TOTAL_SUPPLY_SELECTOR = "0x18160ddd";
 const BALANCE_OF_SELECTOR = "0x70a08231";
 import { readEnvValue } from "../../shared/utils/env.js";
 import { getChainConfig } from "../../config/chains.js";
+import { postNftsApi } from "./nfts-api.js";
 
 const BURN_ADDRESS =
   readEnvValue("NEXT_PUBLIC_LESS_BURN_ADDRESS") ||
@@ -25,10 +26,8 @@ export async function fetchLessTotalSupply(chainId = 1) {
     data: "",
   };
   const balanceOfData = `${BALANCE_OF_SELECTOR}${BURN_ADDRESS.slice(2).padStart(64, "0")}`;
-  const response = await fetch("/api/nfts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const json = await postNftsApi(
+    {
       mode: "rpc",
       chainId,
       calls: [
@@ -43,12 +42,9 @@ export async function fetchLessTotalSupply(chainId = 1) {
           data: balanceOfData,
         },
       ],
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`LESS supply fetch failed (${response.status}).`);
-  }
-  const json = await response.json();
+    },
+    { errorLabel: "LESS supply fetch failed" }
+  );
   if (!Array.isArray(json) || json.length < 2) {
     throw new Error("LESS supply response missing results.");
   }

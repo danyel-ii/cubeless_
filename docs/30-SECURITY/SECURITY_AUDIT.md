@@ -98,8 +98,7 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: PASS (1 test, ~18.6s)
-- Mocked E2E specs (`tests/e2e/*`) added but not run in this snapshot.
+Result: PASS (3 tests, ~4.5s)
 
 ### Client secret scan
 Command:

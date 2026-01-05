@@ -1,6 +1,7 @@
 import { BrowserProvider, Contract, Interface } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { getChainConfig } from "../../config/chains.js";
+import { postNftsApi } from "./nfts-api.js";
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
@@ -43,19 +44,14 @@ export async function fetchLessDelta(provider, tokenId) {
 }
 
 async function rpcCallBatch(chainId, calls) {
-  const response = await fetch("/api/nfts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const json = await postNftsApi(
+    {
       mode: "rpc",
       chainId,
       calls,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`RPC call failed (${response.status}).`);
-  }
-  const json = await response.json();
+    },
+    { errorLabel: "RPC call failed" }
+  );
   if (!Array.isArray(json)) {
     throw new Error("RPC response missing results.");
   }

@@ -82,6 +82,8 @@ are split into smaller modules.
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
   - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Base; optional Sepolia via env).
+- `app/_client/src/data/chain/nfts-api.js`
+  - Shared `/api/nfts` POST helper for client RPC + Alchemy calls.
 - `app/_client/src/data/chain/cubixles-reader.js`
   - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
