@@ -165,3 +165,5 @@ jobs:
       - name: Fork tests (base)
         if: ${{ env.FORK_RPC_URL != '' }}
         run: bash scripts/fork-test.sh
+
+# dependabot rerun marker (Mon Jan  5 10:21:22 UTC 2026)
