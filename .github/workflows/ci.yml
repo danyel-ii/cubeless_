@@ -49,7 +49,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Solhint
@@ -63,7 +63,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install deps
@@ -91,7 +91,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install deps
@@ -118,7 +118,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install deps
@@ -133,7 +133,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install deps
@@ -184,3 +184,7 @@ jobs:
       - name: Fork tests (base)
         if: ${{ env.FORK_RPC_URL != '' }}
         run: bash scripts/fork-test.sh
+
+# dependabot rerun marker (Mon Jan  5 10:21:22 UTC 2026)
+
+# dependabot rerun marker (Mon Jan  5 10:24:57 UTC 2026)
