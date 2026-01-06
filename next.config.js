@@ -2,7 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
+  experimental: {
+    serverComponentsExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];
