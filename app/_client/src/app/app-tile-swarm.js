@@ -260,6 +260,54 @@ function getDefaultAnchor() {
   return { x: width * 0.74, y: height * 0.24 };
 }
 
+const ANCHOR_SELECTORS =
+  ".overlay:not(.is-hidden) .overlay-card, [data-tooltip-anchor], .ui-tooltip, .ui-panel";
+
+function isAnchorVisible(node) {
+  if (!node || !node.isConnected) {
+    return false;
+  }
+  const rect = node.getBoundingClientRect();
+  return rect.width > 8 && rect.height > 8;
+}
+
+function getAnchorCenter(node) {
+  if (!node) {
+    return null;
+  }
+  const rect = node.getBoundingClientRect();
+  if (rect.width <= 8 || rect.height <= 8) {
+    return null;
+  }
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function resolveAnchorNode() {
+  if (tileSwarm?.tooltipNode && isAnchorVisible(tileSwarm.tooltipNode)) {
+    return tileSwarm.tooltipNode;
+  }
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const node = document.querySelector(ANCHOR_SELECTORS);
+  if (isAnchorVisible(node)) {
+    if (tileSwarm) {
+      tileSwarm.tooltipNode = node;
+    }
+    return node;
+  }
+  if (tileSwarm) {
+    tileSwarm.tooltipNode = null;
+  }
+  return null;
+}
+
+function resolveAnchorFallback() {
+  const node = resolveAnchorNode();
+  const centered = getAnchorCenter(node);
+  return centered ?? getDefaultAnchor();
+}
+
 function buildFaceCoords(face, faceSize) {
   const coords = [];
   if (face === "top") {
@@ -297,6 +345,7 @@ function buildTiles(tileSize) {
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
+  const spiralRadiusBase = Math.max(tileSize * CUBE_FACE_SIZE * 2.8, 36);
 
   faces.forEach((face) => {
     const coords = buildFaceCoords(face.name, CUBE_FACE_SIZE);
@@ -318,7 +367,7 @@ function buildTiles(tileSize) {
         color,
         delay,
         spiralAngle: rand() * Math.PI * 2,
-        spiralRadius: tileSize * (CUBE_FACE_SIZE * 2.8 + rand() * CUBE_FACE_SIZE * 2.4),
+        spiralRadius: spiralRadiusBase * (1 + rand() * 0.9),
         phase: rand() * Math.PI * 2,
       });
     });
@@ -362,14 +411,58 @@ function attachListeners() {
   });
 }
 
+function applyLayerStyles(canvas) {
+  if (!canvas) {
+    return;
+  }
+  canvas.classList.add("tile-swarm-layer");
+  canvas.setAttribute("aria-hidden", "true");
+  canvas.style.position = "fixed";
+  canvas.style.inset = "0";
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  canvas.style.zIndex = "1200";
+  canvas.style.pointerEvents = "none";
+  canvas.style.display = "block";
+  canvas.style.opacity = "1";
+  canvas.style.visibility = "visible";
+  canvas.style.mixBlendMode = "normal";
+}
+
+function attachLayerCanvas(canvas) {
+  if (!canvas || canvas.dataset.swarmAttached === "true") {
+    return;
+  }
+  const tryAppend = () => {
+    if (typeof document === "undefined" || !document.body) {
+      return false;
+    }
+    applyLayerStyles(canvas);
+    document.body.appendChild(canvas);
+    canvas.dataset.swarmAttached = "true";
+    return true;
+  };
+  if (!tryAppend()) {
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "DOMContentLoaded",
+        () => {
+          tryAppend();
+        },
+        { once: true }
+      );
+    }
+  }
+}
+
 function resetTileSwarm() {
   if (!tileSwarm) {
     return;
   }
   const baseSize = clamp(Math.min(width, height) * 0.012, 4, 9);
-  const tileSize = Math.max(1.6, baseSize * SWARM_SCALE);
+  const tileSize = Math.max(2.4, baseSize * SWARM_SCALE);
   const { tiles, maxDelay } = buildTiles(tileSize);
-  const anchor = getDefaultAnchor();
+  const anchor = resolveAnchorFallback();
   tileSwarm.tiles = tiles;
   tileSwarm.tileSize = tileSize;
   tileSwarm.confettiSize = baseSize;
@@ -389,16 +482,8 @@ function resolveTarget(now) {
   if (seenRecently) {
     return { x: pointer.x, y: pointer.y };
   }
-  if (typeof document !== "undefined") {
-    if (!tileSwarm?.tooltipNode) {
-      tileSwarm.tooltipNode = document.querySelector("[data-tooltip-anchor], .ui-tooltip");
-    }
-    if (tileSwarm?.tooltipNode) {
-      const rect = tileSwarm.tooltipNode.getBoundingClientRect();
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    }
-  }
-  return tileSwarm?.home ?? getDefaultAnchor();
+  const anchor = resolveAnchorFallback();
+  return anchor ?? tileSwarm?.home ?? getDefaultAnchor();
 }
 
 function spawnConfetti(amount, dx, dy) {
@@ -478,11 +563,7 @@ export function initTileSwarm() {
   layer.pixelDensity(1);
   layer.noSmooth();
   const canvas = layer.canvas || layer.elt;
-  if (canvas) {
-    canvas.classList.add("tile-swarm-layer");
-    canvas.setAttribute("aria-hidden", "true");
-    document.body.appendChild(canvas);
-  }
+  attachLayerCanvas(canvas);
   tileSwarm.layer = layer;
   resetTileSwarm();
 }

@@ -739,7 +739,7 @@ canvas,
 }
 
 .tile-swarm-layer {
-  z-index: 20;
+  z-index: 1200;
   pointer-events: none;
 }
 

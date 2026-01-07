@@ -3,11 +3,11 @@
   "rewrites": [
     {
       "source": "/inspecta_deck",
-      "destination": "https://provenance-viewer.vercel.app/"
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/"
     },
     {
       "source": "/inspecta_deck/:path*",
-      "destination": "https://provenance-viewer.vercel.app/:path*"
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/:path*"
     }
   ]
 }
