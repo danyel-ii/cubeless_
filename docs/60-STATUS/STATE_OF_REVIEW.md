@@ -1,4 +1,4 @@
-# cubixles_ v0 — State of Review (2026-01-05)
+# cubixles_ v0 — State of Review (2026-01-07)
 
 Last updated: 2026-01-06
 
@@ -37,13 +37,13 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 - Repo: `https://github.com/danyel-ii/cubixles_.git`
 - Vercel domain: `https://www.cubixles.xyz`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
-- Mainnet contracts (renamed, deployed 2026-01-02):
-  - CubixlesMinter: `0x2FCC29B8Db193D8c5F1647Cbf1e5eCC03920D62B`
-  - RoyaltySplitter: `0x127AB77A7aB14d2Efb4D58249Ecc373f6e6d8dFF`
+- Mainnet contracts (redeployed 2026-01-07):
+  - CubixlesMinter: `0x61EdB3bff9c758215Bc8C0B2eAcf2a56c638a6f2`
+  - RoyaltySplitter: `0x8c80e16c877F68DFBE461ca64e296e6ec3e69077`
   - Deploy txs:
-    - RoyaltySplitter CREATE: `0xcf880be2f5adf318f328bd5a9702e2536be8372920e929db30e2bc11b2a49777`
-    - CubixlesMinter CREATE: `0xf1f1f1eb160bdc9d79ec2d274b0906235c191984a758246788d74a01055e7f50`
-    - Ownership transfer: `0x9cef0a4e1a8eb15f8cc29dfbc3d28cc541b5ab3b0ef07abc5941bd41e0f8f42c`
+    - RoyaltySplitter CREATE: `0xf2b2459b9b490cbd058bedebcafe36d4196043947076dd831b889ec26f2e802e`
+    - CubixlesMinter CREATE: `0x215a73e4466c4b0c449c7faf4fee6929c9108a67cccc046de0acef8816fe2444`
+    - Ownership transfer: `0xb61bdf6419b6f063c55a04620e023d81341019d5385f4e2ba32b2510db66efb8`
 - Base contracts (deployed 2026-01-07):
   - CubixlesMinter: `0x428032392237cb3BA908a6743994380DCFE7Bb74`
   - RoyaltySplitter: `0xBaFeAa2Bd3ecb0dDe992727C289aDFA227CA12E2`
