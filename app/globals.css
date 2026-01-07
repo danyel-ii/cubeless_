@@ -145,6 +145,58 @@ body.is-token-view #leaderboard {
   backdrop-filter: blur(8px);
 }
 
+.token-floor-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 0;
+  margin: 0 0 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.token-floor-toggle .token-floor-title {
+  margin-bottom: 0;
+}
+
+.token-floor-toggle .token-floor-summary {
+  margin-bottom: 0;
+  grid-column: 1 / 2;
+}
+
+.token-floor-toggle-icon {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-soft);
+  transform: rotate(0deg);
+  transition: transform 160ms ease;
+}
+
+.token-floor-details {
+  display: block;
+}
+
+.token-floor-panel.is-collapsed .token-floor-details {
+  display: none;
+}
+
+.token-floor-panel.is-collapsed .token-floor-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.token-floor-panel.is-collapsed .token-floor-toggle .token-floor-title {
+  display: none;
+}
+
+.token-floor-panel.is-collapsed .token-floor-summary {
+  margin-bottom: 0;
+}
+
 .token-floor-title {
   font-size: 11px;
   text-transform: uppercase;
@@ -297,6 +349,11 @@ body.is-token-view #leaderboard {
   display: inline-block;
 }
 
+.logo-mark-inline {
+  vertical-align: -0.05em;
+  margin-right: 0.08em;
+}
+
 .overlay-sub {
   margin-top: 10px;
   font-size: 14px;
@@ -317,6 +374,18 @@ body.is-token-view #leaderboard {
   box-shadow: 0 10px 22px rgba(27, 22, 17, 0.16);
   transition: transform 180ms ease, box-shadow 180ms ease;
   font-family: var(--font-body);
+}
+
+.overlay-button.is-glow {
+  box-shadow:
+    0 10px 22px rgba(27, 22, 17, 0.16),
+    0 0 14px rgba(180, 92, 54, 0.35);
+}
+
+.overlay-button.is-glow:hover {
+  box-shadow:
+    0 14px 26px rgba(27, 22, 17, 0.2),
+    0 0 18px rgba(180, 92, 54, 0.5);
 }
 
 .overlay-button:hover {
@@ -427,6 +496,22 @@ body.is-token-view #leaderboard {
   pointer-events: auto;
   opacity: 0.65;
   animation: eth-hud-drift 10s ease-in-out infinite;
+}
+
+body.is-token-view .token-view-status {
+  animation: eth-hud-drift 12s ease-in-out infinite;
+}
+
+body.is-token-view .token-floor-panel {
+  animation: eth-hud-drift 13s ease-in-out infinite;
+}
+
+body.is-token-view .less-hud {
+  animation: eth-hud-drift 11s ease-in-out infinite;
+}
+
+body.is-token-view .base-mint-hud {
+  animation: eth-hud-drift 14s ease-in-out infinite;
 }
 
 .less-hud {

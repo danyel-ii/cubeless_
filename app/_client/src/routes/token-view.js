@@ -93,14 +93,33 @@ function initFloorPanel() {
   panel.id = "token-floor-panel";
   panel.className = "token-floor-panel";
   panel.innerHTML = `
-    <div class="token-floor-title">Floor snapshot (mint)</div>
-    <div id="token-floor-summary" class="token-floor-summary">Snapshot: 0.0000 ETH</div>
-    <div id="token-floor-list" class="ui-floor-list"></div>
-    <div class="token-floor-title">Feingehalt (live)</div>
-    <div id="token-feingehalt" class="token-floor-summary">Feingehalt: --</div>
-    <div id="token-feingehalt-note" class="token-floor-note">Fetching live floors…</div>
+    <button
+      id="token-floor-toggle"
+      class="token-floor-toggle"
+      type="button"
+      aria-expanded="true"
+      aria-controls="token-floor-details"
+    >
+      <span class="token-floor-title">Feingehalt (live)</span>
+      <span id="token-feingehalt" class="token-floor-summary">Feingehalt: --</span>
+      <span class="token-floor-toggle-icon" aria-hidden="true">▾</span>
+    </button>
+    <div id="token-floor-details" class="token-floor-details">
+      <div class="token-floor-title">Floor snapshot (mint)</div>
+      <div id="token-floor-summary" class="token-floor-summary">Snapshot: 0.0000 ETH</div>
+      <div id="token-floor-list" class="ui-floor-list"></div>
+      <div id="token-feingehalt-note" class="token-floor-note">Fetching live floors…</div>
+    </div>
   `;
   document.body.appendChild(panel);
+  const toggle = panel.querySelector("#token-floor-toggle");
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      panel.classList.toggle("is-collapsed");
+      const expanded = !panel.classList.contains("is-collapsed");
+      toggle.setAttribute("aria-expanded", String(expanded));
+    });
+  }
   return {
     panel,
     summaryEl: panel.querySelector("#token-floor-summary"),

@@ -24,8 +24,12 @@ export default function AppShell() {
             <span className="sr-only">cubixles_</span>
           </div>
           <div className="overlay-sub">
-            Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered
-            to NFTs you already own.
+            Mint{" "}
+            <span className="logo-mark logo-mark-inline" aria-hidden="true">
+              {"\uE000"}
+            </span>
+            <span className="sr-only">cubixles_</span>: NFTs linked to interactive p5.js artwork
+            whose provenance is tethered to NFTs you already own.
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
@@ -33,8 +37,8 @@ export default function AppShell() {
               <li>Connect your wallet.</li>
               <li>Select 1–6 NFTs from your wallet.</li>
               <li>We snapshot key metadata (and collection floors when available).</li>
-              <li>We publish the interactive artwork + metadata to IPFS.</li>
-              <li>You sign a direct mint on the selected network.</li>
+              <li>We publish the interactive artwork + metadata to IPFS (signature required).</li>
+              <li>You sign the mint transaction on the selected network.</li>
             </ol>
           </div>
           <div className="overlay-section">
@@ -46,16 +50,10 @@ export default function AppShell() {
             </p>
           </div>
           <div className="overlay-section">
-            <div className="overlay-section-title">Fees</div>
+            <div className="overlay-section-title">Feingehalt</div>
             <p className="overlay-text">
-              Mint: mainnet tracks $LESS supply; Base uses linear, immutable pricing. Resale royalty:
-              5% (ERC-2981)
-            </p>
-          </div>
-          <div className="overlay-section">
-            <div className="overlay-section-title">Notes</div>
-            <p className="overlay-text">
-              If floor data is unavailable, we display 0. Your selection is embedded as provenance.
+              Feingehalt is the live sum of linked NFT floor prices; the token view shows both the
+              mint-time snapshot and the live value.
             </p>
           </div>
           <div className="overlay-section">
@@ -74,7 +72,7 @@ export default function AppShell() {
             </p>
           </div>
           <div className="overlay-actions">
-            <button id="enter-btn" className="overlay-button" type="button">
+            <button id="enter-btn" className="overlay-button is-glow" type="button">
               Enter
             </button>
             <button id="overlay-leaderboard" className="overlay-button is-ghost" type="button">
