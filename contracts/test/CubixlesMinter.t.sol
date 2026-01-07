@@ -427,7 +427,7 @@ contract CubixlesMinterTest is Test {
 
     function testLinearPricingUsesBaseAndStep() public {
         uint256 basePrice = 1_200_000_000_000_000;
-        uint256 step = 360_000_000_000_000;
+        uint256 step = 36_000_000_000_000;
         CubixlesMinter linearMinter = new CubixlesMinter(
             resaleSplitter,
             address(0),

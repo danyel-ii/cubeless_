@@ -65,7 +65,7 @@ export default function AppShell() {
               >
                 $LESS
               </a>{" "}
-              supply, Base uses an immutable linear step (0.0012 ETH base + 0.00036 ETH per mint).
+              supply, Base uses an immutable linear step (0.0012 ETH base + 0.000036 ETH per mint).
             </p>
           </div>
           <div className="overlay-actions">

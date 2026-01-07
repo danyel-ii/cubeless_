@@ -178,7 +178,7 @@ type MintMetadata = {
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
 Base ETH-only mode:
-- On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.00036 ETH per mint).
+- On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.000036 ETH per mint).
 - `baseMintPriceWei` and `baseMintPriceStepWei` are immutable once deployed.
 - $LESS snapshots and delta metrics are disabled (stored as `0`) on Base.
 

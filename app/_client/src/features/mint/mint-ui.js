@@ -425,7 +425,7 @@ export function initMintUi() {
       return;
     }
     mintPriceNoteEl.textContent =
-      "Base pricing is linear + immutable: 0.0012 ETH base, +0.00036 ETH per mint.";
+      "Base pricing is linear + immutable: 0.0012 ETH base, +0.000036 ETH per mint.";
   }
 
   async function refreshMintPrice() {
