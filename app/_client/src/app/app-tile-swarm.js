@@ -203,11 +203,11 @@ const TILE_PALETTE = [
 const CUBE_FACE_SIZE = 4;
 const FORMATION_DURATION = 900;
 const FORMATION_STAGGER = 14;
-const FOLLOW_EASE = 0.12;
+const FOLLOW_EASE = 0.14;
 const CONFETTI_MAX = 90;
 const CONFETTI_LIFE = 900;
 const CONFETTI_DRAG = 0.92;
-const SWARM_SCALE = 0.33;
+const SWARM_SCALE = 0.495;
 
 let tileSwarm = null;
 let listenersAttached = false;
@@ -390,6 +390,14 @@ function handlePointerMove(event) {
   pointer.lastSeen = typeof millis === "function" ? millis() : performance.now();
 }
 
+function handleTouchMove(event) {
+  const touch = event?.touches?.[0];
+  if (!touch) {
+    return;
+  }
+  handlePointerMove(touch);
+}
+
 function handlePointerLeave() {
   pointer.active = false;
 }
@@ -402,6 +410,10 @@ function attachListeners() {
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   window.addEventListener("pointerdown", handlePointerMove, { passive: true });
   window.addEventListener("pointerleave", handlePointerLeave, { passive: true });
+  window.addEventListener("touchstart", handleTouchMove, { passive: true });
+  window.addEventListener("touchmove", handleTouchMove, { passive: true });
+  window.addEventListener("touchend", handlePointerLeave, { passive: true });
+  window.addEventListener("touchcancel", handlePointerLeave, { passive: true });
   window.addEventListener("blur", handlePointerLeave);
   document.addEventListener("overlay-opened", () => {
     if (!tileSwarm) {
@@ -478,7 +490,7 @@ function resetTileSwarm() {
 }
 
 function resolveTarget(now) {
-  const seenRecently = pointer.active && now - pointer.lastSeen < 2400;
+  const seenRecently = pointer.lastSeen > 0 && now - pointer.lastSeen < 2400;
   if (seenRecently) {
     return { x: pointer.x, y: pointer.y };
   }

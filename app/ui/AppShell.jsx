@@ -219,6 +219,9 @@ export default function AppShell() {
             <button id="nft-apply" className="ui-button" type="button">
               Apply to cube
             </button>
+            <button id="ui-preview" className="ui-button ui-preview-btn is-preview-dark" type="button">
+              Preview
+            </button>
           </div>
           <div id="nft-selection" className="ui-hint">
             Selected 0 / 6
@@ -267,9 +270,6 @@ export default function AppShell() {
           </div>
         </div>
         <div className="ui-row">
-          <button id="ui-preview" className="ui-button is-ghost ui-preview-btn" type="button">
-            Preview
-          </button>
           <button id="ui-landing" className="ui-button is-ghost" type="button">
             Landing
           </button>
