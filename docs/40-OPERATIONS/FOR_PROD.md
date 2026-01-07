@@ -167,3 +167,11 @@ npm run deploy:mainnet
 ```sh
 npm run deploy:base
 ```
+- Record deployment:
+  - `contracts/deployments/base.json`
+  - CubixlesMinter: `0x428032392237cb3BA908a6743994380DCFE7Bb74`
+  - RoyaltySplitter: `0xBaFeAa2Bd3ecb0dDe992727C289aDFA227CA12E2`
+  - Deploy txs:
+    - RoyaltySplitter CREATE: `0xbf5a179ce7e4b11ff65699a5d69eac56d8c4b75fd66d38702faab4a28d31c3aa`
+    - CubixlesMinter CREATE: `0x35b4b0ab506b3d4677550abc90343300c560e82ddc57c827b6ff1c7b5ac3d78a`
+    - Ownership transfer (minter → owner): `0x13910eec38b3f1620da45228df56eb93383a6c03add5c01488c03e94f7b168db`

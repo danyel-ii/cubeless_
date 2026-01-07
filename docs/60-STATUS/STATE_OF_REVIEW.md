@@ -44,6 +44,13 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
     - RoyaltySplitter CREATE: `0xcf880be2f5adf318f328bd5a9702e2536be8372920e929db30e2bc11b2a49777`
     - CubixlesMinter CREATE: `0xf1f1f1eb160bdc9d79ec2d274b0906235c191984a758246788d74a01055e7f50`
     - Ownership transfer: `0x9cef0a4e1a8eb15f8cc29dfbc3d28cc541b5ab3b0ef07abc5941bd41e0f8f42c`
+- Base contracts (deployed 2026-01-07):
+  - CubixlesMinter: `0x428032392237cb3BA908a6743994380DCFE7Bb74`
+  - RoyaltySplitter: `0xBaFeAa2Bd3ecb0dDe992727C289aDFA227CA12E2`
+  - Deploy txs:
+    - RoyaltySplitter CREATE: `0xbf5a179ce7e4b11ff65699a5d69eac56d8c4b75fd66d38702faab4a28d31c3aa`
+    - CubixlesMinter CREATE: `0x35b4b0ab506b3d4677550abc90343300c560e82ddc57c827b6ff1c7b5ac3d78a`
+    - Ownership transfer: `0x13910eec38b3f1620da45228df56eb93383a6c03add5c01488c03e94f7b168db`
 
 ## Tests
 

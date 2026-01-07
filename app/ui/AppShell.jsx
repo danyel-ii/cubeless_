@@ -17,7 +17,7 @@ export default function AppShell() {
     <>
       <div id="overlay" className="overlay">
         <div className="overlay-card">
-          <div className="overlay-title">cubixles_</div>
+          <div className="overlay-title is-logotype">cubixles_</div>
           <div className="overlay-sub">
             Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered
             to NFTs you already own.
@@ -43,7 +43,7 @@ export default function AppShell() {
           <div className="overlay-section">
             <div className="overlay-section-title">Fees</div>
             <p className="overlay-text">
-              Mint: mainnet tracks $LESS supply; Base uses linear, immutable pricing · Resale royalty:
+              Mint: mainnet tracks $LESS supply; Base uses linear, immutable pricing. Resale royalty:
               5% (ERC-2981)
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function AppShell() {
         Loading token...
       </div>
       <div id="ui" className="ui-panel">
-        <div className="ui-title">cubixles_</div>
+        <div className="ui-title is-logotype">cubixles_</div>
         <div className="ui-sub">
           Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to
           NFTs you already own.
