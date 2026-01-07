@@ -266,24 +266,26 @@ export default function AppShell() {
             Landing
           </button>
         </div>
-        <div id="minted-banner" className="ui-row minted-banner is-hidden">
+        <div className="ui-row minted-links">
+          <div id="minted-banner" className="minted-banner is-hidden">
+            <a
+              className="minted-link"
+              href="https://opensea.io/collection/cubixles"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <img src="https://static.seadn.io/logos/Logomark-Blue.png" alt="OpenSea" />
+            </a>
+          </div>
           <a
-            className="minted-link"
-            href="https://opensea.io/collection/cubixles"
+            className="deepwiki-badge"
+            href="https://deepwiki.com/danyel-ii/cubixles_"
             target="_blank"
             rel="noreferrer"
           >
-            <img src="https://static.seadn.io/logos/Logomark-Blue.png" alt="OpenSea" />
+            <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
           </a>
         </div>
-        <a
-          className="deepwiki-badge"
-          href="https://deepwiki.com/danyel-ii/cubixles_"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
-        </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">
         <button id="preview-back" className="ui-button is-ghost" type="button">

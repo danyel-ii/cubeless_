@@ -16,6 +16,21 @@ import { buildTokenViewUrl } from "../config/links.js";
 
 let uiInitialized = false;
 
+function isDebugEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("debug") === "1") {
+    return true;
+  }
+  try {
+    return window.localStorage.getItem("cubixles_debug") === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
 export function initUiRoot() {
   if (uiInitialized) {
     return;
@@ -205,6 +220,9 @@ function initMintedBanner() {
 }
 
 function initDebugPanel() {
+  if (!isDebugEnabled()) {
+    return;
+  }
   const panel = document.getElementById("debug-panel");
   const logEl = document.getElementById("debug-log");
   const closeButton = document.getElementById("debug-close");

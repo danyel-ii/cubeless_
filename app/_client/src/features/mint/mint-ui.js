@@ -65,6 +65,21 @@ const CUSTOM_ERROR_MESSAGES = {
   FailedInnerCall: "Payment transfer failed. Try again.",
 };
 
+function isDebugEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("debug") === "1") {
+    return true;
+  }
+  try {
+    return window.localStorage.getItem("cubixles_debug") === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
 function extractRevertData(error) {
   const candidates = [
     error?.data,
@@ -162,7 +177,8 @@ export function initMintUi() {
   }
 
   let walletState = null;
-  const devChecklist = IS_DEV ? initDevChecklist(statusEl.parentElement) : null;
+  const devChecklist =
+    IS_DEV && isDebugEnabled() ? initDevChecklist(statusEl.parentElement) : null;
   const floorCache = new Map();
   let currentMintPriceWei = null;
 
@@ -890,6 +906,9 @@ function buildDiagnostics({
 }
 
 function logDiagnostics(diagnostics, devChecklist) {
+  if (!devChecklist) {
+    return;
+  }
   console.info("[cubixles][mint] economics", diagnostics.economics);
   devChecklist.mark("economics");
   console.info("[cubixles][mint] uris", diagnostics.uris);
