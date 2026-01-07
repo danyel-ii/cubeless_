@@ -2,6 +2,14 @@
   "framework": "nextjs",
   "rewrites": [
     {
+      "source": "/landing_page",
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/"
+    },
+    {
+      "source": "/landing_page/:path*",
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/:path*"
+    },
+    {
       "source": "/inspecta_deck",
       "destination": "https://provenance-viewer.vercel.app/inspecta_deck/"
     },
