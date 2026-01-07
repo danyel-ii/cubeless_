@@ -208,6 +208,9 @@ const CONFETTI_MAX = 90;
 const CONFETTI_LIFE = 900;
 const CONFETTI_DRAG = 0.92;
 const SWARM_SCALE = 0.495;
+const SHAPE_ORDER = ["cube", "octa", "tetra", "sphere"];
+const SHAPE_DURATION = 5200;
+const DEFAULT_SHAPE = SHAPE_ORDER[0];
 
 let tileSwarm = null;
 let listenersAttached = false;
@@ -249,11 +252,68 @@ function easeOutCubic(value) {
   return 1 - Math.pow(1 - value, 3);
 }
 
+function easeInOutSine(value) {
+  return -(Math.cos(Math.PI * value) - 1) / 2;
+}
+
 function projectIso(x, y, z, size) {
   return {
     x: (x - z) * size,
     y: (x + z) * size * 0.5 - y * size,
   };
+}
+
+function normalizeVec(vec) {
+  const length = Math.hypot(vec.x, vec.y, vec.z);
+  if (!length || length < 1e-6) {
+    return { x: 0, y: 0, z: 0 };
+  }
+  return { x: vec.x / length, y: vec.y / length, z: vec.z / length };
+}
+
+function mapToCube(dir) {
+  const scale = 1 / Math.max(Math.abs(dir.x), Math.abs(dir.y), Math.abs(dir.z), 1e-5);
+  return { x: dir.x * scale, y: dir.y * scale, z: dir.z * scale };
+}
+
+function mapToOcta(dir) {
+  const scale = 1 / Math.max(Math.abs(dir.x) + Math.abs(dir.y) + Math.abs(dir.z), 1e-5);
+  return { x: dir.x * scale, y: dir.y * scale, z: dir.z * scale };
+}
+
+function mapToTetra(dir) {
+  const g0 = -dir.x - dir.y - dir.z;
+  const g1 = dir.x + dir.y - dir.z;
+  const g2 = dir.x - dir.y + dir.z;
+  const g3 = -dir.x + dir.y + dir.z;
+  const scale = 1 / Math.max(g0, g1, g2, g3, 1e-5);
+  return { x: dir.x * scale, y: dir.y * scale, z: dir.z * scale };
+}
+
+function mapToSphere(dir) {
+  return dir;
+}
+
+function resolveShapePoint(dir, shape) {
+  if (shape === "octa") {
+    return mapToOcta(dir);
+  }
+  if (shape === "tetra") {
+    return mapToTetra(dir);
+  }
+  if (shape === "sphere") {
+    return mapToSphere(dir);
+  }
+  return mapToCube(dir);
+}
+
+function buildShapeOffsets(dir, tileSize, shapeRadius) {
+  const offsets = {};
+  SHAPE_ORDER.forEach((shape) => {
+    const point = resolveShapePoint(dir, shape);
+    offsets[shape] = projectIso(point.x * shapeRadius, point.y * shapeRadius, point.z * shapeRadius, tileSize);
+  });
+  return offsets;
 }
 
 function getDefaultAnchor() {
@@ -341,11 +401,8 @@ function buildTiles(tileSize) {
   ];
   const tiles = [];
   let maxDelay = 0;
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
   const spiralRadiusBase = Math.max(tileSize * CUBE_FACE_SIZE * 2.8, 36);
+  const shapeRadius = (CUBE_FACE_SIZE - 1) * 0.5;
 
   faces.forEach((face) => {
     const coords = buildFaceCoords(face.name, CUBE_FACE_SIZE);
@@ -353,16 +410,19 @@ function buildTiles(tileSize) {
       const paletteHex = TILE_PALETTE[Math.floor(rand() * TILE_PALETTE.length)];
       const baseRgb = hexToRgb(paletteHex ?? "#F5F2F2");
       const color = applyBias(baseRgb, face.shade);
-      const offset = projectIso(coord.x, coord.y, coord.z, tileSize);
-      minX = Math.min(minX, offset.x);
-      maxX = Math.max(maxX, offset.x);
-      minY = Math.min(minY, offset.y);
-      maxY = Math.max(maxY, offset.y);
+      const pos = {
+        x: coord.x - shapeRadius,
+        y: shapeRadius - coord.y,
+        z: coord.z - shapeRadius,
+      };
+      const dir = normalizeVec(pos);
+      const shapeOffsets = buildShapeOffsets(dir, tileSize, shapeRadius);
       const delay = Math.round(rand() * 180 + tiles.length * FORMATION_STAGGER);
       maxDelay = Math.max(maxDelay, delay);
       tiles.push({
-        offsetX: offset.x,
-        offsetY: offset.y,
+        offsetX: shapeOffsets[DEFAULT_SHAPE].x,
+        offsetY: shapeOffsets[DEFAULT_SHAPE].y,
+        shapeOffsets,
         size: tileSize * (0.86 + rand() * 0.24),
         color,
         delay,
@@ -373,11 +433,39 @@ function buildTiles(tileSize) {
     });
   });
 
-  const centerOffsetX = (minX + maxX) * 0.5;
-  const centerOffsetY = (minY + maxY) * 0.5;
+  const shapeCenters = {};
+  SHAPE_ORDER.forEach((shape) => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    tiles.forEach((tile) => {
+      const offset = tile.shapeOffsets?.[shape];
+      if (!offset) {
+        return;
+      }
+      minX = Math.min(minX, offset.x);
+      maxX = Math.max(maxX, offset.x);
+      minY = Math.min(minY, offset.y);
+      maxY = Math.max(maxY, offset.y);
+    });
+    shapeCenters[shape] = {
+      x: (minX + maxX) * 0.5,
+      y: (minY + maxY) * 0.5,
+    };
+  });
+
   tiles.forEach((tile) => {
-    tile.offsetX -= centerOffsetX;
-    tile.offsetY -= centerOffsetY;
+    SHAPE_ORDER.forEach((shape) => {
+      const offset = tile.shapeOffsets?.[shape];
+      const center = shapeCenters[shape];
+      if (offset && center) {
+        offset.x -= center.x;
+        offset.y -= center.y;
+      }
+    });
+    tile.offsetX = tile.shapeOffsets[DEFAULT_SHAPE].x;
+    tile.offsetY = tile.shapeOffsets[DEFAULT_SHAPE].y;
   });
 
   return { tiles, maxDelay };
@@ -496,6 +584,24 @@ function resolveTarget(now) {
   }
   const anchor = resolveAnchorFallback();
   return anchor ?? tileSwarm?.home ?? getDefaultAnchor();
+}
+
+function resolveShapeOffset(tile, now, formationDoneAt) {
+  if (!tile.shapeOffsets) {
+    return { x: tile.offsetX, y: tile.offsetY };
+  }
+  const elapsed = Math.max(0, now - formationDoneAt);
+  const shapeIndex = Math.floor(elapsed / SHAPE_DURATION) % SHAPE_ORDER.length;
+  const shapeNext = (shapeIndex + 1) % SHAPE_ORDER.length;
+  const blend = easeInOutSine((elapsed % SHAPE_DURATION) / SHAPE_DURATION);
+  const fromShape = SHAPE_ORDER[shapeIndex];
+  const toShape = SHAPE_ORDER[shapeNext];
+  const fromOffset = tile.shapeOffsets[fromShape] ?? { x: tile.offsetX, y: tile.offsetY };
+  const toOffset = tile.shapeOffsets[toShape] ?? fromOffset;
+  return {
+    x: lerp(fromOffset.x, toOffset.x, blend),
+    y: lerp(fromOffset.y, toOffset.y, blend),
+  };
 }
 
 function spawnConfetti(amount, dx, dy) {
@@ -637,8 +743,11 @@ export function drawTileSwarm() {
     const radius = tile.spiralRadius * (1 - eased);
     const swirlX = Math.cos(swirl) * radius;
     const swirlY = Math.sin(swirl) * radius;
-    const offsetX = lerp(swirlX, tile.offsetX, eased);
-    const offsetY = lerp(swirlY, tile.offsetY, eased);
+    const shapeOffset = tileSwarm.formed
+      ? resolveShapeOffset(tile, now, formationDoneAt)
+      : { x: tile.offsetX, y: tile.offsetY };
+    const offsetX = lerp(swirlX, shapeOffset.x, eased);
+    const offsetY = lerp(swirlY, shapeOffset.y, eased);
     const bob = tileSwarm.formed ? Math.sin(now * 0.004 + tile.phase) * tileSwarm.tileSize * 0.08 : 0;
     const x = tileSwarm.anchor.x + offsetX;
     const y = tileSwarm.anchor.y + offsetY + bob;
