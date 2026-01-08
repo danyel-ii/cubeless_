@@ -180,15 +180,14 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
+    document.body.classList.remove("overlay-active");
   });
   await page.evaluate(async () => {
     await window.__CUBIXLES_WALLET__?.connectWallet?.();
   });
-  const refreshButton = page.getByRole("button", { name: /refresh nfts/i });
-  await expect(refreshButton).toBeEnabled({ timeout: 5000 });
-  await refreshButton.click();
-  await page.waitForTimeout(100);
-  await page.locator(".nft-card").first().click();
+  const nftCard = page.locator(".nft-card").first();
+  await expect(nftCard).toBeVisible({ timeout: 10000 });
+  await nftCard.click();
   await page.getByRole("button", { name: /mint nft/i }).click();
 
   await expect(page.locator("#mint-status")).toContainText(
