@@ -13,6 +13,7 @@ contracts/out/
 contracts/broadcast/
 contracts/.github/
 contracts/.gitmodules
+contracts/deployments/*.json
 assets/
 !public/assets/
 !public/assets/**

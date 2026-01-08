@@ -60,6 +60,7 @@ export function initIntro() {
   const palette = parsePaletteLines(paletteLines);
   const tileTextures = buildTileTextures(palette);
   const reduceMotion = prefersReducedMotion();
+  const skipIntro = shouldSkipIntro();
   const isTokenView =
     typeof document !== "undefined" &&
     document.body.classList.contains("is-token-view");
@@ -67,7 +68,7 @@ export function initIntro() {
   const zoomStart = Math.max(config.zoom.max + 140, config.zoom.initial + 240);
 
   state.intro = {
-    active: !reduceMotion && !isTokenView,
+    active: !reduceMotion && !isTokenView && !skipIntro,
     duration,
     startTime: typeof millis === "function" ? millis() : Date.now(),
     zoomStart,
@@ -171,6 +172,21 @@ function prefersReducedMotion() {
     return false;
   }
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function shouldSkipIntro() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("skipIntro")) {
+    return false;
+  }
+  const value = params.get("skipIntro");
+  if (value === null || value === "") {
+    return true;
+  }
+  return value !== "0" && value.toLowerCase() !== "false";
 }
 
 function finalizeIntro(intro) {

@@ -175,7 +175,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     });
   });
 
-  await page.goto("/");
+  await page.goto("/?skipIntro=1");
   await page.waitForFunction(() => window.__CUBIXLES_UI_READY__ === true);
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {

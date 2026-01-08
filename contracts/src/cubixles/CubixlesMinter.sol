@@ -557,6 +557,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (remaining == 0) {
             revert MintCapReached();
         }
+        // slither-disable-next-line weak-prng
         uint256 rand = uint256(seed) % remaining;
         uint256 selected = _resolvePaletteIndex(rand);
 
@@ -588,6 +589,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (remaining == 0) {
             revert MintCapReached();
         }
+        // slither-disable-next-line weak-prng
         uint256 rand = uint256(seed) % remaining;
         return _resolvePaletteIndex(rand);
     }
