@@ -43,9 +43,9 @@ export const state = {
     zoomEnd: 0,
     baseRotX: 0,
     baseRotY: 0,
+    holdStart: null,
     tileTextures: null,
     faceTransforms: null,
-    uiRevealed: false,
     paletteCount: 0,
   },
 };

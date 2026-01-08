@@ -1,8 +1,8 @@
 import { config } from "./app-config.js";
 import { state } from "./app-state.js";
 
-const INTRO_DURATION_MS = 5200;
-const INTRO_UI_REVEAL = 0.76;
+const INTRO_DURATION_MS = 3600;
+const INTRO_HOLD_MS = 500;
 const INTRO_FADE_START = 0.55;
 const INTRO_FADE_END = 0.92;
 const INTRO_TEXTURE_START = 0.42;
@@ -60,11 +60,14 @@ export function initIntro() {
   const palette = parsePaletteLines(paletteLines);
   const tileTextures = buildTileTextures(palette);
   const reduceMotion = prefersReducedMotion();
+  const isTokenView =
+    typeof document !== "undefined" &&
+    document.body.classList.contains("is-token-view");
   const duration = reduceMotion ? 1200 : INTRO_DURATION_MS;
   const zoomStart = Math.max(config.zoom.max + 140, config.zoom.initial + 240);
 
   state.intro = {
-    active: !reduceMotion,
+    active: !reduceMotion && !isTokenView,
     duration,
     startTime: typeof millis === "function" ? millis() : Date.now(),
     zoomStart,
@@ -73,7 +76,7 @@ export function initIntro() {
     baseRotY: state.rotY,
     tileTextures,
     faceTransforms: buildFaceTransforms(),
-    uiRevealed: false,
+    holdStart: null,
     paletteCount: palette.length,
   };
 
@@ -82,6 +85,10 @@ export function initIntro() {
 
   if (!state.intro.active) {
     state.zoom = config.zoom.initial;
+    if (typeof document !== "undefined") {
+      document.body.classList.remove("is-intro");
+    }
+    dispatchIntroComplete();
     return;
   }
 
@@ -115,16 +122,23 @@ export function updateIntroState() {
   const glassAlpha = smoothstep(INTRO_GLASS_START, 1, progress);
   const edgeAlpha = smoothstep(INTRO_EDGE_START, INTRO_EDGE_END, progress);
 
-  if (!intro.uiRevealed && progress >= INTRO_UI_REVEAL) {
-    intro.uiRevealed = true;
-    if (typeof document !== "undefined") {
-      document.body.classList.remove("is-intro");
-    }
-  }
-
   if (progress >= 1) {
-    finalizeIntro(intro);
-    return null;
+    if (!intro.holdStart) {
+      intro.holdStart = now;
+      state.zoom = intro.zoomEnd;
+    }
+    if (now - intro.holdStart >= INTRO_HOLD_MS) {
+      finalizeIntro(intro);
+      return null;
+    }
+    return {
+      active: true,
+      tileAlpha: 0,
+      texturedAlpha: 1,
+      glassAlpha: 1,
+      edgeAlpha: 1,
+      progress: 1,
+    };
   }
 
   return {
@@ -165,6 +179,14 @@ function finalizeIntro(intro) {
   if (typeof document !== "undefined") {
     document.body.classList.remove("is-intro");
   }
+  dispatchIntroComplete();
+}
+
+function dispatchIntroComplete() {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.dispatchEvent(new CustomEvent("intro-complete"));
 }
 
 function buildFaceTransforms() {

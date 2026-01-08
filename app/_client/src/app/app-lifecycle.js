@@ -35,13 +35,41 @@ import { fetchBackgroundDataUrl } from "./app-exporter.js";
 import { initUiRoot } from "../ui/ui-root.js";
 
 const TOOLTIP_SWARM_ENABLED = false;
+let defaultTexturesLoading = false;
 
 function preloadApp() {
-  state.defaultTextures = config.sourceUrls.map((url) =>
-    loadImage(resolveUrl(url))
-  );
   preloadBackground();
   preloadIntroPalette();
+}
+
+function loadDefaultTextures() {
+  if (defaultTexturesLoading) {
+    return;
+  }
+  const urls = config.sourceUrls.map((url) => resolveUrl(url));
+  if (!urls.length) {
+    return;
+  }
+  defaultTexturesLoading = true;
+  Promise.all(
+    urls.map(
+      (url) =>
+        new Promise((resolve) => {
+          loadImage(
+            url,
+            (img) => resolve(img),
+            () => resolve(null)
+          );
+        })
+    )
+  ).then((images) => {
+    const loaded = images.filter(Boolean);
+    if (!loaded.length) {
+      return;
+    }
+    state.defaultTextures = loaded;
+    state.faceTextures = fillFaceTextures(loaded);
+  });
 }
 
 function setupApp() {
@@ -52,7 +80,8 @@ function setupApp() {
   state.frostedTexture = createFrostedTexture();
   initBackdrop();
   buildEdges();
-  state.faceTextures = fillFaceTextures(state.defaultTextures);
+  state.faceTextures = fillFaceTextures([state.frostedTexture]);
+  loadDefaultTextures();
   initIntro();
   initUiRoot();
   fetchBackgroundDataUrl();

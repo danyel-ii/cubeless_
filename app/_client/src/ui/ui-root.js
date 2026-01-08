@@ -15,6 +15,7 @@ import { state } from "../app/app-state.js";
 import { buildTokenViewUrl } from "../config/links.js";
 
 let uiInitialized = false;
+let uiDeferred = false;
 
 function isDebugEnabled() {
   if (typeof window === "undefined") {
@@ -33,6 +34,23 @@ function isDebugEnabled() {
 
 export function initUiRoot() {
   if (uiInitialized) {
+    return;
+  }
+  if (
+    typeof document !== "undefined" &&
+    document.body.classList.contains("is-intro")
+  ) {
+    if (!uiDeferred) {
+      uiDeferred = true;
+      document.addEventListener(
+        "intro-complete",
+        () => {
+          uiDeferred = false;
+          initUiRoot();
+        },
+        { once: true }
+      );
+    }
     return;
   }
   uiInitialized = true;

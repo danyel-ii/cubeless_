@@ -69,7 +69,7 @@ export default function RootLayout({ children }) {
           />
         ) : null}
       </head>
-      <body>
+      <body className="is-intro">
         {children}
       </body>
     </html>
