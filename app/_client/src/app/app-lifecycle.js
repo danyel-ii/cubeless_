@@ -13,6 +13,12 @@ import {
   drawForeground,
 } from "./app-backdrop.js";
 import { initTileSwarm, drawTileSwarm, resizeTileSwarm } from "./app-tile-swarm.js";
+import {
+  preloadIntroPalette,
+  initIntro,
+  updateIntroState,
+  drawIntroCube,
+} from "./app-intro.js";
 import { drawTexturedFaces, drawGlassShell } from "./app-cube.js";
 import { buildEdges, drawInkEdges } from "./app-edges.js";
 import {
@@ -35,6 +41,7 @@ function preloadApp() {
     loadImage(resolveUrl(url))
   );
   preloadBackground();
+  preloadIntroPalette();
 }
 
 function setupApp() {
@@ -46,6 +53,7 @@ function setupApp() {
   initBackdrop();
   buildEdges();
   state.faceTextures = fillFaceTextures(state.defaultTextures);
+  initIntro();
   initUiRoot();
   fetchBackgroundDataUrl();
   if (TOOLTIP_SWARM_ENABLED) {
@@ -55,15 +63,31 @@ function setupApp() {
 
 function drawApp() {
   drawBackdrop();
-  applyRotationInertia();
+  const introState = updateIntroState();
+  if (!introState) {
+    applyRotationInertia();
+  }
   applyLights();
   camera(0, 0, state.zoom, 0, 0, 0, 0, 1, 0);
   rotateX(state.rotX);
   rotateY(state.rotY);
   noStroke();
-  drawTexturedFaces();
-  drawGlassShell();
-  drawInkEdges();
+  if (introState) {
+    drawIntroCube(introState);
+    if (introState.texturedAlpha > 0) {
+      drawTexturedFaces(introState.texturedAlpha);
+    }
+    if (introState.glassAlpha > 0) {
+      drawGlassShell(introState.glassAlpha);
+    }
+    if (introState.edgeAlpha > 0) {
+      drawInkEdges(introState.edgeAlpha);
+    }
+  } else {
+    drawTexturedFaces();
+    drawGlassShell();
+    drawInkEdges();
+  }
   drawForeground();
   if (TOOLTIP_SWARM_ENABLED) {
     drawTileSwarm();

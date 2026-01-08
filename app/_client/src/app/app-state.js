@@ -35,4 +35,17 @@ export const state = {
   lastMouse: null,
   pinchStartDist: null,
   pinchStartZoom: null,
+  intro: {
+    active: false,
+    duration: 0,
+    startTime: 0,
+    zoomStart: 0,
+    zoomEnd: 0,
+    baseRotX: 0,
+    baseRotY: 0,
+    tileTextures: null,
+    faceTransforms: null,
+    uiRevealed: false,
+    paletteCount: 0,
+  },
 };

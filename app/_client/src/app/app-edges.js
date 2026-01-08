@@ -67,7 +67,11 @@ function generateEdgePoints(a, b, edgeIndex, pass) {
   return points;
 }
 
-export function drawInkEdges() {
+export function drawInkEdges(alpha = 1) {
+  const clampedAlpha = Math.max(0, Math.min(1, alpha));
+  if (clampedAlpha <= 0) {
+    return;
+  }
   const strokes = [
     { weight: 7.2, alpha: 70, tint: [210, 210, 215] },
     { weight: 5.2, alpha: 140, tint: [230, 230, 235] },
@@ -83,7 +87,7 @@ export function drawInkEdges() {
       strokeInfo.tint[0],
       strokeInfo.tint[1],
       strokeInfo.tint[2],
-      strokeInfo.alpha
+      strokeInfo.alpha * clampedAlpha
     );
     strokeWeight(strokeInfo.weight);
     noFill();
@@ -103,7 +107,7 @@ export function drawInkEdges() {
     });
   });
 
-  stroke(215, 215, 220, 55);
+  stroke(215, 215, 220, 55 * clampedAlpha);
   strokeWeight(9.2);
   noFill();
   state.edgePasses.forEach((passes) => {

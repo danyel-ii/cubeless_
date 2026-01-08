@@ -61,6 +61,32 @@ body.is-token-view #leaderboard {
   display: none;
 }
 
+#ui,
+#overlay,
+#preview-bar,
+#leaderboard,
+#wallet-picker,
+#network-picker,
+#share-cube,
+#share-modal {
+  transition: opacity 520ms ease, transform 520ms ease, filter 520ms ease;
+  will-change: opacity, transform, filter;
+}
+
+body.is-intro #ui,
+body.is-intro #overlay,
+body.is-intro #preview-bar,
+body.is-intro #leaderboard,
+body.is-intro #wallet-picker,
+body.is-intro #network-picker,
+body.is-intro #share-cube,
+body.is-intro #share-modal {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.98);
+  filter: blur(6px);
+}
+
 .debug-panel {
   position: fixed;
   right: 12px;

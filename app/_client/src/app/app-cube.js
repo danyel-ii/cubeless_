@@ -1,10 +1,14 @@
 import { config } from "./app-config.js";
 import { state } from "./app-state.js";
 
-export function drawTexturedFaces() {
+export function drawTexturedFaces(alpha = 1) {
+  const clampedAlpha = Math.max(0, Math.min(1, alpha));
+  if (clampedAlpha <= 0) {
+    return;
+  }
   const half = config.cubeSize / 2 - 1;
   const faceSize = config.cubeSize * 0.98;
-  const tintAlpha = 210;
+  const tintAlpha = 210 * clampedAlpha;
   const faces = state.faceTextures;
   const transforms = [
     { x: half, y: 0, z: 0, rx: 0, ry: HALF_PI, rz: 0, mirrorX: false },
@@ -37,9 +41,13 @@ function drawFace(img, { x, y, z, rx, ry, rz, mirrorX }, size, alpha) {
   pop();
 }
 
-export function drawGlassShell() {
+export function drawGlassShell(alpha = 1) {
+  const clampedAlpha = Math.max(0, Math.min(1, alpha));
+  if (clampedAlpha <= 0) {
+    return;
+  }
   push();
-  specularMaterial(210, 225, 245, 50);
+  specularMaterial(210, 225, 245, 50 * clampedAlpha);
   shininess(120);
   box(config.cubeSize * 1.02);
   pop();

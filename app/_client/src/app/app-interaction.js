@@ -7,6 +7,9 @@ const ROT_EPSILON = 0.0001;
 const ROT_CLAMP = Math.PI / 2 - 0.08;
 
 export function onMousePressed() {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isWalletModalOpen()) {
     return false;
   }
@@ -18,6 +21,9 @@ export function onMousePressed() {
 }
 
 export function onMouseDragged() {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isWalletModalOpen()) {
     return false;
   }
@@ -34,6 +40,9 @@ export function onMouseDragged() {
 }
 
 export function onMouseReleased() {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isWalletModalOpen()) {
     return false;
   }
@@ -45,6 +54,9 @@ export function onMouseReleased() {
 }
 
 export function onMouseWheel(event) {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isWalletModalOpen()) {
     return false;
   }
@@ -60,6 +72,9 @@ export function onMouseWheel(event) {
 }
 
 export function onTouchStarted(event) {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
@@ -80,6 +95,9 @@ export function onTouchStarted(event) {
 }
 
 export function onTouchMoved(event) {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
@@ -109,6 +127,9 @@ export function onTouchMoved(event) {
 }
 
 export function onTouchEnded(event) {
+  if (state.intro?.active) {
+    return false;
+  }
   if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
