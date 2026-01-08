@@ -20,6 +20,33 @@ function buildEthereumMock() {
 test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const { selectors, responses } = buildEthereumMock();
 
+  await page.addInitScript(() => {
+    const apply = () => {
+      const style = document.createElement("style");
+      style.id = "__pw-disable-animations__";
+      style.textContent = `
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+        .ui-button:hover {
+          transform: none !important;
+          box-shadow: none !important;
+        }
+      `;
+      const parent = document.head || document.documentElement;
+      if (parent) {
+        parent.appendChild(style);
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", apply, { once: true });
+    } else {
+      apply();
+    }
+  });
+
   await page.addInitScript(({ selectors, responses }) => {
     window.__CUBIXLES_TEST_HOOKS__ = true;
     window.localStorage?.setItem("cubixles:chainId", "1");
