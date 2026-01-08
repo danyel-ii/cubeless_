@@ -1,8 +1,28 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## Local commands
+
+### Exact scan sequence (security branch run)
+```sh
+cd contracts
+forge test -vvv
+cd ..
+npm test
+npm run test:ui
+npm run coverage:contracts
+npm run check:no-client-secrets
+npm run check:no-repo-secrets
+npm audit --audit-level=high
+cd contracts
+npx solhint "src/**/*.sol"
+python3 -m slither .
+# If slither isn't on PATH:
+../.venv-slither/bin/python -m slither .
+cd ..
+npm run fork-test
+```
 
 ### Contracts (unit + fuzz + invariants)
 ```sh
