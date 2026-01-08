@@ -1,6 +1,6 @@
 # Solidity Coverage Report
 
-Total: 296/319 lines = 92.79%
+Total: 318/344 lines = 92.44%
 Excluded: contracts/script/**, contracts/test/**
 
 ## Uncovered Lines (by contract)
@@ -8,8 +8,8 @@ Excluded: contracts/script/**, contracts/test/**
 ### CubixlesMinter.sol
 
 - src/cubixles/CubixlesMinter.sol
-  - Coverage: 179/187 = 95.72%
-  - Missed lines: 404, 405, 406, 408, 409, 411, 412, 556
+  - Coverage: 201/212 = 94.81%
+  - Missed lines: 406, 407, 408, 410, 411, 413, 414, 558, 582, 589, 603
 
 ### RoyaltySplitter.sol
 
