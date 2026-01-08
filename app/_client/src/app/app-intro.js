@@ -178,6 +178,9 @@ function shouldSkipIntro() {
   if (typeof window === "undefined") {
     return false;
   }
+  if (window.__CUBIXLES_TEST_HOOKS__ || window.__CUBIXLES_SKIP_INTRO__) {
+    return true;
+  }
   const params = new URLSearchParams(window.location.search);
   if (!params.has("skipIntro")) {
     return false;

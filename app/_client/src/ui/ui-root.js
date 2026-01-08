@@ -32,6 +32,24 @@ function isDebugEnabled() {
   }
 }
 
+function shouldSkipIntro() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  if (window.__CUBIXLES_TEST_HOOKS__ || window.__CUBIXLES_SKIP_INTRO__) {
+    return true;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("skipIntro")) {
+    return false;
+  }
+  const value = params.get("skipIntro");
+  if (value === null || value === "") {
+    return true;
+  }
+  return value !== "0" && value.toLowerCase() !== "false";
+}
+
 export function initUiRoot() {
   if (uiInitialized) {
     return;
@@ -40,18 +58,22 @@ export function initUiRoot() {
     typeof document !== "undefined" &&
     document.body.classList.contains("is-intro")
   ) {
-    if (!uiDeferred) {
-      uiDeferred = true;
-      document.addEventListener(
-        "intro-complete",
-        () => {
-          uiDeferred = false;
-          initUiRoot();
-        },
-        { once: true }
-      );
+    if (shouldSkipIntro()) {
+      document.body.classList.remove("is-intro");
+    } else {
+      if (!uiDeferred) {
+        uiDeferred = true;
+        document.addEventListener(
+          "intro-complete",
+          () => {
+            uiDeferred = false;
+            initUiRoot();
+          },
+          { once: true }
+        );
+      }
+      return;
     }
-    return;
   }
   uiInitialized = true;
   if (typeof window !== "undefined") {

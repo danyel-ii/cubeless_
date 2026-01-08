@@ -176,7 +176,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
 
   await page.goto("/?skipIntro=1");
-  await page.waitForFunction(() => window.__CUBIXLES_UI_READY__ === true);
+  await page.waitForFunction(() => window.__CUBIXLES_MAIN_IMPORTED__ === true);
+  await page.waitForFunction(
+    () => typeof window.__CUBIXLES_WALLET__?.connectWallet === "function"
+  );
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
@@ -185,10 +188,21 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.evaluate(async () => {
     await window.__CUBIXLES_WALLET__?.connectWallet?.();
   });
+  await expect(page.locator("#wallet-status")).toContainText(/connected/i, {
+    timeout: 10000,
+  });
   const nftCard = page.locator(".nft-card").first();
   await expect(nftCard).toBeVisible({ timeout: 10000 });
   await nftCard.click();
-  await page.getByRole("button", { name: /mint nft/i }).click();
+  await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
+    timeout: 10000,
+  });
+  await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
+    timeout: 10000,
+  });
+  const mintButton = page.getByRole("button", { name: /mint nft/i });
+  await expect(mintButton).toBeEnabled({ timeout: 10000 });
+  await mintButton.click();
 
   await expect(page.locator("#mint-status")).toContainText(
     /step 1\/2: confirm commit|step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps/i,
