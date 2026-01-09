@@ -23,7 +23,6 @@ contract MaliciousReceiverReenter {
     CubixlesMinter public minter;
     address[] public refContracts;
     uint256[] public refTokenIds;
-    string public tokenUri;
     bytes32 public salt;
     bool public attempted;
 
@@ -31,13 +30,11 @@ contract MaliciousReceiverReenter {
         CubixlesMinter minter_,
         address[] calldata refContracts_,
         uint256[] calldata refTokenIds_,
-        string calldata tokenUri_,
         bytes32 salt_
     ) external {
         minter = minter_;
         refContracts = refContracts_;
         refTokenIds = refTokenIds_;
-        tokenUri = tokenUri_;
         salt = salt_;
         attempted = false;
     }
@@ -55,6 +52,6 @@ contract MaliciousReceiverReenter {
                 tokenId: refTokenIds[i]
             });
         }
-        try minter.mint{ value: 0 }(salt, tokenUri, refs) {} catch {}
+        try minter.mint{ value: 0 }(salt, refs) {} catch {}
     }
 }

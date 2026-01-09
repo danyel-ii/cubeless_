@@ -2,20 +2,23 @@
 pragma solidity ^0.8.20;
 
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import { ERC721URIStorage } from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
+import { VRFConsumerBaseV2 } from "../chainlink/VRFConsumerBaseV2.sol";
+import { VRFCoordinatorV2Interface } from "../chainlink/VRFCoordinatorV2Interface.sol";
 
 /// @title CubixlesMinter
 /// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
 /// @author cubixles_
-contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
+contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2 {
+    using Strings for uint256;
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
         address contractAddress;
@@ -54,23 +57,33 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     error InsufficientEth();
     /// @notice Commit refs hash mismatch.
     error MintCommitMismatch();
-    /// @notice Commit salt mismatch.
-    error MintCommitSaltMismatch();
+    /// @notice Commit randomness not fulfilled yet.
+    error MintRandomnessPending();
     /// @notice TokenId already exists.
     error TokenIdExists();
-    /// @notice Commit block hash not found.
-    error MintCommitHashMissing();
     /// @notice Commit refs hash is empty.
     error MintCommitEmpty();
     /// @notice Commit already exists and is still active.
     error MintCommitActive();
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired();
+    /// @notice Metadata CID is required.
+    error PaletteMetadataCidRequired();
+    /// @notice VRF coordinator is required.
+    error VrfCoordinatorRequired();
+    /// @notice VRF key hash is required.
+    error VrfKeyHashRequired();
+    /// @notice VRF subscription id is required.
+    error VrfSubscriptionRequired();
+    /// @notice VRF request confirmations required.
+    error VrfRequestConfirmationsRequired();
+    /// @notice VRF callback gas limit required.
+    error VrfCallbackGasLimitRequired();
 
     /// @notice Default resale royalty in basis points (5%).
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
     /// @notice Base mint price in wei.
-    uint256 public constant BASE_PRICE_WEI = 1_500_000_000_000_000;
+    uint256 public constant BASE_PRICE_WEI = 2_200_000_000_000_000;
     /// @notice Price step for rounding in wei.
     uint256 public constant PRICE_STEP_WEI = 100_000_000_000_000;
     /// @notice Supply cap reference (1B tokens with 18 decimals).
@@ -81,14 +94,27 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     uint256 public constant MAX_MINTS = 10_000;
     /// @notice Palette entries available for random draw.
     uint256 public constant PALETTE_SIZE = 10_000;
-    /// @notice Commit expiry window (in blocks) for reveal.
-    uint256 public constant COMMIT_EXPIRY_BLOCKS = 256;
+    /// @notice Commit reveal delay (in blocks).
+    uint256 public constant COMMIT_REVEAL_DELAY_BLOCKS = 1;
+    /// @notice Commit reveal window (in blocks).
+    uint256 public constant COMMIT_REVEAL_WINDOW_BLOCKS = 256;
+    /// @notice VRF random words requested per commit.
+    uint32 public constant VRF_NUM_WORDS = 1;
+    /// @notice Domain separator for commit hashes.
+    string private constant COMMIT_DOMAIN = "cubixles_:commit:v1";
 
     /// @notice Pending commit for commit-reveal minting.
     struct MintCommit {
-        bytes32 refsHash;
-        bytes32 salt;
+        bytes32 commitment;
         uint256 blockNumber;
+        uint256 requestId;
+        uint256 randomness;
+        bool randomnessReady;
+    }
+
+    struct MintRequest {
+        address minter;
+        bytes32 commitment;
     }
 
     /// @notice LESS supply at mint time by tokenId.
@@ -101,6 +127,8 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(uint256 => uint256) private _paletteIndexSwap;
     /// @notice Pending commit per minter.
     mapping(address => MintCommit) public mintCommitByMinter;
+    /// @notice Commit request tracking by VRF request id.
+    mapping(uint256 => MintRequest) private _mintRequestById;
 
     /// @notice LESS token address.
     address public immutable LESS_TOKEN; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention,missing-zero-check */
@@ -116,6 +144,18 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     uint256 public fixedMintPriceWei;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
+    /// @notice Base CID for palette metadata.
+    string public paletteMetadataCID;
+    /// @notice VRF coordinator contract.
+    VRFCoordinatorV2Interface public immutable vrfCoordinator;
+    /// @notice VRF key hash for randomness requests.
+    bytes32 public immutable vrfKeyHash;
+    /// @notice VRF subscription id.
+    uint64 public immutable vrfSubscriptionId;
+    /// @notice VRF request confirmations.
+    uint16 public immutable vrfRequestConfirmations;
+    /// @notice VRF callback gas limit.
+    uint32 public immutable vrfCallbackGasLimit;
     /// @notice Total minted count (monotonic).
     uint256 public totalMinted;
     /// @notice TokenId by sequential index (1-based).
@@ -137,14 +177,23 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     event MintSupplySnapshotted(uint256 indexed tokenId, uint256 indexed supply);
     /// @notice Emitted when a mint commit is created.
     /// @param minter Wallet that committed.
-    /// @param refsHash Canonical refs hash.
-    /// @param salt User-provided salt.
+    /// @param commitment Commitment hash.
     /// @param blockNumber Block number of the commit.
+    /// @param requestId VRF request id.
     event MintCommitCreated(
         address indexed minter,
-        bytes32 indexed refsHash,
-        bytes32 salt,
-        uint256 indexed blockNumber
+        bytes32 indexed commitment,
+        uint256 indexed blockNumber,
+        uint256 requestId
+    );
+    /// @notice Emitted when VRF randomness is fulfilled for a commit.
+    /// @param minter Wallet that committed.
+    /// @param requestId VRF request id.
+    /// @param randomness Randomness delivered.
+    event MintRandomnessFulfilled(
+        address indexed minter,
+        uint256 indexed requestId,
+        uint256 randomness
     );
     /// @notice Emitted when a palette index is assigned at mint.
     /// @param tokenId Minted token id.
@@ -171,6 +220,12 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @param baseMintPriceWei_ Base mint price for linear pricing.
     /// @param baseMintPriceStepWei_ Price step per mint for linear pricing.
     /// @param linearPricingEnabled_ Whether linear pricing is enabled.
+    /// @param paletteMetadataCID_ Base CID for palette metadata JSON.
+    /// @param vrfCoordinator_ Chainlink VRF coordinator address.
+    /// @param vrfKeyHash_ Chainlink VRF key hash.
+    /// @param vrfSubscriptionId_ Chainlink VRF subscription id.
+    /// @param vrfRequestConfirmations_ Chainlink VRF request confirmations.
+    /// @param vrfCallbackGasLimit_ Chainlink VRF callback gas limit.
     constructor(
         address resaleSplitter_,
         address lessToken_,
@@ -178,10 +233,17 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         uint256 fixedMintPriceWei_,
         uint256 baseMintPriceWei_,
         uint256 baseMintPriceStepWei_,
-        bool linearPricingEnabled_
+        bool linearPricingEnabled_,
+        string memory paletteMetadataCID_,
+        address vrfCoordinator_,
+        bytes32 vrfKeyHash_,
+        uint64 vrfSubscriptionId_,
+        uint16 vrfRequestConfirmations_,
+        uint32 vrfCallbackGasLimit_
     )
         ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
+        VRFConsumerBaseV2(vrfCoordinator_)
     {
         if (resaleSplitter_ == address(0)) {
             revert ResaleSplitterRequired();
@@ -189,12 +251,36 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (resaleRoyaltyBps > 1000) {
             revert RoyaltyTooHigh();
         }
+        if (bytes(paletteMetadataCID_).length == 0) {
+            revert PaletteMetadataCidRequired();
+        }
+        if (vrfCoordinator_ == address(0)) {
+            revert VrfCoordinatorRequired();
+        }
+        if (vrfKeyHash_ == bytes32(0)) {
+            revert VrfKeyHashRequired();
+        }
+        if (vrfSubscriptionId_ == 0) {
+            revert VrfSubscriptionRequired();
+        }
+        if (vrfRequestConfirmations_ == 0) {
+            revert VrfRequestConfirmationsRequired();
+        }
+        if (vrfCallbackGasLimit_ == 0) {
+            revert VrfCallbackGasLimitRequired();
+        }
         resaleSplitter = resaleSplitter_;
         // slither-disable-next-line missing-zero-check
         LESS_TOKEN = lessToken_;
         linearPricingEnabled = linearPricingEnabled_;
         baseMintPriceWei = baseMintPriceWei_;
         baseMintPriceStepWei = baseMintPriceStepWei_;
+        paletteMetadataCID = paletteMetadataCID_;
+        vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator_);
+        vrfKeyHash = vrfKeyHash_;
+        vrfSubscriptionId = vrfSubscriptionId_;
+        vrfRequestConfirmations = vrfRequestConfirmations_;
+        vrfCallbackGasLimit = vrfCallbackGasLimit_;
         if (lessToken_ != address(0)) {
             if (linearPricingEnabled_) {
                 revert LinearPricingNotAllowed();
@@ -218,18 +304,14 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Mint a new NFT tied to provenance refs.
-    /// @dev Requires a prior commit within the expiry window.
+    /// @dev Requires a prior commit within the reveal window.
     /// @param salt User-provided salt for tokenId derivation.
-    /// @param metadataURI IPFS metadata URI to store.
     /// @param refs Provenance references (1..6).
     /// @return tokenId Newly minted token ID.
     function mint(
         bytes32 salt,
-        string calldata metadataURI,
         NftRef[] calldata refs
     ) external payable nonReentrant returns (uint256 tokenId) {
-        MintCommit memory commit = mintCommitByMinter[msg.sender];
-        _requireValidCommit(commit);
         _requireValidRefs(refs);
         if (!(totalMinted < MAX_MINTS)) {
             revert MintCapReached();
@@ -241,27 +323,20 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         }
 
         bytes32 refsHash = _hashRefsCanonical(refs);
-        if (refsHash != commit.refsHash) {
-            revert MintCommitMismatch();
-        }
-        if (salt != commit.salt) {
-            revert MintCommitSaltMismatch();
-        }
+        uint256 randomness = _consumeCommit(salt, refsHash);
         tokenId = _computeTokenId(msg.sender, salt, refsHash);
         if (_ownerOf(tokenId) != address(0)) {
             revert TokenIdExists();
         }
 
-        uint256 paletteIndex = _assignPaletteIndex(refsHash, salt, msg.sender, commit.blockNumber);
+        uint256 paletteIndex = _assignPaletteIndex(randomness);
 
         ++totalMinted;
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
         mintPriceByTokenId[tokenId] = price;
         paletteIndexByTokenId[tokenId] = paletteIndex;
-        _setTokenURI(tokenId, metadataURI);
         _snapshotSupply(tokenId, true);
-        delete mintCommitByMinter[msg.sender];
 
         _safeMint(msg.sender, tokenId);
 
@@ -276,24 +351,36 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Commit a mint request for commit-reveal.
-    /// @param salt User-provided salt for tokenId derivation.
-    /// @param refsHash Canonical refs hash (sorted refs).
-    function commitMint(bytes32 salt, bytes32 refsHash) external {
-        if (refsHash == bytes32(0)) {
+    /// @param commitment Commitment hash (minter + salt + refs hash).
+    function commitMint(bytes32 commitment) external {
+        if (commitment == bytes32(0)) {
             revert MintCommitEmpty();
         }
         MintCommit memory existing = mintCommitByMinter[msg.sender];
         if (existing.blockNumber != 0) {
-            if (!(block.number > existing.blockNumber + COMMIT_EXPIRY_BLOCKS)) {
+            if (_isCommitActive(existing.blockNumber)) {
                 revert MintCommitActive();
             }
         }
+        if (!(totalMinted < MAX_MINTS)) {
+            revert MintCapReached();
+        }
+        uint256 requestId = vrfCoordinator.requestRandomWords(
+            vrfKeyHash,
+            vrfSubscriptionId,
+            vrfRequestConfirmations,
+            vrfCallbackGasLimit,
+            VRF_NUM_WORDS
+        );
         mintCommitByMinter[msg.sender] = MintCommit({
-            refsHash: refsHash,
-            salt: salt,
-            blockNumber: block.number
+            commitment: commitment,
+            blockNumber: block.number,
+            requestId: requestId,
+            randomness: 0,
+            randomnessReady: false
         });
-        emit MintCommitCreated(msg.sender, refsHash, salt, block.number);
+        _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
+        emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
     }
 
     /// @notice Current mint price for this deployment.
@@ -327,6 +414,35 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     ) external view returns (uint256) {
         bytes32 refsHash = _hashRefsCanonical(refs);
         return _computeTokenId(msg.sender, salt, refsHash);
+    }
+
+    /// @notice Compute the commitment hash for a mint.
+    /// @param minter Address committing.
+    /// @param salt User-provided salt.
+    /// @param refsHash Canonical refs hash.
+    /// @return commitment Commitment hash.
+    function computeCommitment(
+        address minter,
+        bytes32 salt,
+        bytes32 refsHash
+    ) external pure returns (bytes32) {
+        return _computeCommitment(minter, salt, refsHash);
+    }
+
+    /// @notice Metadata URI derived from palette index.
+    /// @param tokenId Token id to query.
+    /// @return uri Token metadata URI.
+    function tokenURI(uint256 tokenId) public view override(ERC721) returns (string memory) {
+        _requireOwned(tokenId);
+        uint256 paletteIndex = paletteIndexByTokenId[tokenId];
+        return
+            string.concat(
+                "ipfs://",
+                paletteMetadataCID,
+                "/",
+                paletteIndex.toString(),
+                ".json"
+            );
     }
 
     /// @notice Current LESS total supply.
@@ -414,12 +530,12 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         emit FixedMintPriceUpdated(price);
     }
 
-    /// @notice ERC-165 support for ERC721URIStorage + ERC2981.
+    /// @notice ERC-165 support for ERC721 + ERC2981.
     /// @param interfaceId Interface id to query.
     /// @return True if interface supported.
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721URIStorage, ERC2981) returns (bool) {
+    ) public view override(ERC721, ERC2981) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
@@ -486,6 +602,14 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         return uint256(keccak256(abi.encodePacked("cubixles_:tokenid:v1", minter, salt, refsHash)));
     }
 
+    function _computeCommitment(
+        address minter,
+        bytes32 salt,
+        bytes32 refsHash
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(COMMIT_DOMAIN, minter, salt, refsHash));
+    }
+
     /// @dev Round up to the nearest step.
     function _roundUp(uint256 value, uint256 step) internal pure returns (uint256) {
         if (value == 0) {
@@ -511,17 +635,60 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         emit LastSupplySnapshotted(tokenId, supply);
     }
 
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] memory randomWords
+    ) internal override {
+        if (randomWords.length == 0) {
+            return;
+        }
+        MintRequest memory request = _mintRequestById[requestId];
+        if (request.minter == address(0)) {
+            return;
+        }
+        MintCommit storage commit = mintCommitByMinter[request.minter];
+        if (commit.commitment != request.commitment || commit.requestId != requestId) {
+            return;
+        }
+        commit.randomness = randomWords[0];
+        commit.randomnessReady = true;
+        delete _mintRequestById[requestId];
+        emit MintRandomnessFulfilled(request.minter, requestId, randomWords[0]);
+    }
+
+    function _consumeCommit(
+        bytes32 salt,
+        bytes32 refsHash
+    ) private returns (uint256 randomness) {
+        MintCommit memory commit = mintCommitByMinter[msg.sender];
+        _requireValidCommit(commit);
+        if (!commit.randomnessReady) {
+            revert MintRandomnessPending();
+        }
+        if (_computeCommitment(msg.sender, salt, refsHash) != commit.commitment) {
+            revert MintCommitMismatch();
+        }
+        randomness = commit.randomness;
+        delete mintCommitByMinter[msg.sender];
+    }
+
     function _requireValidCommit(MintCommit memory commit) private view {
         if (commit.blockNumber == 0) {
             revert MintCommitRequired();
         }
-        uint256 expiryBlock = commit.blockNumber + COMMIT_EXPIRY_BLOCKS;
-        if (!(block.number < expiryBlock + 1)) {
-            revert MintCommitExpired();
-        }
-        if (!(block.number > commit.blockNumber)) {
+        uint256 earliestBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
+        if (block.number < earliestBlock) {
             revert MintCommitPendingBlock();
         }
+        uint256 expiryBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
+        if (block.number > expiryBlock) {
+            revert MintCommitExpired();
+        }
+    }
+
+    function _isCommitActive(uint256 blockNumber) private view returns (bool) {
+        uint256 expiryBlock = blockNumber + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
+        return block.number <= expiryBlock;
     }
 
     function _requireValidRefs(NftRef[] calldata refs) private view {
@@ -552,13 +719,12 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         return mapped == 0 ? offset : mapped - 1;
     }
 
-    function _drawPaletteIndex(bytes32 seed) private returns (uint256) {
+    function _drawPaletteIndex(uint256 randomness) private returns (uint256) {
         uint256 remaining = MAX_MINTS - totalMinted;
         if (remaining == 0) {
             revert MintCapReached();
         }
-        // slither-disable-next-line weak-prng
-        uint256 rand = uint256(seed) % remaining;
+        uint256 rand = randomness % remaining;
         uint256 selected = _resolvePaletteIndex(rand);
 
         uint256 lastIndex = remaining - 1;
@@ -570,44 +736,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         return selected;
     }
 
-    /// @notice Preview the palette index for a commit before minting.
-    /// @dev Uses the current draw state; another mint can change the result.
-    function previewPaletteIndex(
-        bytes32 refsHash,
-        bytes32 salt,
-        address minter,
-        uint256 commitBlockNumber
-    ) external view returns (uint256) {
-        bytes32 commitBlockHash = blockhash(commitBlockNumber);
-        if (commitBlockHash == bytes32(0)) {
-            revert MintCommitHashMissing();
-        }
-        bytes32 seed = keccak256(
-            abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash)
-        );
-        uint256 remaining = MAX_MINTS - totalMinted;
-        if (remaining == 0) {
-            revert MintCapReached();
-        }
-        // slither-disable-next-line weak-prng
-        uint256 rand = uint256(seed) % remaining;
-        return _resolvePaletteIndex(rand);
-    }
-
-    function _assignPaletteIndex(
-        bytes32 refsHash,
-        bytes32 salt,
-        address minter,
-        uint256 commitBlockNumber
-    ) private returns (uint256) {
-        bytes32 commitBlockHash = blockhash(commitBlockNumber);
-        if (commitBlockHash == bytes32(0)) {
-            revert MintCommitHashMissing();
-        }
-        // slither-disable-next-line weak-prng
-        bytes32 seed = keccak256(
-            abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash)
-        );
-        return _drawPaletteIndex(seed);
+    function _assignPaletteIndex(uint256 randomness) private returns (uint256) {
+        return _drawPaletteIndex(randomness);
     }
 }

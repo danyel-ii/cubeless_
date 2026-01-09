@@ -45,8 +45,8 @@ contract RefundRevertsOnReceive {
         }
     }
 
-    function mintWithOverpay(string calldata tokenUri) external payable {
-        minter.mint{ value: msg.value }(DEFAULT_SALT, tokenUri, refs);
+    function mintWithOverpay() external payable {
+        minter.mint{ value: msg.value }(DEFAULT_SALT, refs);
     }
 }
 
@@ -56,7 +56,14 @@ contract CubixlesMinterEdgeTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
+    address private vrfCoordinator = makeAddr("vrfCoordinator");
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
+    bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
+    uint64 private constant VRF_SUB_ID = 1;
+    uint16 private constant VRF_CONFIRMATIONS = 3;
+    uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
+    uint256 private constant DEFAULT_RANDOMNESS = 123_456;
+    string private constant PALETTE_CID = "bafytestcid";
 
     function _commitMint(
         address minterAddr,
@@ -64,15 +71,48 @@ contract CubixlesMinterEdgeTest is Test {
         CubixlesMinter.NftRef[] memory refs
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
+        bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
         vm.prank(minterAddr);
-        minter.commitMint(salt, refsHash);
+        minter.commitMint(commitment);
         vm.roll(block.number + 1);
+    }
+
+    function _fulfillRandomness(uint256 requestId, uint256 randomness) internal {
+        uint256[] memory words = new uint256[](1);
+        words[0] = randomness;
+        vm.prank(vrfCoordinator);
+        minter.rawFulfillRandomWords(requestId, words);
+    }
+
+    function _commitAndFulfill(
+        address minterAddr,
+        bytes32 salt,
+        CubixlesMinter.NftRef[] memory refs,
+        uint256 randomness
+    ) internal {
+        _commitMint(minterAddr, salt, refs);
+        (, , uint256 requestId, , ) = minter.mintCommitByMinter(minterAddr);
+        _fulfillRandomness(requestId, randomness);
     }
 
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 0, 0, false);
+        minter = new CubixlesMinter(
+            resaleSplitter,
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_CID,
+            vrfCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
@@ -80,7 +120,21 @@ contract CubixlesMinterEdgeTest is Test {
     function testMintRevertsWhenOwnerReceiveFails() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
         vm.prank(owner);
-        minter = new CubixlesMinter(address(receiver), address(lessToken), 500, 0, 0, 0, false);
+        minter = new CubixlesMinter(
+            address(receiver),
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_CID,
+            vrfCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
@@ -89,10 +143,10 @@ contract CubixlesMinterEdgeTest is Test {
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
-        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
         vm.prank(minterAddr);
         vm.expectRevert();
-        minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
+        minter.mint{ value: price }(DEFAULT_SALT, refs);
     }
 
     function testMintRevertsWhenRefundFails() public {
@@ -104,9 +158,9 @@ contract CubixlesMinterEdgeTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(address(refundReverter), price + 1 wei);
 
-        _commitMint(address(refundReverter), refundReverter.DEFAULT_SALT(), refs);
+        _commitAndFulfill(address(refundReverter), refundReverter.DEFAULT_SALT(), refs, DEFAULT_RANDOMNESS);
         vm.expectRevert();
-        refundReverter.mintWithOverpay{ value: price + 1 wei }("ipfs://token");
+        refundReverter.mintWithOverpay{ value: price + 1 wei }();
     }
 
     function testOwnerOfRevertBubbles() public {
@@ -122,7 +176,7 @@ contract CubixlesMinterEdgeTest is Test {
                 1
             )
         );
-        minter.mint(DEFAULT_SALT, "ipfs://token", refs);
+        minter.mint(DEFAULT_SALT, refs);
     }
 
     function testWrongOwnerReverts() public {
@@ -141,7 +195,7 @@ contract CubixlesMinterEdgeTest is Test {
                 wrongOwner
             )
         );
-        minter.mint(DEFAULT_SALT, "ipfs://token", refs);
+        minter.mint(DEFAULT_SALT, refs);
     }
 
     function testTokenIdDiffersForDifferentSalts() public {
@@ -153,13 +207,13 @@ contract CubixlesMinterEdgeTest is Test {
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price * 2);
-        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
         vm.prank(minterAddr);
-        uint256 mintedA = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://a", refs);
+        uint256 mintedA = minter.mint{ value: price }(DEFAULT_SALT, refs);
         refs[0].tokenId = tokenIdB;
-        _commitMint(minterAddr, keccak256("salt-b"), refs);
+        _commitAndFulfill(minterAddr, keccak256("salt-b"), refs, DEFAULT_RANDOMNESS + 1);
         vm.prank(minterAddr);
-        uint256 mintedB = minter.mint{ value: price }(keccak256("salt-b"), "ipfs://b", refs);
+        uint256 mintedB = minter.mint{ value: price }(keccak256("salt-b"), refs);
 
         assertTrue(mintedA != mintedB);
     }
@@ -167,7 +221,21 @@ contract CubixlesMinterEdgeTest is Test {
     function testMintSucceedsWithGasHeavyOwner() public {
         ReceiverConsumesGasOnReceive gasOwner = new ReceiverConsumesGasOnReceive();
         vm.prank(owner);
-        minter = new CubixlesMinter(address(gasOwner), address(lessToken), 500, 0, 0, 0, false);
+        minter = new CubixlesMinter(
+            address(gasOwner),
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_CID,
+            vrfCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
@@ -176,9 +244,9 @@ contract CubixlesMinterEdgeTest is Test {
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
-        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
         vm.prank(minterAddr);
-        minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
+        minter.mint{ value: price }(DEFAULT_SALT, refs);
         assertEq(address(gasOwner).balance, price);
     }
 
@@ -200,15 +268,14 @@ contract CubixlesMinterEdgeTest is Test {
             minter,
             reenterContracts,
             reenterTokenIds,
-            "ipfs://reenter",
             DEFAULT_SALT
         );
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
-        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
         vm.prank(minterAddr);
-        uint256 mintedId = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
+        uint256 mintedId = minter.mint{ value: price }(DEFAULT_SALT, refs);
         assertEq(minter.ownerOf(mintedId), minterAddr);
     }
 }

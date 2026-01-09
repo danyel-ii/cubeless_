@@ -8,6 +8,7 @@ function buildEthereumMock() {
     currentMintPrice: id("currentMintPrice()").slice(0, 10),
     previewTokenId: id("previewTokenId(bytes32,(address,uint256)[])").slice(0, 10),
     lessSupplyNow: id("lessSupplyNow()").slice(0, 10),
+    mintCommitByMinter: id("mintCommitByMinter(address)").slice(0, 10),
   };
   const responses = {
     currentMintPrice: coder.encode(["uint256"], [1_500_000_000_000_000n]),
@@ -92,6 +93,9 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           if (data.startsWith(selectors.lessSupplyNow)) {
             return responses.lessSupplyNow;
           }
+          if (data.startsWith(selectors.mintCommitByMinter)) {
+            throw new Error("commit reveal unavailable");
+          }
           return responses.currentMintPrice;
         }
         if (method === "eth_estimateGas") {
@@ -110,6 +114,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           return {
             status: "0x1",
             transactionHash: "0xdeadbeef",
+            blockNumber: "0x2",
             logs: [],
           };
         }
@@ -232,7 +237,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await mintButton.click();
 
   await expect(page.locator("#mint-status")).toContainText(
-    /step 1\/2: confirm commit|step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps/i,
+    /step 1\/2: confirm commit|step 2\/2: confirm mint|waiting for randomness|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
     {
       timeout: 5000,
     }

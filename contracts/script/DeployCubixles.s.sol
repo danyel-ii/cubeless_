@@ -45,7 +45,13 @@ contract DeployCubixles is Script {
             cfg.fixedMintPriceWei,
             cfg.baseMintPriceWei,
             cfg.baseMintPriceStepWei,
-            cfg.linearPricingEnabled
+            cfg.linearPricingEnabled,
+            cfg.paletteMetadataCID,
+            cfg.vrfCoordinator,
+            cfg.vrfKeyHash,
+            cfg.vrfSubscriptionId,
+            cfg.vrfRequestConfirmations,
+            cfg.vrfCallbackGasLimit
         );
         if (cfg.owner != msg.sender) {
             minter.transferOwnership(cfg.owner);
@@ -82,6 +88,12 @@ contract DeployCubixles is Script {
         bool linearPricingEnabled;
         uint256 baseMintPriceWei;
         uint256 baseMintPriceStepWei;
+        string paletteMetadataCID;
+        address vrfCoordinator;
+        bytes32 vrfKeyHash;
+        uint64 vrfSubscriptionId;
+        uint16 vrfRequestConfirmations;
+        uint32 vrfCallbackGasLimit;
     }
 
     function _loadConfig() internal view returns (DeployConfig memory cfg) {
@@ -113,6 +125,16 @@ contract DeployCubixles is Script {
         cfg.baseMintPriceStepWei = vm.envOr(
             "CUBIXLES_BASE_MINT_PRICE_STEP_WEI",
             cfg.chainId == 8453 ? 12_000_000_000_000 : 0
+        );
+        cfg.paletteMetadataCID = vm.envString("CUBIXLES_PALETTE_METADATA_CID");
+        cfg.vrfCoordinator = vm.envAddress("CUBIXLES_VRF_COORDINATOR");
+        cfg.vrfKeyHash = vm.envBytes32("CUBIXLES_VRF_KEY_HASH");
+        cfg.vrfSubscriptionId = uint64(vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID"));
+        cfg.vrfRequestConfirmations = uint16(
+            vm.envOr("CUBIXLES_VRF_REQUEST_CONFIRMATIONS", uint256(3))
+        );
+        cfg.vrfCallbackGasLimit = uint32(
+            vm.envOr("CUBIXLES_VRF_CALLBACK_GAS_LIMIT", uint256(250_000))
         );
     }
 

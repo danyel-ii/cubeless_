@@ -13,6 +13,13 @@ contract CubixlesMinterFuzzTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
+    address private vrfCoordinator = makeAddr("vrfCoordinator");
+    bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
+    uint64 private constant VRF_SUB_ID = 1;
+    uint16 private constant VRF_CONFIRMATIONS = 3;
+    uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
+    uint256 private constant DEFAULT_RANDOMNESS = 123_456;
+    string private constant PALETTE_CID = "bafytestcid";
 
     function _commitMint(
         address minterAddr,
@@ -20,15 +27,35 @@ contract CubixlesMinterFuzzTest is Test {
         CubixlesMinter.NftRef[] memory refs
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
+        bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
         vm.prank(minterAddr);
-        minter.commitMint(salt, refsHash);
+        minter.commitMint(commitment);
         vm.roll(block.number + 1);
+        (, , uint256 requestId, , ) = minter.mintCommitByMinter(minterAddr);
+        uint256[] memory words = new uint256[](1);
+        words[0] = DEFAULT_RANDOMNESS;
+        vm.prank(vrfCoordinator);
+        minter.rawFulfillRandomWords(requestId, words);
     }
 
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 0, 0, false);
+        minter = new CubixlesMinter(
+            resaleSplitter,
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_CID,
+            vrfCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
@@ -58,7 +85,7 @@ contract CubixlesMinterFuzzTest is Test {
             _commitMint(minterAddr, salt, refs);
             vm.prank(minterAddr);
             vm.expectRevert(CubixlesMinter.InsufficientEth.selector);
-            minter.mint{ value: payment }(salt, "ipfs://token", refs);
+            minter.mint{ value: payment }(salt, refs);
             return;
         }
 
@@ -66,7 +93,7 @@ contract CubixlesMinterFuzzTest is Test {
         uint256 minterBefore = minterAddr.balance;
         _commitMint(minterAddr, salt, refs);
         vm.prank(minterAddr);
-        minter.mint{ value: payment }(salt, "ipfs://token", refs);
+        minter.mint{ value: payment }(salt, refs);
 
         assertEq(resaleSplitter.balance, splitterBefore + price);
         assertEq(minterAddr.balance, minterBefore - price);
@@ -98,9 +125,9 @@ contract CubixlesMinterFuzzTest is Test {
                     other
                 )
             );
-            minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
+            minter.mint{ value: price }(keccak256("salt"), refs);
             return;
         }
-        minter.mint{ value: price }(keccak256("salt"), "ipfs://token", refs);
+        minter.mint{ value: price }(keccak256("salt"), refs);
     }
 }

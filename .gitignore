@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+!.env.mainnet.example
+!.env.base.example
 .DS_Store
 
 node_modules/

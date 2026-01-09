@@ -15,6 +15,8 @@ load_env_file() {
 }
 
 load_env_file "${repo_root}/.env"
+load_env_file "${repo_root}/.env.mainnet"
+load_env_file "${repo_root}/.env.base"
 load_env_file "${repo_root}/.env.local"
 
 if [[ "${FORK_RPC_URL:-}" == \$* ]]; then

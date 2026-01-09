@@ -14,7 +14,7 @@ contract DisableLegacyMinter is Script {
 
         MintBlocker blocker = existingBlocker == address(0)
             ? new MintBlocker()
-            : MintBlocker(existingBlocker);
+            : MintBlocker(payable(existingBlocker));
 
         CubixlesMinter minter = CubixlesMinter(legacyMinter);
         if (minter.resaleSplitter() != address(blocker)) {

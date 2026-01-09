@@ -2,6 +2,9 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+via_ir = true
+optimizer = true
+optimizer_runs = 200
 remappings = [
   "@openzeppelin/=lib/v4-core/lib/openzeppelin-contracts/",
   "@uniswap/v4-core/=lib/v4-core/"

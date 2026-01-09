@@ -1,35 +1,28 @@
-import { BrowserProvider, Contract, Interface, JsonRpcProvider } from "ethers";
+import {
+  BrowserProvider,
+  Contract,
+  Interface,
+  JsonRpcProvider,
+  solidityPackedKeccak256,
+} from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import {
   formatChainName,
   getChainConfig,
   subscribeActiveChain,
 } from "../../config/chains.js";
-import { buildPalettePreviewGifUrl, buildTokenViewUrl } from "../../config/links.js";
-import { buildProvenanceBundle } from "../../data/nft/indexer";
+import { buildTokenViewUrl } from "../../config/links.js";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
-import { buildMintMetadata } from "./mint-metadata.js";
-import {
-  buildPaletteImageUrl,
-  getPaletteEntryByIndex,
-  loadPaletteManifest,
-} from "../../data/palette/manifest.js";
-import { pinTokenMetadata } from "./token-uri-provider.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
-import {
-  computeGifSeed,
-  computeVariantIndex,
-  decodeVariantIndex,
-  gifIpfsUrl,
-} from "../../gif/variant.js";
-import { fetchLessTotalSupply } from "../../data/chain/less-supply.js";
 
 const FALLBACK_BASE_PRICE_WEI = 1_500_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
 const WAD = 1_000_000_000_000_000_000n;
 const PRICE_STEP_WEI = 100_000_000_000_000n;
+const COMMIT_REVEAL_DELAY_BLOCKS = 1n;
+const COMMIT_REVEAL_WINDOW_BLOCKS = 256n;
 const IS_DEV =
   typeof process !== "undefined" && process.env.NODE_ENV !== "production";
 const CUBIXLES_INTERFACE =
@@ -39,13 +32,12 @@ const CUSTOM_ERROR_MESSAGES = {
   InsufficientEth: "Insufficient ETH for mint price.",
   MintCommitRequired: "Commit required before minting. Please retry.",
   MintCommitExpired: "Commit expired. Please retry to create a new commit.",
-  MintCommitPendingBlock: "Commit pending. Wait for the next block to mint.",
+  MintCommitPendingBlock: "Commit pending. Wait for the reveal window to open.",
   MintCommitMismatch: "Mint selection changed since commit. Please re-commit.",
-  MintCommitSaltMismatch: "Mint salt mismatch. Please retry.",
-  MintCommitHashMissing: "Commit block unavailable. Please retry.",
+  MintRandomnessPending: "Randomness pending. Please retry in a moment.",
   MintCommitEmpty: "Commit missing. Please retry.",
   MintCommitActive:
-    "Existing commit still active. Use the same selection or wait ~256 blocks.",
+    "Existing commit still active. Use the same selection or wait for it to expire.",
   InvalidReferenceCount: "Select 1 to 6 NFTs.",
   RefNotOwned: "You do not own one of the selected NFTs.",
   RefOwnershipCheckFailed:
@@ -161,6 +153,67 @@ function generateSalt() {
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
+function computeCommitmentHash({ minter, salt, refsHash }) {
+  if (!minter || !salt || !refsHash) {
+    return null;
+  }
+  return solidityPackedKeccak256(
+    ["string", "address", "bytes32", "bytes32"],
+    ["cubixles_:commit:v1", minter, salt, refsHash]
+  );
+}
+
+function buildCommitStorageKey(chainId, address) {
+  if (!address) {
+    return null;
+  }
+  return `cubixles:commit:${chainId}:${address.toLowerCase()}`;
+}
+
+function loadStoredCommit(chainId, address) {
+  try {
+    const key = buildCommitStorageKey(chainId, address);
+    if (!key || !window?.localStorage) {
+      return null;
+    }
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed?.salt || !parsed?.commitment || !parsed?.refsHash) {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveStoredCommit(chainId, address, payload) {
+  try {
+    const key = buildCommitStorageKey(chainId, address);
+    if (!key || !window?.localStorage) {
+      return;
+    }
+    window.localStorage.setItem(key, JSON.stringify(payload));
+  } catch (error) {
+    void error;
+  }
+}
+
+function clearStoredCommit(chainId, address) {
+  try {
+    const key = buildCommitStorageKey(chainId, address);
+    if (!key || !window?.localStorage) {
+      return;
+    }
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    void error;
+  }
+}
+
 export function initMintUi() {
   const statusEl = document.getElementById("mint-status");
   const mintButton = document.getElementById("mint-submit");
@@ -193,6 +246,9 @@ export function initMintUi() {
   let readProviderPromise = null;
 
   async function getReadProvider() {
+    if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__ && walletState?.provider) {
+      return new BrowserProvider(walletState.provider);
+    }
     const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
     const rpcUrls = chain?.rpcUrls ?? [];
     if (rpcUrls.length) {
@@ -430,6 +486,30 @@ export function initMintUi() {
     }
   }
 
+  async function waitForRandomness({ readContract, commitment }) {
+    const deadline = Date.now() + 60_000;
+    const expected = commitment?.toLowerCase?.() ?? "";
+    while (Date.now() < deadline) {
+      const commit = await readContract.mintCommitByMinter(walletState.address);
+      const commitHash =
+        (commit?.commitment ?? commit?.[0] ?? "").toString().toLowerCase();
+      if (!commitHash || /^0x0+$/.test(commitHash)) {
+        throw new Error("Commit missing. Please re-commit.");
+      }
+      if (expected && commitHash !== expected) {
+        throw new Error(
+          "Pending commit does not match your selection. Please re-commit."
+        );
+      }
+      const ready = Boolean(commit?.randomnessReady ?? commit?.[4]);
+      if (ready) {
+        return commit;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    throw new Error("Randomness pending. Please retry in a moment.");
+  }
+
   function updateMintPriceNote() {
     if (!mintPriceNoteEl) {
       return;
@@ -636,15 +716,7 @@ export function initMintUi() {
         signer
       );
       let salt = null;
-      const bundle = await buildProvenanceBundle(
-        state.nftSelection,
-        walletState.address,
-        CUBIXLES_CONTRACT.chainId
-      );
-      const refsFaces = state.nftSelection.map((nft) => ({
-        contractAddress: nft.contractAddress,
-        tokenId: nft.tokenId,
-      }));
+      let commitment = null;
       const refsForContract = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
         tokenId: BigInt(nft.tokenId),
@@ -661,43 +733,74 @@ export function initMintUi() {
       } catch (error) {
         supportsCommitReveal = false;
       }
+      const storedCommit = loadStoredCommit(
+        CUBIXLES_CONTRACT.chainId,
+        walletState.address
+      );
       let commitBlockNumber = null;
+      let usingExistingCommit = false;
       if (supportsCommitReveal && existingBlock > 0n) {
-        const expiryBlock = existingBlock + 256n;
+        const expiryBlock =
+          existingBlock + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
         if (latestBlock <= expiryBlock) {
-          if (existingCommit.refsHash !== refsHash) {
+          const storedSalt = storedCommit?.salt;
+          if (!storedSalt) {
             throw new Error(
-              "Pending commit exists. Use the same NFT selection as your last commit or wait ~256 blocks."
+              "Pending commit exists but local salt is missing. Wait for it to expire before recommitting."
             );
           }
-          if (latestBlock <= existingBlock) {
-            throw new Error("Commit pending. Wait for the next block to reveal.");
+          const candidateCommitment = computeCommitmentHash({
+            minter: walletState.address,
+            salt: storedSalt,
+            refsHash,
+          });
+          const existingCommitment = (
+            existingCommit?.commitment ?? existingCommit?.[0] ?? ""
+          ).toString();
+          if (
+            !candidateCommitment ||
+            existingCommitment.toLowerCase() !== candidateCommitment.toLowerCase()
+          ) {
+            throw new Error(
+              "Pending commit exists. Use the same NFT selection as your last commit or wait for it to expire."
+            );
           }
-          salt = existingCommit.salt;
+          const earliestBlock = existingBlock + COMMIT_REVEAL_DELAY_BLOCKS;
+          if (latestBlock < earliestBlock) {
+            throw new Error("Commit pending. Wait for the reveal window to open.");
+          }
+          salt = storedSalt;
+          commitment = candidateCommitment;
           commitBlockNumber = existingBlock;
+          usingExistingCommit = true;
+        } else {
+          clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
         }
       }
-      const refsCanonicalMeta = refsCanonical.map((ref) => ({
-        contractAddress: ref.contractAddress,
-        tokenId: ref.tokenId.toString(),
-      }));
+      if (supportsCommitReveal && existingBlock === 0n && storedCommit) {
+        clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
+      }
       if (!salt) {
         salt = generateSalt();
+        commitment = computeCommitmentHash({
+          minter: walletState.address,
+          salt,
+          refsHash,
+        });
+      }
+      if (!commitment) {
+        throw new Error("Commitment unavailable. Please retry.");
       }
       const previewTokenId = await readContract.previewTokenId(
         salt,
         refsCanonical,
         { from: walletState.address }
       );
-      const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
-      const lessSupplyMint = chain?.supportsLess
-        ? await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId)
-        : null;
       const tokenId = BigInt(previewTokenId);
-      const selectionSeed = computeGifSeed({
-        tokenId,
-        minter: walletState.address,
-      });
+      const externalUrl = buildTokenViewUrl(tokenId.toString());
+      if (!externalUrl) {
+        throw new Error("Token viewer URL is not configured.");
+      }
       if (supportsCommitReveal && commitBlockNumber === null) {
         showToast({
           title: "Two-step mint",
@@ -705,7 +808,7 @@ export function initMintUi() {
           tone: "neutral",
         });
         setStatus("Step 1/2: confirm commit in your wallet.");
-        const commitTx = await contract.commitMint(salt, refsHash);
+        const commitTx = await contract.commitMint(commitment);
         showToast({
           title: "Commit submitted",
           message: `Commit broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
@@ -722,8 +825,18 @@ export function initMintUi() {
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
         }
+        saveStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address, {
+          commitment,
+          salt,
+          refsHash,
+          blockNumber: commitBlockNumber.toString(),
+        });
       } else if (supportsCommitReveal) {
-        setStatus("Using existing commit. Preparing mint...");
+        setStatus(
+          usingExistingCommit
+            ? "Using existing commit. Waiting for randomness..."
+            : "Preparing mint..."
+        );
       } else {
         showToast({
           title: "Legacy mint flow",
@@ -732,58 +845,17 @@ export function initMintUi() {
           tone: "neutral",
         });
         setStatus("Preparing mint...");
-        commitBlockNumber = Number(latestBlock);
       }
-      const paletteManifest = await loadPaletteManifest();
-      const paletteIndexRaw = await readContract.previewPaletteIndex(
-        refsHash,
-        salt,
-        walletState.address,
-        commitBlockNumber
-      );
-      const paletteIndex = Number(paletteIndexRaw);
-      const paletteEntry = getPaletteEntryByIndex(paletteIndex, paletteManifest);
-      const variantIndex = computeVariantIndex(selectionSeed);
-      const params = decodeVariantIndex(variantIndex);
-      const paletteImageUrl = buildPaletteImageUrl(paletteEntry);
-      const imageIpfsUrl = paletteImageUrl || buildPalettePreviewGifUrl();
-      const imageUrl = imageIpfsUrl.startsWith("ipfs://")
-        ? `https://gateway.pinata.cloud/ipfs/${imageIpfsUrl.replace("ipfs://", "")}`
-        : imageIpfsUrl;
-      const animationUrl = imageIpfsUrl;
-      const externalUrl = buildTokenViewUrl(tokenId.toString());
-      if (!externalUrl) {
-        throw new Error("Token viewer URL is not configured.");
+      if (supportsCommitReveal) {
+        setStatus("Waiting for randomness...");
+        setCommitProgress(true);
+        await waitForRandomness({ readContract, commitment });
+        setCommitProgress(false);
       }
-      const metadata = buildMintMetadata({
-        tokenId: tokenId.toString(),
-        minter: walletState.address,
-        chainId: CUBIXLES_CONTRACT.chainId,
-        selection: state.nftSelection,
-        provenanceBundle: bundle,
-        refsFaces,
-        refsCanonical: refsCanonicalMeta,
-        salt,
-        animationUrl,
-        externalUrl,
-        imageUrl,
-        imageIpfsUrl,
-        paletteEntry,
-        paletteIndex,
-        paletteImageUrl,
-        lessSupplyMint: lessSupplyMint ? lessSupplyMint.toString() : "N/A",
-      });
-      setStatus("Pinning metadata...");
-      const tokenUri = await pinTokenMetadata({
-        metadata,
-        signer,
-        address: walletState.address,
-      });
       if (devChecklist) {
         const diagnostics = buildDiagnostics({
           selection: state.nftSelection,
-          metadata,
-          tokenUri,
+          externalUrl,
           amountInput: amountInput.value,
           walletAddress: walletState.address,
           mintPriceWei: currentMintPriceWei,
@@ -797,12 +869,12 @@ export function initMintUi() {
       await ensureBalanceForMint({
         provider,
         contract,
-        args: [salt, tokenUri, refsCanonical],
+        args: [salt, refsCanonical],
         valueWei: currentMintPriceWei,
       });
 
       setStatus("Step 2/2: confirm mint in your wallet.");
-      const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
+      const tx = await contract.mint(salt, refsCanonical, overrides);
       showToast({
         title: "Mint submitted",
         message: `Transaction broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
@@ -813,6 +885,7 @@ export function initMintUi() {
         "Waiting for mint confirmation. Please stay on this page while the transaction is being committed."
       );
       const receipt = await tx.wait();
+      clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
       const mintedTokenId = extractMintedTokenId(receipt, contract);
       if (mintedTokenId !== null && mintedTokenId !== undefined) {
         state.currentCubeTokenId = BigInt(mintedTokenId);
@@ -864,8 +937,7 @@ export function initMintUi() {
 
 function buildDiagnostics({
   selection,
-  metadata,
-  tokenUri,
+  externalUrl,
   amountInput,
   walletAddress,
   mintPriceWei,
@@ -890,9 +962,7 @@ function buildDiagnostics({
       amountInputEth: amountInput ? Number(amountInput) : null,
     },
     uris: {
-      externalUrl: metadata.external_url || metadata.animation_url || null,
-      image: metadata.image || null,
-      tokenUri,
+      externalUrl: externalUrl || null,
     },
   };
 }

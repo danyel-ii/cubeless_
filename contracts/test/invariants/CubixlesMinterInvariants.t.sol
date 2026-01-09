@@ -12,6 +12,7 @@ contract MintHandler is Test {
     CubixlesMinter public minter;
     MockERC721Standard public nft;
     MockERC20 public lessToken;
+    address public vrfCoordinator;
     uint256 public mintCount;
     uint256 public lastTokenId;
     uint256 public immutable mintPrice;
@@ -20,12 +21,14 @@ contract MintHandler is Test {
         CubixlesMinter minter_,
         MockERC721Standard nft_,
         MockERC20 lessToken_,
-        uint256 mintPrice_
+        uint256 mintPrice_,
+        address vrfCoordinator_
     ) {
         minter = minter_;
         nft = nft_;
         lessToken = lessToken_;
         mintPrice = mintPrice_;
+        vrfCoordinator = vrfCoordinator_;
         vm.deal(address(this), 100 ether);
     }
 
@@ -41,9 +44,15 @@ contract MintHandler is Test {
         }
         bytes32 salt = keccak256(abi.encodePacked("salt", mintCount, count));
         bytes32 refsHash = Refs.hashCanonical(refs);
-        minter.commitMint(salt, refsHash);
+        bytes32 commitment = minter.computeCommitment(address(this), salt, refsHash);
+        minter.commitMint(commitment);
         vm.roll(block.number + 1);
-        uint256 tokenId = minter.mint{ value: mintPrice }(salt, "ipfs://token", refs);
+        (, , uint256 requestId, , ) = minter.mintCommitByMinter(address(this));
+        uint256[] memory words = new uint256[](1);
+        words[0] = uint256(keccak256(abi.encodePacked(salt, mintCount)));
+        vm.prank(vrfCoordinator);
+        minter.rawFulfillRandomWords(requestId, words);
+        uint256 tokenId = minter.mint{ value: mintPrice }(salt, refs);
         mintCount += 1;
         lastTokenId = tokenId;
     }
@@ -66,15 +75,35 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
 
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
+    address private vrfCoordinator = makeAddr("vrfCoordinator");
+    bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
+    uint64 private constant VRF_SUB_ID = 1;
+    uint16 private constant VRF_CONFIRMATIONS = 3;
+    uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
+    string private constant PALETTE_CID = "bafytestcid";
 
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 0, 0, false);
+        minter = new CubixlesMinter(
+            resaleSplitter,
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_CID,
+            vrfCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
         uint256 price = minter.currentMintPrice();
-        handler = new MintHandler(minter, nft, lessToken, price);
+        handler = new MintHandler(minter, nft, lessToken, price, vrfCoordinator);
         targetContract(address(handler));
     }
 
