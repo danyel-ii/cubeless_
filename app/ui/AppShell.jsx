@@ -78,9 +78,6 @@ export default function AppShell() {
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
-            <button id="overlay-about" className="overlay-button is-ghost" type="button">
-              About
-            </button>
           </div>
           <div id="overlay-about-panel" className="overlay-about">
             <div className="overlay-section-title">About</div>
