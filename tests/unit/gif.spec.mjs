@@ -41,7 +41,7 @@ describe("gif variant mapping", () => {
   it("builds a stable IPFS URL for the wallet GIF", () => {
     const url = gifIpfsUrl(7);
     expect(url).toBe(
-      "ipfs://bafybeiap5a6tm3kpiizbjscfh5cafj245jjuchvfumz2azwyvs3y3ybvpy"
+      "ipfs://QmQJF5H31a6HFpmce6ksehw9wLQai7tTzdi7yweQ3Q97Mj"
     );
   });
 });
