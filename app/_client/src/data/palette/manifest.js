@@ -38,7 +38,10 @@ export async function loadPaletteManifest() {
   }
   manifestPromise = (async () => {
     const ipfsUrl = `ipfs://${manifestCid}`;
-    const { response } = await fetchWithGateways(ipfsUrl, { timeoutMs: 12000 });
+    const { response } = await fetchWithGateways(ipfsUrl, {
+      timeoutMs: 12000,
+      expectsJson: true,
+    });
     if (!response.ok) {
       throw new Error(`Palette manifest fetch failed (${response.status}).`);
     }

@@ -35,9 +35,14 @@ async function isJsonResponse(response) {
   }
 }
 
-export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
+export async function fetchWithGateways(
+  ipfsUrl,
+  { timeoutMs = 8000, expectsJson: expectsJsonOverride } = {}
+) {
   const expectsJson =
-    ipfsUrl.endsWith(".json") || ipfsUrl.includes("manifest.json");
+    typeof expectsJsonOverride === "boolean"
+      ? expectsJsonOverride
+      : ipfsUrl.endsWith(".json") || ipfsUrl.includes("manifest.json");
   if (typeof window !== "undefined" && ipfsUrl.startsWith("ipfs://")) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
