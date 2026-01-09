@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## 0) Pre-flight (local)
 
@@ -145,12 +145,12 @@ npm run deploy:mainnet
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - CubixlesMinter: `0x61EdB3bff9c758215Bc8C0B2eAcf2a56c638a6f2`
-   - RoyaltySplitter: `0x8c80e16c877F68DFBE461ca64e296e6ec3e69077`
+   - CubixlesMinter: `0x1DF2240b266A54E6b5a8118d0d2214256ADfBBAb`
+   - RoyaltySplitter: `0x58594deAe6b192Db91cfD534D6c67e0e371cc876`
    - Deploy txs:
-     - RoyaltySplitter CREATE: `0xf2b2459b9b490cbd058bedebcafe36d4196043947076dd831b889ec26f2e802e`
-     - CubixlesMinter CREATE: `0x215a73e4466c4b0c449c7faf4fee6929c9108a67cccc046de0acef8816fe2444`
-   - Ownership transfer (minter → owner): `0xb61bdf6419b6f063c55a04620e023d81341019d5385f4e2ba32b2510db66efb8`
+     - RoyaltySplitter CREATE: `0x09e2eb958a6e026dd583b91f81160ffdc4e9a2968dfee3165fa83c2d18e05f42`
+     - CubixlesMinter CREATE: `0xf4bae8c43960057fecbaa68b941bb7100b1055c9db61b5107f300cb2dc39c554`
+   - Ownership transfer (minter → owner): `0xc83dd7a34f5bf357a0563dd8d51f7b0550589d74be07109f49d55fc03691350b`
 
 ## 6) Mainnet launch validation
 
@@ -170,15 +170,16 @@ npm run deploy:mainnet
 - Set `CUBIXLES_BASE_MINT_PRICE_WEI` and `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (defaults: 0.0012 ETH and 0.000012 ETH; immutable once deployed).
 - Leave `CUBIXLES_FIXED_MINT_PRICE_WEI=0` (unused on Base).
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
+- Set `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
 - Deploy:
 ```sh
 npm run deploy:base
 ```
 - Record deployment:
   - `contracts/deployments/base.json`
-  - CubixlesMinter: `0x428032392237cb3BA908a6743994380DCFE7Bb74`
-  - RoyaltySplitter: `0xBaFeAa2Bd3ecb0dDe992727C289aDFA227CA12E2`
+  - CubixlesMinter: `0xFA760797Db195d705F8f52709c447497da377Ebf`
+  - RoyaltySplitter: `0xa2F6765466D78fc2CeDeA1b3212f3a909ABc4a30`
   - Deploy txs:
-    - RoyaltySplitter CREATE: `0xbf5a179ce7e4b11ff65699a5d69eac56d8c4b75fd66d38702faab4a28d31c3aa`
-    - CubixlesMinter CREATE: `0x35b4b0ab506b3d4677550abc90343300c560e82ddc57c827b6ff1c7b5ac3d78a`
-    - Ownership transfer (minter → owner): `0x13910eec38b3f1620da45228df56eb93383a6c03add5c01488c03e94f7b168db`
+    - RoyaltySplitter CREATE: `0x35332001923615a15c0ab8d97a7b35f99b9b76eeb1f0eb8a5ee4bc6d05a4b56e`
+    - CubixlesMinter CREATE: `0xeef5aa7b4886c284d13bdf6f9f3732894bced7628426b9ffe1b6d7573eabbf00`
+    - Ownership transfer (minter → owner): `0x04a78820f65da23e482c66bb385d72adac7b7b2604000bcd77fd6a4b4d04a1f5`

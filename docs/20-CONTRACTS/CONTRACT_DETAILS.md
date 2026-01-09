@@ -1,10 +1,10 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Review Status
 
-- Last reviewed: 2026-01-08
+- Last reviewed: 2026-01-09
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -47,7 +47,7 @@ Key steps:
    - linear price = `baseMintPriceWei + (baseMintPriceStepWei * totalMinted)` (no rounding)
    - fixed price = `fixedMintPriceWei` when LESS + linear pricing are disabled
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
-4.5 **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
+4.5 **Supply cap**: mint reverts once `totalMinted` reaches 10,000.
 5. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
 6. **Mint + metadata**: mint token and store `tokenURI`.
 7. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.

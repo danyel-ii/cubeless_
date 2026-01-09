@@ -1,10 +1,10 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet + Base)
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Review Status
 
-- Last reviewed: 2026-01-08
+- Last reviewed: 2026-01-09
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -200,7 +200,7 @@ type MintMetadata = {
   - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
-- Mint supply is capped at 32,768 total mints.
+- Mint supply is capped at 10,000 total mints.
 - Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 

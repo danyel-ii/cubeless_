@@ -1,10 +1,10 @@
 # cubixles_ Deployment (CubixlesMinter, Mainnet + Base + Sepolia)
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Review Status
 
-- Last reviewed: 2026-01-08
+- Last reviewed: 2026-01-09
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -79,4 +79,4 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
 
-Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0).
+Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0). Set `CUBIXLES_POOL_MANAGER=0x0`, `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to fully disable swaps on Base.
