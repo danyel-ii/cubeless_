@@ -398,21 +398,30 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
         }
-        VRFV2PlusClient.RandomWordsRequest memory request;
-        request.keyHash = vrfKeyHash;
-        request.subId = vrfSubscriptionId;
-        request.requestConfirmations = vrfRequestConfirmations;
-        request.callbackGasLimit = vrfCallbackGasLimit;
-        request.numWords = VRF_NUM_WORDS;
-        request.extraArgs = VRFV2PlusClient._argsToBytes(
-            VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
-        );
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: vrfKeyHash,
+            subId: vrfSubscriptionId,
+            requestConfirmations: vrfRequestConfirmations,
+            callbackGasLimit: vrfCallbackGasLimit,
+            numWords: VRF_NUM_WORDS,
+            extraArgs: VRFV2PlusClient._argsToBytes(
+                VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
+            )
+        });
         uint256 requestId = vrfCoordinator.requestRandomWords(request);
-        MintCommit memory commit;
-        commit.commitment = commitment;
-        commit.blockNumber = block.number;
-        commit.requestId = requestId;
-        commit.commitFee = msg.value;
+        MintCommit memory commit = MintCommit({
+            commitment: commitment,
+            blockNumber: block.number,
+            requestId: requestId,
+            randomness: 0,
+            randomnessReady: false,
+            paletteIndex: 0,
+            paletteAssigned: false,
+            metadataHash: bytes32(0),
+            imagePathHash: bytes32(0),
+            metadataCommitted: false,
+            commitFee: msg.value
+        });
         mintCommitByMinter[msg.sender] = commit;
         _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
         emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
@@ -674,6 +683,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             address contractAddress = sorted[i].contractAddress;
             uint256 tokenId = sorted[i].tokenId;
             // Pack as address (20 bytes) + tokenId (32 bytes) to match abi.encodePacked.
+            // slither-disable-next-line assembly
             assembly {
                 let ptr := add(add(packed, 32), offset)
                 mstore(ptr, shl(96, contractAddress))
