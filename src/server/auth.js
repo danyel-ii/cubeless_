@@ -3,9 +3,8 @@ import {
   Contract,
   JsonRpcProvider,
   getAddress,
-  hashMessage,
-  toUtf8Bytes,
-  verifyMessage,
+  TypedDataEncoder,
+  verifyTypedData,
 } from "ethers";
 import { requireEnv } from "./env.js";
 import { getRedis } from "./redis.js";
@@ -14,6 +13,17 @@ import { recordMetric } from "./metrics.js";
 const NONCE_TTL_MS = 5 * 60 * 1000;
 const usedNonces = new Map();
 const EIP1271_MAGIC = "0x1626ba7e";
+const PIN_DOMAIN_NAME = "cubixles_";
+const PIN_DOMAIN_VERSION = "1";
+const PIN_STATEMENT = "cubixles_ wants you to authorize metadata pinning.";
+const PIN_TYPES = {
+  MetadataPin: [
+    { name: "statement", type: "string" },
+    { name: "nonce", type: "string" },
+    { name: "issuedAt", type: "uint256" },
+    { name: "expiresAt", type: "uint256" },
+  ],
+};
 const EIP1271_ABI = [
   "function isValidSignature(bytes32,bytes) view returns (bytes4)",
   "function isValidSignature(bytes,bytes) view returns (bytes4)",
@@ -54,20 +64,33 @@ function parseNonce(nonce) {
   return { ok: true, rand, issuedAt, ttlMs, signature };
 }
 
-export function buildNonceMessage(nonce) {
+function getAuthChainId() {
+  const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
+  return Number.isFinite(chainId) ? chainId : 1;
+}
+
+function buildPinTypedData(nonce) {
   const parsed = parseNonce(nonce);
-  const issuedAt = parsed.ok ? new Date(parsed.issuedAt).toISOString() : "unknown";
-  const expiresAt = parsed.ok
-    ? new Date(parsed.issuedAt + parsed.ttlMs).toISOString()
-    : "unknown";
-  return [
-    "cubixles_ wants you to sign this message to authorize metadata pinning.",
-    "No transaction or gas is required.",
-    "",
-    `Nonce: ${nonce}`,
-    `Issued At: ${issuedAt}`,
-    `Expires At: ${expiresAt}`,
-  ].join("\n");
+  if (!parsed.ok) {
+    return parsed;
+  }
+  const issuedAt = parsed.issuedAt;
+  const expiresAt = parsed.issuedAt + parsed.ttlMs;
+  return {
+    ok: true,
+    domain: {
+      name: PIN_DOMAIN_NAME,
+      version: PIN_DOMAIN_VERSION,
+      chainId: getAuthChainId(),
+    },
+    types: PIN_TYPES,
+    value: {
+      statement: PIN_STATEMENT,
+      nonce,
+      issuedAt,
+      expiresAt,
+    },
+  };
 }
 
 export function issueNonce() {
@@ -138,8 +161,7 @@ export function resolveRpcUrlForChain(chainId) {
 }
 
 function getRpcUrl() {
-  const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
-  return resolveRpcUrlForChain(chainId);
+  return resolveRpcUrlForChain(getAuthChainId());
 }
 
 async function callSignatureMethod(contract, method, args) {
@@ -150,7 +172,7 @@ async function callSignatureMethod(contract, method, args) {
   }
 }
 
-async function verifyContractSignature(checksum, message, signature) {
+async function verifyContractSignature(checksum, domain, types, value, signature) {
   const rpcUrl = getRpcUrl();
   if (!rpcUrl) {
     return false;
@@ -162,10 +184,11 @@ async function verifyContractSignature(checksum, message, signature) {
   }
 
   const contract = new Contract(checksum, EIP1271_ABI, provider);
-  const messageHash = hashMessage(message);
+  const digest = TypedDataEncoder.hash(domain, types, value);
+  const encoded = TypedDataEncoder.encode(domain, types, value);
   const checks = [
-    ["isValidSignature(bytes32,bytes)", [messageHash, signature]],
-    ["isValidSignature(bytes,bytes)", [toUtf8Bytes(message), signature]],
+    ["isValidSignature(bytes32,bytes)", [digest, signature]],
+    ["isValidSignature(bytes,bytes)", [encoded, signature]],
   ];
   for (const [method, args] of checks) {
     const result = await callSignatureMethod(contract, method, args);
@@ -188,10 +211,15 @@ export async function verifySignature({ address, nonce, signature }) {
     recordMetric("auth.signature.invalid_address");
     return { ok: false, error: "Invalid address" };
   }
-  const message = buildNonceMessage(nonce);
+  const typedData = buildPinTypedData(nonce);
+  if (!typedData.ok) {
+    recordMetric("auth.signature.invalid_nonce");
+    return { ok: false, error: typedData.error || "Invalid nonce" };
+  }
+  const { domain, types, value } = typedData;
   let recovered;
   try {
-    recovered = verifyMessage(message, signature);
+    recovered = verifyTypedData(domain, types, value, signature);
   } catch (error) {
     recovered = null;
   }
@@ -199,7 +227,7 @@ export async function verifySignature({ address, nonce, signature }) {
     return { ok: true, address: checksum };
   }
 
-  const valid1271 = await verifyContractSignature(checksum, message, signature);
+  const valid1271 = await verifyContractSignature(checksum, domain, types, value, signature);
   if (!valid1271) {
     recordMetric("auth.signature.mismatch");
     return { ok: false, error: "Signature mismatch" };

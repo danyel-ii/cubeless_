@@ -191,7 +191,7 @@ are split into smaller modules.
 - `src/server/env.js`
   - Server-only env assertions.
 - `src/server/auth.js`
-  - Nonce issuance and EIP-191 signature verification.
+  - Nonce issuance and EIP-712 signature verification.
 - `src/server/ratelimit.js`
   - Redis-backed token bucket rate limiter with in-memory fallback.
 - `src/server/cache.js`

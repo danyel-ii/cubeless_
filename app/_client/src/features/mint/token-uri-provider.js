@@ -1,3 +1,17 @@
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
+
+const PIN_DOMAIN_NAME = "cubixles_";
+const PIN_DOMAIN_VERSION = "1";
+const PIN_STATEMENT = "cubixles_ wants you to authorize metadata pinning.";
+const PIN_TYPES = {
+  MetadataPin: [
+    { name: "statement", type: "string" },
+    { name: "nonce", type: "string" },
+    { name: "issuedAt", type: "uint256" },
+    { name: "expiresAt", type: "uint256" },
+  ],
+};
+
 function parseNonce(nonce) {
   if (!nonce || typeof nonce !== "string") {
     return { ok: false };
@@ -15,20 +29,27 @@ function parseNonce(nonce) {
   return { ok: true, issuedAt, ttlMs };
 }
 
-function buildNonceMessage(nonce) {
+function buildPinTypedData(nonce, chainId) {
   const parsed = parseNonce(nonce);
-  const issuedAt = parsed.ok ? new Date(parsed.issuedAt).toISOString() : "unknown";
-  const expiresAt = parsed.ok
-    ? new Date(parsed.issuedAt + parsed.ttlMs).toISOString()
-    : "unknown";
-  return [
-    "cubixles_ wants you to sign this message to authorize metadata pinning.",
-    "No transaction or gas is required.",
-    "",
-    `Nonce: ${nonce}`,
-    `Issued At: ${issuedAt}`,
-    `Expires At: ${expiresAt}`,
-  ].join("\n");
+  if (!parsed.ok) {
+    throw new Error("Invalid nonce format.");
+  }
+  const issuedAt = parsed.issuedAt;
+  const expiresAt = parsed.issuedAt + parsed.ttlMs;
+  return {
+    domain: {
+      name: PIN_DOMAIN_NAME,
+      version: PIN_DOMAIN_VERSION,
+      chainId,
+    },
+    types: PIN_TYPES,
+    value: {
+      statement: PIN_STATEMENT,
+      nonce,
+      issuedAt,
+      expiresAt,
+    },
+  };
 }
 
 async function fetchNonce() {
@@ -50,7 +71,8 @@ export async function pinTokenMetadata({ metadata, signer, address }) {
   let lastError = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const nonce = await fetchNonce();
-    const signature = await signer.signMessage(buildNonceMessage(nonce));
+    const { domain, types, value } = buildPinTypedData(nonce, CUBIXLES_CONTRACT.chainId);
+    const signature = await signer.signTypedData(domain, types, value);
 
     const response = await fetch("/api/pin/metadata", {
       method: "POST",
