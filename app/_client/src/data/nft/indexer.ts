@@ -115,7 +115,7 @@ export async function getNftsForOwner(
     owned.forEach((nft) => {
       try {
         if (nft.tokenType && nft.tokenType !== "ERC721") {
-          throw new Error("Unsupported token standard.");
+          return;
         }
         const contractAddress = normalizeAddress(nft.contract?.address);
         const tokenId = parseTokenId(nft.tokenId);

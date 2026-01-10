@@ -35,6 +35,9 @@ function loadP5Library() {
   if (window.__CUBIXLES_P5_PROMISE__) {
     return window.__CUBIXLES_P5_PROMISE__;
   }
+  if (window._setupDone && typeof window.p5 === "function") {
+    return Promise.resolve();
+  }
   if (typeof window.p5 === "function") {
     return Promise.resolve();
   }
@@ -87,7 +90,7 @@ function ensureP5Instance() {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBIXLES_P5__) {
+  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBIXLES_P5__ || window._setupDone) {
     return;
   }
   if (window.__CUBIXLES_P5_INIT__) {
@@ -99,14 +102,17 @@ function ensureP5Instance() {
       if (
         window.__CUBIXLES_P5_INSTANCE__ ||
         window.__CUBIXLES_P5__ ||
+        window._setupDone ||
         typeof window.p5 !== "function"
       ) {
         window.__CUBIXLES_P5_INIT__ = false;
         return;
       }
-      const instance = new window.p5();
-      window.__CUBIXLES_P5_INSTANCE__ = instance;
-      window.__CUBIXLES_P5__ = instance;
+      const instance = window.p5?.instance;
+      if (instance) {
+        window.__CUBIXLES_P5_INSTANCE__ = instance;
+        window.__CUBIXLES_P5__ = instance;
+      }
       window.__CUBIXLES_P5_INIT__ = false;
     })
     .catch((error) => {

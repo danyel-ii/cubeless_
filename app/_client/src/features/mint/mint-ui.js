@@ -9,6 +9,8 @@ import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import {
   formatChainName,
   getChainConfig,
+  isSupportedChainId,
+  setActiveChainId,
   subscribeActiveChain,
 } from "../../config/chains.js";
 import { buildTokenViewUrl } from "../../config/links.js";
@@ -791,20 +793,33 @@ export function initMintUi() {
     setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
+      const provider = new BrowserProvider(walletState.provider);
+      const walletNetwork = await provider.getNetwork();
+      const walletChainId = Number(walletNetwork.chainId);
+      if (!isSupportedChainId(walletChainId)) {
+        throw new Error("Unsupported wallet network. Switch to mainnet or Base.");
+      }
+      if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
+        setActiveChainId(walletChainId);
+        readProviderPromise = null;
+        await refreshMintPrice();
+      }
       const readProvider = await getReadProvider();
       if (!readProvider) {
         throw new Error("Read-only RPC unavailable. Try again shortly.");
       }
-      const network = await readProvider.getNetwork();
-      if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
+      const readNetwork = await readProvider.getNetwork();
+      const readChainId = Number(readNetwork.chainId);
+      if (readChainId !== walletChainId) {
         throw new Error(
-          `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
+          `Network mismatch. Wallet on ${formatChainName(
+            walletChainId
+          )}, RPC on ${formatChainName(readChainId)}.`
         );
       }
       if (!currentMintPriceWei) {
         throw new Error("Mint price unavailable. Try again shortly.");
       }
-      const provider = new BrowserProvider(walletState.provider);
       const signer = await provider.getSigner();
       const readContract = new Contract(
         CUBIXLES_CONTRACT.address,
@@ -923,6 +938,7 @@ export function initMintUi() {
           tone: "neutral",
         });
         setStatus(`Step 1/${totalSteps}: confirm commit in your wallet.`);
+        await contract.commitMint.staticCall(commitment, { value: commitFeeWei });
         const commitTx = await contract.commitMint(commitment, { value: commitFeeWei });
         showToast({
           title: "Commit submitted",
@@ -1042,6 +1058,7 @@ export function initMintUi() {
         }
       } else {
         setStatus(`Step ${metadataStep}/${totalSteps}: confirm metadata in your wallet.`);
+        await contract.commitMetadata.staticCall(metadataHash, imagePathHash);
         const metadataTx = await contract.commitMetadata(
           metadataHash,
           imagePathHash
@@ -1095,6 +1112,15 @@ export function initMintUi() {
       });
 
       setStatus(`Step ${mintStep}/${totalSteps}: confirm mint in your wallet.`);
+      await contract.mint.staticCall(
+        salt,
+        refsCanonical,
+        expectedPaletteIndex,
+        tokenURI,
+        metadataHash,
+        imagePathHash,
+        overrides
+      );
       const tx = await contract.mint(
         salt,
         refsCanonical,

@@ -4,6 +4,8 @@ import {
   getActiveChain,
   getActiveChainId,
   getChainConfig,
+  isSupportedChainId,
+  setActiveChainId,
   subscribeActiveChain,
 } from "../../config/chains.js";
 
@@ -103,7 +105,11 @@ export async function connectWallet(options = {}) {
     }
     const chainId = await readChainId(provider);
     setState({ status: "connected", address, provider, providerSource, chainId });
-    await ensureChain(provider, getActiveChainId());
+    if (chainId && isSupportedChainId(chainId)) {
+      setActiveChainId(chainId);
+    } else {
+      await ensureChain(provider, getActiveChainId());
+    }
     attachProviderListeners(provider);
   } catch (error) {
     if (typeof document !== "undefined") {
@@ -287,7 +293,11 @@ function attachProviderListeners(provider) {
     if (typeof chainIdHex !== "string") {
       return;
     }
-    setState({ chainId: Number.parseInt(chainIdHex, 16) });
+    const parsedChainId = Number.parseInt(chainIdHex, 16);
+    setState({ chainId: parsedChainId });
+    if (isSupportedChainId(parsedChainId)) {
+      setActiveChainId(parsedChainId);
+    }
   });
 }
 
