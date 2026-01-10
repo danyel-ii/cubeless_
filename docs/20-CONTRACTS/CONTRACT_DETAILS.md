@@ -10,7 +10,7 @@ Last updated: 2026-01-09
 
 ## Executive Summary
 
-CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0022 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Minting uses a hash-only commit + reveal with Chainlink VRF randomness; the reveal step consumes the fulfilled VRF word to draw a palette index without replacement. Token metadata is **pinned per mint**: `tokenURI` is provided at mint time (pinned offchain), while the contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the base image set and manifest.
+CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0022 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Minting uses a hash-only commit + reveal with Chainlink VRF randomness; the reveal step consumes the fulfilled VRF word to draw a palette index without replacement. Commit requests can require a configurable commit fee that is credited at mint and forfeited on expiry. Token metadata is **pinned per mint**: `tokenURI` is provided at mint time (pinned offchain), while the contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the base image set and manifest.
 Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps via the v4 PoolManager; on successful swap, 25% of the ETH is forwarded to the owner, 25% is swapped to $LESS (owner), 50% is swapped to $PNKSTR (owner), and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking.
 An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing is either fixed or linear (base + step) depending on `linearPricingEnabled`, and LESS snapshots/deltas remain `0`. Base deployments use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint).
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
@@ -33,14 +33,26 @@ Contract: `contracts/src/cubixles/CubixlesMinter.sol`
 Function signature:
 
 ```solidity
-mint(bytes32 salt, NftRef[] calldata refs, uint256 expectedPaletteIndex, string calldata tokenURI)
-  external payable returns (uint256 tokenId)
+mint(
+  bytes32 salt,
+  NftRef[] calldata refs,
+  uint256 expectedPaletteIndex,
+  string calldata tokenURI,
+  bytes32 metadataHash,
+  bytes32 imagePathHash
+) external payable returns (uint256 tokenId)
 ```
 
 Commit signature (required before mint):
 
 ```solidity
-commitMint(bytes32 commitment) external
+commitMint(bytes32 commitment) external payable
+```
+
+Metadata commit signature (required before mint):
+
+```solidity
+commitMetadata(bytes32 metadataHash, bytes32 imagePathHash) external
 ```
 
 Key steps:
@@ -48,6 +60,7 @@ Key steps:
 0. **Commit required**: `commitMint(commitment)` must be called first (commit must be mined in a prior block; window is 256 blocks).
    - Commitment hash = `keccak256("cubixles_:commit:v1", minter, salt, refsHash)`.
    - VRF request is made during `commitMint`; mint waits for `randomnessReady`.
+   - When configured, a commit fee (`commitFeeWei`) is required; it is credited at mint and forfeited after expiry (sweepable via `sweepExpiredCommit`).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: `currentMintPrice()` returns the dynamic $LESS price, linear base + step (when `linearPricingEnabled` is on), or fixed ETH pricing when LESS + linear pricing are disabled.
@@ -98,6 +111,7 @@ Royalty splitter: `contracts/src/royalties/RoyaltySplitter.sol`
 - `setRoyaltyReceiver(resaleSplitter)` updates ERC-2981 receiver and resets bps to 5%.
 - `setResaleRoyalty(bps, receiver)` updates ERC-2981 receiver + rate (bps capped at 10%).
 - `setFixedMintPrice(price)` updates fixed pricing when LESS + linear pricing are disabled.
+- `setCommitFee(fee)` updates the required commit fee (credited at mint, forfeited on expiry).
 - Mint uses a `nonReentrant` guard to protect the payable transfers.
 
 ## Tests
@@ -120,6 +134,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
     - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
     - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
+    - `CUBIXLES_COMMIT_FEE_WEI` (optional; commit fee credited at mint)
     - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
     - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
     - `CUBIXLES_POOL_MANAGER` (optional; required for swaps)
@@ -157,7 +172,7 @@ File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds refs hash and commitment for the selected NFTs.
-- Calls `commitMint(commitment)` and waits for VRF fulfillment.
+- Calls `commitMint(commitment)` (paying any configured commit fee) and waits for VRF fulfillment.
 - Resolves the palette index once randomness is ready and pins metadata offchain.
 - Calls `mint(salt, refs, expectedPaletteIndex, tokenURI)` after randomness is ready.
 - Offchain metadata pinning is required; `tokenURI` is stored onchain per mint.

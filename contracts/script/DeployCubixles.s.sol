@@ -68,6 +68,9 @@ contract DeployCubixles is Script {
             cfg.vrfRequestConfirmations,
             cfg.vrfCallbackGasLimit
         );
+        if (cfg.commitFeeWei != 0) {
+            minter.setCommitFee(cfg.commitFeeWei);
+        }
         if (cfg.owner != msg.sender) {
             minter.transferOwnership(cfg.owner);
         }
@@ -103,6 +106,7 @@ contract DeployCubixles is Script {
         uint96 resaleRoyaltyBps;
         uint16 swapMaxSlippageBps;
         uint256 fixedMintPriceWei;
+        uint256 commitFeeWei;
         bool linearPricingEnabled;
         uint256 baseMintPriceWei;
         uint256 baseMintPriceStepWei;
@@ -147,6 +151,7 @@ contract DeployCubixles is Script {
         cfg.resaleRoyaltyBps = uint96(vm.envOr("CUBIXLES_RESALE_BPS", uint256(500)));
         cfg.swapMaxSlippageBps = uint16(vm.envOr("CUBIXLES_SWAP_MAX_SLIPPAGE_BPS", uint256(0)));
         cfg.fixedMintPriceWei = vm.envOr("CUBIXLES_FIXED_MINT_PRICE_WEI", uint256(0));
+        cfg.commitFeeWei = vm.envOr("CUBIXLES_COMMIT_FEE_WEI", uint256(0));
         cfg.linearPricingEnabled = vm.envOr(
             "CUBIXLES_LINEAR_PRICING_ENABLED",
             cfg.chainId == 8453

@@ -70,6 +70,7 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
 - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
 - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
+- `CUBIXLES_COMMIT_FEE_WEI` (optional; commit fee credited at mint)
 - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
 - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)

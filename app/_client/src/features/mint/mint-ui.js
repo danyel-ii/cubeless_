@@ -46,6 +46,7 @@ const CUSTOM_ERROR_MESSAGES = {
   MintCommitEmpty: "Commit missing. Please retry.",
   MintCommitActive:
     "Existing commit still active. Use the same selection or wait for it to expire.",
+  CommitFeeMismatch: "Commit fee mismatch. Please retry.",
   MintMetadataCommitRequired: "Metadata commit required before minting.",
   MintMetadataCommitActive: "Metadata already committed for this mint.",
   MintMetadataMismatch: "Metadata mismatch. Please retry.",
@@ -525,6 +526,33 @@ export function initMintUi() {
     return ((value + step - 1n) / step) * step;
   }
 
+  function toBigInt(value, fallback = 0n) {
+    if (value === null || value === undefined) {
+      return fallback;
+    }
+    if (typeof value === "bigint") {
+      return value;
+    }
+    if (typeof value === "number") {
+      return BigInt(Math.trunc(value));
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return fallback;
+      }
+      return BigInt(trimmed);
+    }
+    if (typeof value === "object" && typeof value.toString === "function") {
+      const text = value.toString();
+      if (!text) {
+        return fallback;
+      }
+      return BigInt(text);
+    }
+    return fallback;
+  }
+
   async function ensureBalanceForMint({ provider, contract, args, valueWei }) {
     if (!provider || !contract || !walletState?.address || valueWei == null) {
       return;
@@ -788,6 +816,13 @@ export function initMintUi() {
         CUBIXLES_CONTRACT.abi,
         signer
       );
+      let commitFeeWei = 0n;
+      try {
+        commitFeeWei = toBigInt(await readContract.commitFeeWei());
+      } catch (error) {
+        commitFeeWei = 0n;
+      }
+      let commitFeePaidWei = 0n;
       let salt = null;
       let commitment = null;
       const refsForContract = state.nftSelection.map((nft) => ({
@@ -799,9 +834,11 @@ export function initMintUi() {
       const latestBlock = BigInt(await readProvider.getBlockNumber());
       let existingCommit = null;
       let existingBlock = 0n;
+      let existingCommitFee = 0n;
       try {
         existingCommit = await readContract.mintCommitByMinter(walletState.address);
         existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
+        existingCommitFee = toBigInt(existingCommit?.commitFee ?? existingCommit?.[10]);
       } catch (error) {
         throw new Error("Commit state unavailable. Please retry.");
       }
@@ -845,6 +882,7 @@ export function initMintUi() {
           commitment = candidateCommitment;
           commitBlockNumber = existingBlock;
           usingExistingCommit = true;
+          commitFeePaidWei = existingCommitFee;
         } else {
           clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
         }
@@ -885,7 +923,7 @@ export function initMintUi() {
           tone: "neutral",
         });
         setStatus(`Step 1/${totalSteps}: confirm commit in your wallet.`);
-        const commitTx = await contract.commitMint(commitment);
+        const commitTx = await contract.commitMint(commitment, { value: commitFeeWei });
         showToast({
           title: "Commit submitted",
           message: `Commit broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
@@ -902,6 +940,7 @@ export function initMintUi() {
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
         }
+        commitFeePaidWei = commitFeeWei;
         saveStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address, {
           commitment,
           salt,
@@ -1036,7 +1075,11 @@ export function initMintUi() {
       }
       state.currentCubeTokenId = tokenId;
       document.dispatchEvent(new CustomEvent("cube-token-change"));
-      const overrides = { value: currentMintPriceWei };
+      const mintValueWei =
+        currentMintPriceWei > commitFeePaidWei
+          ? currentMintPriceWei - commitFeePaidWei
+          : 0n;
+      const overrides = { value: mintValueWei };
       await ensureBalanceForMint({
         provider,
         contract,
@@ -1048,7 +1091,7 @@ export function initMintUi() {
           metadataHash,
           imagePathHash,
         ],
-        valueWei: currentMintPriceWei,
+        valueWei: mintValueWei,
       });
 
       setStatus(`Step ${mintStep}/${totalSteps}: confirm mint in your wallet.`);

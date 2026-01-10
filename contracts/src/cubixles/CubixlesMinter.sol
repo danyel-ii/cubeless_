@@ -63,6 +63,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     error MintCommitEmpty();
     /// @notice Commit already exists and is still active.
     error MintCommitActive();
+    /// @notice Commit fee does not match the required amount.
+    error CommitFeeMismatch(uint256 expected, uint256 received);
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired();
     /// @notice Palette images CID is required.
@@ -85,6 +87,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     error MintMetadataMismatch();
     /// @notice VRF coordinator is required.
     error VrfCoordinatorRequired();
+    /// @notice VRF coordinator must be a deployed contract.
+    error VrfCoordinatorNotContract(address coordinator);
     /// @notice VRF key hash is required.
     error VrfKeyHashRequired();
     /// @notice VRF subscription id is required.
@@ -129,6 +133,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 metadataHash;
         bytes32 imagePathHash;
         bool metadataCommitted;
+        uint256 commitFee;
     }
 
     struct MintRequest {
@@ -161,6 +166,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     uint256 public immutable baseMintPriceStepWei; /* solhint-disable-line immutable-vars-naming */
     /// @notice Fixed mint price when LESS + linear pricing are disabled.
     uint256 public fixedMintPriceWei;
+    /// @notice Commit fee required to request VRF randomness.
+    uint256 public commitFeeWei;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
     /// @notice Base CID for palette images.
@@ -215,6 +222,10 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         uint256 indexed blockNumber,
         uint256 requestId
     );
+    /// @notice Emitted when an expired commit is forfeited.
+    /// @param minter Wallet whose commit was forfeited.
+    /// @param amount Commit fee forfeited.
+    event MintCommitForfeited(address indexed minter, uint256 amount);
     /// @notice Emitted when metadata is committed for a mint.
     /// @param minter Wallet that committed.
     /// @param metadataHash Hash of the canonical metadata payload.
@@ -252,6 +263,9 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @notice Emitted when fixed mint price is updated.
     /// @param price New fixed mint price in wei.
     event FixedMintPriceUpdated(uint256 price);
+    /// @notice Emitted when commit fee is updated.
+    /// @param fee New commit fee in wei.
+    event CommitFeeUpdated(uint256 fee);
     // solhint-enable gas-indexed-events
 
     /// @notice Create a new minter instance.
@@ -303,6 +317,9 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         if (vrfCoordinator_ == address(0)) {
             revert VrfCoordinatorRequired();
+        }
+        if (vrfCoordinator_.code.length == 0) {
+            revert VrfCoordinatorNotContract(vrfCoordinator_);
         }
         if (vrfKeyHash_ == bytes32(0)) {
             revert VrfKeyHashRequired();
@@ -378,8 +395,10 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             revert MintCapReached();
         }
 
+        uint256 commitFeePaid = mintCommitByMinter[msg.sender].commitFee;
         uint256 price = currentMintPrice();
-        if (msg.value < price) {
+        uint256 totalPaid = msg.value + commitFeePaid;
+        if (totalPaid < price) {
             revert InsufficientEth();
         }
 
@@ -412,14 +431,14 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
 
         _transferEth(resaleSplitter, price);
 
-        if (msg.value > price) {
-            _transferEth(msg.sender, msg.value - price);
+        if (totalPaid > price) {
+            _transferEth(msg.sender, totalPaid - price);
         }
     }
 
     /// @notice Commit a mint request for commit-reveal.
     /// @param commitment Commitment hash (minter + salt + refs hash).
-    function commitMint(bytes32 commitment) external {
+    function commitMint(bytes32 commitment) external payable nonReentrant {
         if (commitment == bytes32(0)) {
             revert MintCommitEmpty();
         }
@@ -428,6 +447,13 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             if (_isCommitActive(existing.blockNumber)) {
                 revert MintCommitActive();
             }
+        }
+        uint256 requiredFee = commitFeeWei;
+        if (msg.value != requiredFee) {
+            revert CommitFeeMismatch(requiredFee, msg.value);
+        }
+        if (existing.blockNumber != 0) {
+            _forfeitCommit(msg.sender, existing);
         }
         if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
@@ -449,7 +475,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             paletteAssigned: false,
             metadataHash: bytes32(0),
             imagePathHash: bytes32(0),
-            metadataCommitted: false
+            metadataCommitted: false,
+            commitFee: msg.value
         });
         _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
         emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
@@ -480,6 +507,19 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         commit.imagePathHash = imagePathHash;
         commit.metadataCommitted = true;
         emit MintMetadataCommitted(msg.sender, metadataHash, imagePathHash);
+    }
+
+    /// @notice Forfeit an expired commit and forward any fee to the resale splitter.
+    /// @param minter Address with an expired commit.
+    function sweepExpiredCommit(address minter) external nonReentrant {
+        MintCommit memory commit = mintCommitByMinter[minter];
+        if (commit.blockNumber == 0) {
+            revert MintCommitRequired();
+        }
+        if (_isCommitActive(commit.blockNumber)) {
+            revert MintCommitActive();
+        }
+        _forfeitCommit(minter, commit);
     }
 
     /// @notice Current mint price for this deployment.
@@ -640,6 +680,13 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         emit FixedMintPriceUpdated(price);
     }
 
+    /// @notice Update the commit fee required for VRF requests.
+    /// @param fee New commit fee in wei.
+    function setCommitFee(uint256 fee) external onlyOwner {
+        commitFeeWei = fee;
+        emit CommitFeeUpdated(fee);
+    }
+
     /// @notice ERC-165 support for ERC721 + ERC2981.
     /// @param interfaceId Interface id to query.
     /// @return True if interface supported.
@@ -797,6 +844,18 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         paletteIndex = commit.paletteIndex;
         delete mintCommitByMinter[msg.sender];
+    }
+
+    function _forfeitCommit(address minter, MintCommit memory commit) private {
+        uint256 fee = commit.commitFee;
+        if (fee != 0) {
+            _transferEth(resaleSplitter, fee);
+        }
+        if (commit.requestId != 0) {
+            delete _mintRequestById[commit.requestId];
+        }
+        delete mintCommitByMinter[minter];
+        emit MintCommitForfeited(minter, fee);
     }
 
     function _requireValidCommit(MintCommit memory commit) private view {

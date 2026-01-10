@@ -48,9 +48,10 @@ contract MintHandler is Test {
         bytes32 salt = keccak256(abi.encodePacked("salt", mintCount, count));
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(address(this), salt, refsHash);
-        minter.commitMint(commitment);
+        uint256 commitFee = minter.commitFeeWei();
+        minter.commitMint{ value: commitFee }(commitment);
         vm.roll(block.number + 1);
-        (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(address(this));
+        (, , uint256 requestId, , , , , , , , ) = minter.mintCommitByMinter(address(this));
         uint256[] memory words = new uint256[](1);
         words[0] = uint256(keccak256(abi.encodePacked(salt, mintCount)));
         vm.prank(vrfCoordinator);

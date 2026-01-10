@@ -177,10 +177,11 @@ contract CubixlesMinterTest is Test {
     ) internal returns (uint256 requestId) {
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
+        uint256 commitFee = minter.commitFeeWei();
         vm.prank(minterAddr);
-        minter.commitMint(commitment);
+        minter.commitMint{ value: commitFee }(commitment);
         vm.roll(block.number + 1);
-        (, , requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
+        (, , requestId, , , , , , , , ) = minter.mintCommitByMinter(minterAddr);
     }
 
     function _commitMintSameBlock(
@@ -190,8 +191,9 @@ contract CubixlesMinterTest is Test {
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
+        uint256 commitFee = minter.commitFeeWei();
         vm.prank(minterAddr);
-        minter.commitMint(commitment);
+        minter.commitMint{ value: commitFee }(commitment);
     }
 
     function _fulfillRandomness(uint256 requestId, uint256 randomness) internal {
@@ -944,6 +946,79 @@ contract CubixlesMinterTest is Test {
         vm.prank(makeAddr("minter"));
         vm.expectRevert(CubixlesMinter.MintCommitEmpty.selector);
         minter.commitMint(bytes32(0));
+    }
+
+    function testCommitFeeRequired() public {
+        uint256 fee = 0.001 ether;
+        vm.prank(owner);
+        minter.setCommitFee(fee);
+
+        address minterAddr = makeAddr("minter");
+        bytes32 commitment = minter.computeCommitment(
+            minterAddr,
+            DEFAULT_SALT,
+            keccak256("refs")
+        );
+
+        vm.prank(minterAddr);
+        vm.expectRevert(
+            abi.encodeWithSelector(CubixlesMinter.CommitFeeMismatch.selector, fee, 0)
+        );
+        minter.commitMint(commitment);
+
+        vm.deal(minterAddr, fee);
+        vm.prank(minterAddr);
+        minter.commitMint{ value: fee }(commitment);
+        assertEq(address(minter).balance, fee);
+    }
+
+    function testCommitFeeCreditedAtMint() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        uint256 price = minter.currentMintPrice();
+        uint256 fee = price / 2;
+        vm.prank(owner);
+        minter.setCommitFee(fee);
+        vm.deal(minterAddr, price);
+
+        _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
+        uint256 mintValue = price - fee;
+        uint256 splitterBefore = resaleSplitter.balance;
+        _mintWithExpected(minterAddr, DEFAULT_SALT, refs, mintValue);
+
+        assertEq(resaleSplitter.balance - splitterBefore, price);
+        assertEq(minterAddr.balance, 0);
+        assertEq(address(minter).balance, 0);
+    }
+
+    function testExpiredCommitForfeitsFee() public {
+        uint256 fee = 0.0005 ether;
+        vm.prank(owner);
+        minter.setCommitFee(fee);
+
+        address minterAddr = makeAddr("minter");
+        bytes32 commitment = minter.computeCommitment(
+            minterAddr,
+            DEFAULT_SALT,
+            keccak256("refs")
+        );
+        vm.deal(minterAddr, fee);
+        vm.prank(minterAddr);
+        minter.commitMint{ value: fee }(commitment);
+
+        uint256 expiryBlock =
+            block.number + minter.COMMIT_REVEAL_DELAY_BLOCKS() + minter.COMMIT_REVEAL_WINDOW_BLOCKS() + 1;
+        vm.roll(expiryBlock);
+
+        uint256 splitterBefore = resaleSplitter.balance;
+        minter.sweepExpiredCommit(minterAddr);
+        assertEq(resaleSplitter.balance - splitterBefore, fee);
+        (, uint256 blockNumber, , , , , , , , , ) = minter.mintCommitByMinter(minterAddr);
+        assertEq(blockNumber, 0);
     }
 
     function testCommitMintRevertsWhenActive() public {

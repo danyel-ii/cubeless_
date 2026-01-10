@@ -38,12 +38,14 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `MAINNET_DEPLOYER_KEY`
 - `BASE_DEPLOYER_KEY`
 - `SEPOLIA_DEPLOYER_KEY` (if rehearsing on Sepolia)
+- `ETHERSCAN_API_KEY` (mainnet + sepolia verification)
+- `BASESCAN_API_KEY` (Base verification)
 - `CUBIXLES_VRF_COORDINATOR`
 - `CUBIXLES_VRF_KEY_HASH`
 - `CUBIXLES_VRF_SUBSCRIPTION_ID`
 - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS`
 - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT`
-- Base VRF mirrors are stored with the `_BASE` suffix in GitHub/Vercel (e.g., `CUBIXLES_VRF_COORDINATOR_BASE`) to avoid clobbering mainnet values.
+- Keep the same variable names across environments; use environment-scoped secrets (GitHub Actions environments, Vercel env scopes) or `.env.base` / `.env.mainnet` locally to avoid clobbering values.
 
 ## Incident response
 - Remove compromised keys from providers.

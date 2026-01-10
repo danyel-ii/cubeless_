@@ -33,10 +33,11 @@ contract CubixlesMinterFuzzTest is Test {
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
+        uint256 commitFee = minter.commitFeeWei();
         vm.prank(minterAddr);
-        minter.commitMint(commitment);
+        minter.commitMint{ value: commitFee }(commitment);
         vm.roll(block.number + 1);
-        (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
+        (, , uint256 requestId, , , , , , , , ) = minter.mintCommitByMinter(minterAddr);
         uint256[] memory words = new uint256[](1);
         words[0] = DEFAULT_RANDOMNESS;
         vm.prank(address(vrfCoordinator));

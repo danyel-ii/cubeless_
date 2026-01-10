@@ -93,8 +93,9 @@ contract CubixlesMinterEdgeTest is Test {
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
+        uint256 commitFee = minter.commitFeeWei();
         vm.prank(minterAddr);
-        minter.commitMint(commitment);
+        minter.commitMint{ value: commitFee }(commitment);
         vm.roll(block.number + 1);
     }
 
@@ -112,7 +113,7 @@ contract CubixlesMinterEdgeTest is Test {
         uint256 randomness
     ) internal {
         _commitMint(minterAddr, salt, refs);
-        (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
+        (, , uint256 requestId, , , , , , , , ) = minter.mintCommitByMinter(minterAddr);
         _fulfillRandomness(requestId, randomness);
     }
 
@@ -167,6 +168,33 @@ contract CubixlesMinterEdgeTest is Test {
         );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
+    }
+
+    function testConstructorRevertsOnNonContractVrfCoordinator() public {
+        address badCoordinator = makeAddr("vrf-eoa");
+        vm.prank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CubixlesMinter.VrfCoordinatorNotContract.selector,
+                badCoordinator
+            )
+        );
+        new CubixlesMinter(
+            resaleSplitter,
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            badCoordinator,
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
     }
 
     function testMintRevertsWhenOwnerReceiveFails() public {
