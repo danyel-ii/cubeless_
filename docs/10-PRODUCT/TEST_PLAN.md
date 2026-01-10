@@ -1,10 +1,10 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Review Status
 
-- Last reviewed: 2026-01-08
+- Last reviewed: 2026-01-10
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -25,7 +25,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - includes palette traits + image + provenance
    - uses the expected palette index for the image filename
 4. **Economics**:
-   - mint requires `msg.value >= currentMintPrice()`
+   - mint requires `msg.value + commitFeePaid >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
    - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`
    - on Base (LESS disabled), `currentMintPrice()` is linear (`base + step * totalMinted`) and LESS metrics are `0`
@@ -66,12 +66,13 @@ This plan defines the tests needed to trust the system end-to-end:
 - mint reverts if commit expires (>256 blocks)
 - mint reverts on refsHash or salt mismatch
 - mint reverts if randomness is not yet fulfilled
+- mint reverts if metadata is not committed or metadata hashes mismatch
 - commitMint reverts on empty hash or active commit
 
 **D. Payment requirements**
-- mint reverts if `msg.value < currentMintPrice()`
-- mint succeeds if `msg.value == currentMintPrice()`
-- mint succeeds if `msg.value > currentMintPrice()` and refunds delta
+- mint reverts if `msg.value + commitFeePaid < currentMintPrice()`
+- mint succeeds if `msg.value + commitFeePaid == currentMintPrice()`
+- mint succeeds if `msg.value + commitFeePaid > currentMintPrice()` and refunds delta
 
 **E. RoyaltySplitter behavior**
 - when swap disabled → forwards 100% ETH to owner
@@ -175,7 +176,7 @@ For `/api/identity`:
 - mint action blocks and shows an error if the read provider reports a different chain than the active chain
 - floor snapshot computed for current selection (cached per contract)
 - mint payment autofill matches `currentMintPrice()`
-- mint flow shows two wallet prompts (commit then mint), and step 2 auto-triggers after commit confirmation
+- mint flow shows three wallet prompts (commit, metadata, mint) when no active commit exists
 - floor snapshot UI shows per-NFT and total floor values
 - floor snapshot defaults to `0` when unavailable
 - ΔLESS HUD shows delta when tokenId is known (mainnet only)
@@ -200,8 +201,8 @@ Because Warpcast hosting is hard to automate, we split E2E into:
 **Assertions**
 - connect -> inventory renders
 - select refs -> cube textures update
-- click mint -> app commits then mints with:
-  - commit tx sent first, mint tx after VRF fulfillment
+- click mint -> app commits then commits metadata then mints with:
+  - commit tx sent first, metadata commit after VRF fulfillment, mint tx after metadata confirmation
   - `refs` encoded correctly
   - `value` set to max payment
 - success state displayed
@@ -214,7 +215,7 @@ This is the “ship gate” checklist:
 3. Ensure network = mainnet
 4. Select 1..6 NFTs (owned on mainnet)
 5. Mint:
-   - wait for VRF fulfillment between commit + mint
+  - wait for VRF fulfillment between commit + metadata + mint
    - wallet shows tx with correct `value`
 6. Confirm onchain:
    - transaction success

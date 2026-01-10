@@ -1,6 +1,6 @@
 # cubixles_ — Static Analysis
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Tools
 - Slither (static analyzer)
@@ -46,28 +46,13 @@ python3 -m slither . --config-file slither.config.json
   downstream consumers (`FixedMintPriceUpdated`, `WethSwept`).
 
 ## Slither status
-Latest run: 2026-01-09 (`slither . --config-file slither.config.json`) — 7 findings (reviewed below); `naming-convention` excluded in config.
+Latest run: 2026-01-10 (`slither . --config-file slither.config.json`) — 0 findings; `naming-convention` excluded in config.
 
-### Reviewed findings (documented)
-1. **Dangerous strict equalities**
-   - `commit.blockNumber == 0` sentinel and palette swap sentinel in `CubixlesMinter`.
-   - Acceptable sentinels; documented in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
-2. **Contracts that lock ether**
-   - `MintBlocker` intentionally receives ETH and does not expose withdrawals (legacy disable-mint sink).
-3. **Reentrancy warnings on `commitMint`**
-   - VRF coordinator call occurs before state writes; the coordinator is trusted, but Slither flags it.
-   - Consider `nonReentrant` or reordering if we want to silence the warning.
-4. **Cyclomatic complexity**
-   - Constructor in `CubixlesMinter` exceeds Slither complexity heuristic; no behavior impact.
-
-### Suppressed findings (intentional)
-1. **Unused return values** — `RoyaltySplitter._sqrtPriceLimit`, `_poolInitialized`
-   - `POOL_MANAGER.getSlot0` exposes multiple slots, but only `sqrtPriceX96` feeds the swap logic. The remaining slots are intentionally ignored and suppressed so Slither focuses on actionable findings.
-2. **Missing zero-address validation** — `CubixlesMinter.LESS_TOKEN`
-   - Passing `address(0)` enables ETH-only pricing (linear or fixed) without LESS snapshots; a targeted `slither-disable` keeps the check from firing while preserving Base linear mode.
+### Suppressions (intentional)
+- `MintBlocker` receive/fallback intentionally locks ETH (inline suppression).
+- `CubixlesMinter.LESS_TOKEN` zero-address check is suppressed to allow ETH-only deployments.
 
 ### Dependency findings (noise)
-Slither still reports issues inside OpenZeppelin and Uniswap v4 dependencies
-(incorrect exponentiation/shift, divide-before-multiply, assembly usage, pragma-version
-mixing, dead code). These are treated as dependency noise and
+Slither may report issues inside OpenZeppelin and Uniswap v4 dependencies
+(assembly usage, pragma-version mixing, dead code). These are treated as dependency noise and
 not modified locally.

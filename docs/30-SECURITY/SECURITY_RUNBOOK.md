@@ -1,6 +1,6 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Local commands
 
@@ -126,4 +126,4 @@ slither . --config-file slither.config.json
 - Track swap failures with `npm run monitor:swaps` (requires `MAINNET_RPC_URL` and `ROYALTY_SPLITTER_ADDRESS`).
 
 ## Formal verification (specs)
-- Draft specs live in `contracts/specs/` for royalty receiver and swap invariants.
+- Specs live in `contracts/specs/` for royalty receiver and swap invariants.

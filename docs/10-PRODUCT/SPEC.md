@@ -1,10 +1,10 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet + Base)
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Review Status
 
-- Last reviewed: 2026-01-09
+- Last reviewed: 2026-01-10
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -136,7 +136,8 @@ v0 mapping order (fixed):
 
 `tokenURI` is pinned per mint (for example: `ipfs://<metadataCid>`). Metadata is generated at mint
 time and includes palette traits plus per-mint provenance. The contract stores
-`paletteImagesCID` + `paletteManifestHash` to commit to the palette image set + manifest.
+`paletteImagesCID` + `paletteManifestHash` to commit to the palette image set + manifest, plus
+per-token `metadataHash` + `imagePathHash` commitments.
 
 Notes:
 - `external_url` is optional; it can point to `https://<domain>/m/<tokenId>` if precomputed offchain.
@@ -163,7 +164,8 @@ type PaletteMetadata = {
   - base price `0.0022 ETH`
   - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
-- Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
+- Mint accepts `msg.value + commitFeePaid >= currentMintPrice()` and refunds overpayment.
+- Commit fee is paid in `commitMint` and credited at mint; it is forfeited if the commit expires.
 - Mint supply is capped at 10,000 total mints.
 - Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 25% ETH to owner, swaps 25% to $LESS for the owner, swaps 50% to $PNKSTR for the owner).
@@ -183,13 +185,17 @@ Base ETH-only mode:
 
 ## Commit-Reveal Mint Flow
 
-- Minting uses a hash-only commit-reveal:
+- Minting uses a hash-only commit-reveal with metadata hashing:
   1. `commitMint(commitment)` stores a commitment hash and requests VRF randomness.
-  2. `mint(salt, refs)` reveals refs + salt and completes the mint once randomness is ready.
+  2. After randomness is ready, `commitMetadata(metadataHash, imagePathHash)` locks the metadata hashes.
+  3. `mint(salt, refs, expectedPaletteIndex, tokenURI, metadataHash, imagePathHash)` reveals refs + salt and completes the mint.
 - Commitment hash = `keccak256("cubixles_:commit:v1", minter, salt, refsHash)`.
 - The reveal must occur after the commit is mined (next block or later) and within 256 blocks.
 - Random palette index is derived from the fulfilled VRF word (random-without-replacement).
-- The UI prompts two wallet confirmations and waits for VRF fulfillment before minting.
+- The UI prompts three wallet confirmations (commit, metadata, mint) when no active commit exists.
+- If a valid commit is already stored, the UI skips the commit tx and only prompts for metadata + mint.
+- `metadataHash` is the keccak256 of the canonical metadata JSON.
+- `imagePathHash` is the keccak256 of the palette image path (relative to `paletteImagesCID`).
 
 ## $LESS Delta Metric (UI/Leaderboard)
 

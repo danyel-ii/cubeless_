@@ -1,23 +1,36 @@
 # cubixles_ Deployment (CubixlesMinter, Mainnet + Base + Sepolia)
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Review Status
 
-- Last reviewed: 2026-01-09
+- Last reviewed: 2026-01-10
 - Review status: Updated
 - Owner: danyel-ii
 
 ## Mint Signature
 
 ```solidity
-mint(bytes32 salt, NftRef[] calldata refs) external payable returns (uint256 tokenId)
+mint(
+    bytes32 salt,
+    NftRef[] calldata refs,
+    uint256 expectedPaletteIndex,
+    string calldata tokenURI,
+    bytes32 metadataHash,
+    bytes32 imagePathHash
+) external payable returns (uint256 tokenId)
 ```
 
 Commit signature (required before mint):
 
 ```solidity
-commitMint(bytes32 commitment) external
+commitMint(bytes32 commitment) external payable
+```
+
+Metadata commit (required before mint):
+
+```solidity
+commitMetadata(bytes32 metadataHash, bytes32 imagePathHash) external
 ```
 
 `NftRef` shape:
@@ -33,11 +46,13 @@ struct NftRef {
 
 - `mint` is payable.
 - `commitMint` must be called first; reveal must occur after the commit is mined (next block or later) and within 256 blocks, and after VRF randomness is fulfilled.
+- `commitMint` requires `msg.value == commitFeeWei` (can be zero). The commit fee is credited at mint and forfeited on expiry.
+- `commitMetadata` must be called after randomness is ready to lock `metadataHash` and `imagePathHash`.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0022 ETH` with a 1.0–4.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
-- Mint pays the RoyaltySplitter and refunds any excess.
+- Mint pays the RoyaltySplitter and refunds any excess from `msg.value + commitFeePaid`.
 - If the payout transfer fails, the mint reverts (no partial transfers).
-- `tokenURI` is stored per mint (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the palette set.
+- `tokenURI` is stored per mint (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token `metadataHash` + `imagePathHash` commitments.
 
 ## Gating Rules
 
@@ -58,6 +73,8 @@ struct NftRef {
 
 - `setRoyaltyReceiver(resaleSplitter)` (resets bps to 5%)
 - `setResaleRoyalty(bps, receiver)` (bps capped at 10%)
+- `setCommitFee(fee)` updates the commit fee required for VRF requests
+- `setFixedMintPrice(price)` updates fixed pricing when LESS + linear pricing are disabled
 
 ## Deployment Inputs
 
@@ -85,7 +102,7 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)
 - `CUBIXLES_VRF_KEY_HASH` (required; gas lane key hash)
-- `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF subscription id)
+- `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF subscription id, must fit `uint64`)
 - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS` (optional, defaults to 3)
 - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT` (optional, defaults to 250000)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)

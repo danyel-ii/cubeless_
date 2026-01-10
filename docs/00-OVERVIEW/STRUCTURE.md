@@ -1,6 +1,6 @@
 # cubixles_ Code Structure
 
-Last updated: 2026-01-08
+Last updated: 2026-01-10
 
 ## Review Status
 
@@ -79,11 +79,11 @@ are split into smaller modules.
 - `app/_client/src/features/mint/mint-ui.js`
   - Mint flow, floor snapshot UI (Alchemy-backed; mainnet + Base), and diagnostics.
 - `app/_client/src/features/mint/mint-metadata.js`
-  - Offchain metadata + provenance shaping (optional; not part of onchain tokenURI).
+  - Offchain metadata + provenance shaping used for onchain tokenURI.
 - `app/_client/src/features/mint/refs.js`
   - Canonical ref sorting + refsHash helper for commit-reveal.
 - `app/_client/src/features/mint/token-uri-provider.js`
-  - Token URI pinning helper (legacy/optional in VRF flow).
+  - Token URI pinning helper for mint-time metadata.
 - `app/_client/src/data/chain/alchemy-client.ts`
   - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Base; optional Sepolia via env).
 - `app/_client/src/data/chain/nfts-api.js`

@@ -1,9 +1,9 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-09
-Date: 2026-01-09
-Run timestamp (local): 2026-01-09T16:39:53Z (app + static analysis audit)
-Previous full scan: 2026-01-08T12:20:11Z
+Last updated: 2026-01-10
+Date: 2026-01-10
+Run timestamp (local): 2026-01-10T12:05:36Z (app + contracts verification)
+Previous full scan: 2026-01-09T16:39:53Z
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -32,29 +32,29 @@ Previous full scan: 2026-01-08T12:20:11Z
 
 ## Test results
 ### Security audit (local)
-Run timestamp (local): 2026-01-09T16:39:53Z
-- `npm run check:no-client-secrets` — PASS
-- `npm run check:no-repo-secrets` — PASS
-- `npm audit --audit-level=high` — PASS (0 vulnerabilities)
-- `cd contracts && npx solhint "src/**/*.sol"` — WARN (33 warnings; Natspec + style)
-- `cd contracts && slither . --config-file slither.config.json` — FINDINGS (7)
+Run timestamp (local): 2026-01-10T12:05:36Z
+- `npm test` — PASS (31 tests, Vitest).
+- `npm run test:ui` — PASS (3 tests, Playwright).
+- `cd contracts && forge test --fuzz-timeout 120` — PASS (118 tests; fuzz + invariants included).
+- `cd contracts && npx solhint "src/**/*.sol"` — WARN (39 warnings; Natspec + naming/style).
+- `cd contracts && slither . --config-file slither.config.json` — PASS (0 findings).
 Notes:
-- Contract test suites (`forge test`, `coverage:contracts`, fork tests) were not run in this audit.
+- Coverage, fork tests, secret scans, and `npm audit` were not re-run in this pass.
 
 ### Unit + edge + fuzz + invariants
 Command:
 ```sh
 cd contracts
-forge test -vvv
+forge test --fuzz-timeout 120
 ```
-Result: PASS (96 tests; fork tests logged as skipped because RPC env vars were not set).
+Result: PASS (118 tests; includes fuzz + invariants).
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (92.79% line coverage; minimum is 90%).
+Result: PASS (90.95% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
@@ -76,10 +76,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-08 with `MAINNET_RPC_URL` set)
-- `ownerOf` reverted (non-standard or restricted), logged and allowed.
-- `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
-- Forge traces emitted Sourcify decode warnings (non-blocking).
+Result: NOT RUN in this pass; required before release.
 
 ### Fork tests (Base)
 Command:
@@ -91,22 +88,21 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (1 test; latest local run 2026-01-08 with `BASE_RPC_URL` set)
-- Chain id and fork block assertions passed (connectivity confirmed). Optional `BASE_FORK_TEST_ADDRESS` check runs only when set.
+Result: NOT RUN in this pass; required before release.
 
 ### Frontend tests
 Command:
 ```sh
 npm test
 ```
-Result: PASS (22 tests, Vitest unit/component/API; v4.0.16).
+Result: PASS (31 tests, Vitest unit/component/API; v4.0.16).
 
 ### Frontend smoke (Playwright)
 Command:
 ```sh
 npm run test:ui
 ```
-Result: PASS (3 tests, ~9s)
+Result: PASS (3 tests, ~7s)
 
 ### Client secret scan
 Command:
@@ -142,14 +138,10 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 33 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
+  - Result: 0 errors, 39 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
 - Local slither run:
   - Command: `cd contracts && slither . --config-file slither.config.json`
-  - Result: 7 findings:
-    - Dangerous strict equalities (`commit.blockNumber == 0`, palette swap sentinel).
-    - Ether-locking warning for `MintBlocker` (intentional sink).
-    - Reentrancy warnings in `commitMint` due to VRF coordinator call.
-    - High cyclomatic complexity in `CubixlesMinter` constructor.
+  - Result: 0 findings.
   - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
 
 ## Formal verification

@@ -1,6 +1,6 @@
 # cubixles_ — Threat Model
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -52,6 +52,6 @@ Last updated: 2026-01-09
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.
 - **External call containment**: `nonReentrant` on mint and splitter receive.
 - **State-before-callback**: mint state is finalized before `_safeMint` callback.
-- **Rounding rule**: no splits in mint; refund exact `msg.value - MINT_PRICE`.
+- **Rounding rule**: no splits in mint; refund exact `msg.value + commitFeePaid - MINT_PRICE`.
 - **ERC-721 behavior**: if `ownerOf` reverts or returns a different owner, mint reverts.
 - **VRF hardening**: randomness is sourced from Chainlink VRF (no blockhash dependence).

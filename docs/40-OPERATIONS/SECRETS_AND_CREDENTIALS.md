@@ -1,6 +1,6 @@
 # Secrets and Credentials Policy
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
@@ -42,7 +42,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `BASESCAN_API_KEY` (Base verification)
 - `CUBIXLES_VRF_COORDINATOR`
 - `CUBIXLES_VRF_KEY_HASH`
-- `CUBIXLES_VRF_SUBSCRIPTION_ID`
+- `CUBIXLES_VRF_SUBSCRIPTION_ID` (uint64)
 - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS`
 - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT`
 - Keep the same variable names across environments; use environment-scoped secrets (GitHub Actions environments, Vercel env scopes) or `.env.base` / `.env.mainnet` locally to avoid clobbering values.

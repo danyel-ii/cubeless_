@@ -1,6 +1,6 @@
 # cubixles_ — Known Limitations
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 1. **Strict receiver failure policy**
    - Mint reverts if ETH transfers fail.
@@ -28,7 +28,7 @@ Last updated: 2026-01-09
 
 8. **VRF dependency + commit window**
    - Minting depends on Chainlink VRF fulfillment and a funded subscription.
-   - Commits expire after 256 blocks; users must re-commit if VRF fulfillment is delayed.
+   - Commits expire after `1 + 256` blocks (delay + window); users must re-commit if VRF fulfillment is delayed.
 
 9. **Base pricing immutability**
    - Base mint pricing is configured at deploy time (base + step) and cannot be changed without redeploying.
@@ -36,7 +36,6 @@ Last updated: 2026-01-09
 10. **RPC/provider availability**
    - Fork tests, floor snapshots, and some app views depend on upstream RPCs; outages reduce functionality.
 
-11. **Static analysis findings (accepted)**
-   - Solhint reports Natspec + immutable naming warnings that are tracked but not enforced.
-   - Slither excludes `naming-convention` via `contracts/slither.config.json`; remaining project suppressions are inline and dependency noise is ignored.
-   - Slither also flags: strict equality sentinels (commit/palette swap), `MintBlocker` locking ETH (intentional sink), and `commitMint` reentrancy warnings due to the trusted VRF coordinator call.
+11. **Static analysis posture**
+   - Solhint reports Natspec + naming/style warnings; no errors are expected.
+   - Slither excludes `naming-convention` via `contracts/slither.config.json`; inline suppressions are limited to intentional sinks/compatibility and dependency noise is ignored.

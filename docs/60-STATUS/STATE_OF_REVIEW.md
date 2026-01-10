@@ -1,6 +1,6 @@
-# cubixles_ v0 — State of Review (2026-01-09)
+# cubixles_ v0 — State of Review (2026-01-10)
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Summary
 
@@ -10,7 +10,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys). Optional metadata pinning is protected by signed nonces.
 - **Provenance**: NFT selection -> provenance bundle pipeline is in place for offchain diagnostics and optional metadata generation.
-- **Mint UI**: builds a commitment hash, calls `commitMint`, waits for VRF fulfillment, then calls `mint(salt, refs)`; diagnostics include token viewer links.
+- **Mint UI**: builds a commitment hash, calls `commitMint`, waits for VRF fulfillment, commits metadata hashes, then calls `mint(salt, refs, expectedPaletteIndex, tokenURI, metadataHash, imagePathHash)`; diagnostics include token viewer links.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → palette metadata → cube render; share modal is available on token view pages. Provenance display requires metadata that includes refs.
 - **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply on mainnet (base `0.0022 ETH`, rounded up to `0.0001 ETH`), while Base uses immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint). tokenId is deterministic via `previewTokenId`, commit-reveal uses VRF, and royalties are routed to RoyaltySplitter which swaps to LESS + PNKSTR and forwards ETH to the owner. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`).

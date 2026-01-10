@@ -1,18 +1,19 @@
 # Decision Log
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## Review Status
 
-- Last reviewed: 2026-01-08
+- Last reviewed: 2026-01-10
 - Review status: Updated
 - Owner: danyel-ii
 
 ## 2026-01-09 — VRF commit-reveal + per-mint tokenURI
 
 - Commit phase stores only a commitment hash and requests VRF randomness.
+- Metadata hashes (`metadataHash`, `imagePathHash`) are committed after randomness is ready.
 - `tokenURI` is pinned per mint (stored onchain) and includes curated provenance fields.
-- The contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the palette set.
+- The contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token hash commitments.
 - Mainnet base price updated to `0.0022 ETH` (scaled 1.0×–4.0).
 
 ## 2026-01-08 — Multi-chain provenance + metadata shaping
