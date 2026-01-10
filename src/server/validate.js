@@ -7,9 +7,15 @@ export const pinRequestSchema = z.object({
   payload: z.record(z.unknown()),
 });
 
+const CHAIN_ID_SCHEMA = z.union([
+  z.literal(1),
+  z.literal(8453),
+  z.literal(11155111),
+]);
+
 export const nftRequestSchema = z.object({
   mode: z.enum(["alchemy", "rpc"]).optional(),
-  chainId: z.number().int().positive(),
+  chainId: CHAIN_ID_SCHEMA,
   path: z.string().optional(),
   query: z.record(z.union([z.string(), z.number(), z.array(z.union([z.string(), z.number()]))])).optional(),
   calls: z

@@ -124,15 +124,22 @@ export async function verifyNonce(nonce) {
   return { ok: true, expiresAt };
 }
 
-function getRpcUrl() {
-  const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
+export function resolveRpcUrlForChain(chainId) {
   if (chainId === 11155111) {
     return process.env.SEPOLIA_RPC_URL || null;
+  }
+  if (chainId === 8453) {
+    return process.env.BASE_RPC_URL || null;
   }
   if (chainId === 1) {
     return process.env.MAINNET_RPC_URL || null;
   }
-  return process.env.MAINNET_RPC_URL || null;
+  return null;
+}
+
+function getRpcUrl() {
+  const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
+  return resolveRpcUrlForChain(chainId);
 }
 
 async function callSignatureMethod(contract, method, args) {

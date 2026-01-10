@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { CubixlesMinter } from "../../src/cubixles/CubixlesMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
 import { MockERC20 } from "../mocks/MockERC20.sol";
+import { MockVRFCoordinatorV2 } from "../mocks/MockVRFCoordinatorV2.sol";
 import { Refs } from "../helpers/Refs.sol";
 
 contract CubixlesMinterFuzzTest is Test {
@@ -13,7 +14,7 @@ contract CubixlesMinterFuzzTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    address private vrfCoordinator = makeAddr("vrfCoordinator");
+    MockVRFCoordinatorV2 private vrfCoordinator;
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
     uint64 private constant VRF_SUB_ID = 1;
     uint16 private constant VRF_CONFIRMATIONS = 3;
@@ -38,7 +39,7 @@ contract CubixlesMinterFuzzTest is Test {
         (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
         uint256[] memory words = new uint256[](1);
         words[0] = DEFAULT_RANDOMNESS;
-        vm.prank(vrfCoordinator);
+        vm.prank(address(vrfCoordinator));
         minter.rawFulfillRandomWords(requestId, words);
     }
 
@@ -50,6 +51,7 @@ contract CubixlesMinterFuzzTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
+        vrfCoordinator = new MockVRFCoordinatorV2();
         minter = new CubixlesMinter(
             resaleSplitter,
             address(lessToken),
@@ -60,7 +62,7 @@ contract CubixlesMinterFuzzTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -169,6 +171,7 @@ contract CubixlesMinterFuzzTest is Test {
         uint256 expected = minter.previewPaletteIndex(minterAddr);
         string memory tokenUri = _buildTokenURI(expected);
         _commitMetadata(minterAddr);
+        vm.prank(minterAddr);
         minter.mint{ value: price }(
             keccak256("salt"),
             refs,

@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { CubixlesMinter } from "../../src/cubixles/CubixlesMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
 import { MockERC20 } from "../mocks/MockERC20.sol";
+import { MockVRFCoordinatorV2 } from "../mocks/MockVRFCoordinatorV2.sol";
 import { Refs } from "../helpers/Refs.sol";
 
 contract MintHandler is Test {
@@ -87,7 +88,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
 
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    address private vrfCoordinator = makeAddr("vrfCoordinator");
+    MockVRFCoordinatorV2 private vrfCoordinator;
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
     uint64 private constant VRF_SUB_ID = 1;
     uint16 private constant VRF_CONFIRMATIONS = 3;
@@ -98,6 +99,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
+        vrfCoordinator = new MockVRFCoordinatorV2();
         minter = new CubixlesMinter(
             resaleSplitter,
             address(lessToken),
@@ -108,7 +110,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -117,7 +119,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
         uint256 price = minter.currentMintPrice();
-        handler = new MintHandler(minter, nft, lessToken, price, vrfCoordinator);
+        handler = new MintHandler(minter, nft, lessToken, price, address(vrfCoordinator));
         targetContract(address(handler));
     }
 

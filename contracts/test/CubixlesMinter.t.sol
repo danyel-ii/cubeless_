@@ -8,6 +8,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import { CubixlesMinter } from "../src/cubixles/CubixlesMinter.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
+import { MockVRFCoordinatorV2 } from "./mocks/MockVRFCoordinatorV2.sol";
 import { Refs } from "./helpers/Refs.sol";
 
 contract MockERC721 is ERC721 {
@@ -45,7 +46,7 @@ contract CubixlesMinterHarness is CubixlesMinter {
             false,
             paletteImagesCID,
             paletteManifestHash,
-            vrfCoordinator,
+            address(vrfCoordinator),
             vrfKeyHash,
             vrfSubscriptionId,
             vrfRequestConfirmations,
@@ -69,7 +70,7 @@ contract CubixlesMinterTest is Test {
 
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    address private vrfCoordinator = makeAddr("vrfCoordinator");
+    MockVRFCoordinatorV2 private vrfCoordinator;
     uint256 private constant ONE_BILLION = 1_000_000_000e18;
     uint256 private constant BASE_PRICE = 2_200_000_000_000_000;
     uint256 private constant PRICE_STEP = 100_000_000_000_000;
@@ -88,6 +89,7 @@ contract CubixlesMinterTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
+        vrfCoordinator = new MockVRFCoordinatorV2();
         minter = new CubixlesMinter(
             resaleSplitter,
             address(lessToken),
@@ -98,7 +100,7 @@ contract CubixlesMinterTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -195,7 +197,7 @@ contract CubixlesMinterTest is Test {
     function _fulfillRandomness(uint256 requestId, uint256 randomness) internal {
         uint256[] memory words = new uint256[](1);
         words[0] = randomness;
-        vm.prank(vrfCoordinator);
+        vm.prank(address(vrfCoordinator));
         minter.rawFulfillRandomWords(requestId, words);
     }
 
@@ -567,7 +569,7 @@ contract CubixlesMinterTest is Test {
             500,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -588,7 +590,7 @@ contract CubixlesMinterTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -608,7 +610,7 @@ contract CubixlesMinterTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -628,7 +630,7 @@ contract CubixlesMinterTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -648,7 +650,7 @@ contract CubixlesMinterTest is Test {
             false,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -670,7 +672,7 @@ contract CubixlesMinterTest is Test {
             true,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -690,7 +692,7 @@ contract CubixlesMinterTest is Test {
             true,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,
@@ -711,7 +713,7 @@ contract CubixlesMinterTest is Test {
             true,
             PALETTE_IMAGES_CID,
             PALETTE_MANIFEST_HASH,
-            vrfCoordinator,
+            address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
             VRF_CONFIRMATIONS,

@@ -11,6 +11,9 @@ import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
 import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 
 contract DeployCubixles is Script {
+    uint256 private constant ENV_UINT_SENTINEL = type(uint256).max;
+    address private constant ENV_ADDRESS_SENTINEL = address(type(uint160).max);
+
     function run() external {
         DeployConfig memory cfg = _loadConfig();
         if (cfg.chainId == 8453) {
@@ -19,7 +22,10 @@ contract DeployCubixles is Script {
             require(cfg.fixedMintPriceWei == 0, "Base forbids fixed mint pricing");
         }
         if (cfg.poolManager != address(0)) {
-            require(cfg.tickSpacing != 0, "CUBIXLES_POOL_TICK_SPACING required");
+            require(
+                cfg.tickSpacing != 0,
+                "CUBIXLES_LESS_POOL_TICK_SPACING required"
+            );
             require(cfg.pnkTickSpacing != 0, "CUBIXLES_PNKSTR_POOL_TICK_SPACING required");
         }
         PoolKey memory lessPoolKey = _buildPoolKey(
@@ -118,9 +124,23 @@ contract DeployCubixles is Script {
         cfg.lessToken = vm.envOr("CUBIXLES_LESS_TOKEN", lessTokenDefault);
         cfg.pnkstrToken = vm.envOr("CUBIXLES_PNKSTR_TOKEN", address(0));
         cfg.poolManager = vm.envOr("CUBIXLES_POOL_MANAGER", address(0));
-        cfg.poolFee = uint24(vm.envOr("CUBIXLES_POOL_FEE", uint256(0)));
-        cfg.tickSpacing = int24(int256(vm.envOr("CUBIXLES_POOL_TICK_SPACING", uint256(0))));
-        cfg.hooks = vm.envOr("CUBIXLES_POOL_HOOKS", address(0));
+        cfg.poolFee = uint24(
+            _envOrUint("CUBIXLES_LESS_POOL_FEE", "CUBIXLES_POOL_FEE", 0)
+        );
+        cfg.tickSpacing = int24(
+            int256(
+                _envOrUint(
+                    "CUBIXLES_LESS_POOL_TICK_SPACING",
+                    "CUBIXLES_POOL_TICK_SPACING",
+                    0
+                )
+            )
+        );
+        cfg.hooks = _envOrAddress(
+            "CUBIXLES_LESS_POOL_HOOKS",
+            "CUBIXLES_POOL_HOOKS",
+            address(0)
+        );
         cfg.pnkPoolFee = uint24(vm.envOr("CUBIXLES_PNKSTR_POOL_FEE", uint256(0)));
         cfg.pnkTickSpacing = int24(int256(vm.envOr("CUBIXLES_PNKSTR_POOL_TICK_SPACING", uint256(0))));
         cfg.pnkHooks = vm.envOr("CUBIXLES_PNKSTR_POOL_HOOKS", address(0));
@@ -150,6 +170,28 @@ contract DeployCubixles is Script {
         cfg.vrfCallbackGasLimit = uint32(
             vm.envOr("CUBIXLES_VRF_CALLBACK_GAS_LIMIT", uint256(250_000))
         );
+    }
+
+    function _envOrUint(
+        string memory primary,
+        string memory fallbackKey,
+        uint256 defaultValue
+    ) private view returns (uint256 value) {
+        value = vm.envOr(primary, ENV_UINT_SENTINEL);
+        if (value == ENV_UINT_SENTINEL) {
+            value = vm.envOr(fallbackKey, defaultValue);
+        }
+    }
+
+    function _envOrAddress(
+        string memory primary,
+        string memory fallbackKey,
+        address defaultValue
+    ) private view returns (address value) {
+        value = vm.envOr(primary, ENV_ADDRESS_SENTINEL);
+        if (value == ENV_ADDRESS_SENTINEL) {
+            value = vm.envOr(fallbackKey, defaultValue);
+        }
     }
 
     function _buildPoolKey(

@@ -123,9 +123,10 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
     - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
     - `CUBIXLES_POOL_MANAGER` (optional; required for swaps)
-    - `CUBIXLES_POOL_FEE` (optional; LESS pool fee)
-    - `CUBIXLES_POOL_TICK_SPACING` (required if PoolManager is set)
-    - `CUBIXLES_POOL_HOOKS` (optional; defaults to `0x0000000000000000000000000000000000000000`)
+    - `CUBIXLES_LESS_POOL_FEE` (optional; LESS pool fee)
+    - `CUBIXLES_LESS_POOL_TICK_SPACING` (required if PoolManager is set)
+    - `CUBIXLES_LESS_POOL_HOOKS` (optional; defaults to `0x0000000000000000000000000000000000000000`)
+    - Legacy names (`CUBIXLES_POOL_FEE`, `CUBIXLES_POOL_TICK_SPACING`, `CUBIXLES_POOL_HOOKS`) are still accepted for backward compatibility.
     - `CUBIXLES_PNKSTR_TOKEN` (optional; required for swaps)
     - `CUBIXLES_PNKSTR_POOL_FEE` (optional; PNKSTR pool fee)
     - `CUBIXLES_PNKSTR_POOL_TICK_SPACING` (required if PoolManager is set)

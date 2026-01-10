@@ -82,4 +82,19 @@ describe("/api/nfts", () => {
     );
     expect(res.status).toBe(429);
   });
+
+  it("rejects unsupported chains", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/nfts", {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "alchemy",
+          chainId: 10,
+          path: "getNFTsForOwner",
+          query: { owner: "0x000000000000000000000000000000000000dEaD" },
+        }),
+      })
+    );
+    expect(res.status).toBe(400);
+  });
 });

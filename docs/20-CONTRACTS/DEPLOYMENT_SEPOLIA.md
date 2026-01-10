@@ -73,9 +73,9 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
 - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
-- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
-- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_LESS_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_LESS_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_LESS_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_PNKSTR_TOKEN` (optional; required for swaps)
 - `CUBIXLES_PNKSTR_POOL_FEE` (optional, defaults to 0)
 - `CUBIXLES_PNKSTR_POOL_TICK_SPACING` (required if pool manager is set)
@@ -90,7 +90,7 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
 
-Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0). Set `CUBIXLES_POOL_MANAGER=0x0`, `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to fully disable swaps on Base.
+Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0). Set `CUBIXLES_POOL_MANAGER=0x0`, `CUBIXLES_LESS_POOL_FEE=0`, `CUBIXLES_LESS_POOL_TICK_SPACING=0`, `CUBIXLES_LESS_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to fully disable swaps on Base.
 
 ## Timelock deployment
 

@@ -57,9 +57,9 @@ npm run check:no-repo-secrets
 - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
 - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
-- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
-- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_LESS_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_LESS_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_LESS_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_PNKSTR_POOL_FEE` (optional, defaults to 0)
 - `CUBIXLES_PNKSTR_POOL_TICK_SPACING` (required if pool manager is set)
 - `CUBIXLES_PNKSTR_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
@@ -177,7 +177,7 @@ npm run deploy:mainnet
 - Set `CUBIXLES_BASE_MINT_PRICE_WEI` and `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (defaults: 0.0012 ETH and 0.000012 ETH; immutable once deployed).
 - Leave `CUBIXLES_FIXED_MINT_PRICE_WEI=0` (unused on Base).
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
-- Set `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
+- Set `CUBIXLES_LESS_POOL_FEE=0`, `CUBIXLES_LESS_POOL_TICK_SPACING=0`, `CUBIXLES_LESS_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
 - Set `CUBIXLES_PNKSTR_POOL_FEE=0`, `CUBIXLES_PNKSTR_POOL_TICK_SPACING=0`, and `CUBIXLES_PNKSTR_POOL_HOOKS=0x0` to zero out the PNKSTR pool config.
 - Configure Base VRF coordinator + subscription id in env.
 - Deploy:
