@@ -10,7 +10,8 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 import { VRFConsumerBaseV2 } from "../chainlink/VRFConsumerBaseV2.sol";
-import { VRFCoordinatorV2Interface } from "../chainlink/VRFCoordinatorV2Interface.sol";
+import { VRFCoordinatorV2_5Interface } from "../chainlink/VRFCoordinatorV2_5Interface.sol";
+import { VRFV2PlusClient } from "../chainlink/VRFV2PlusClient.sol";
 
 /// @title CubixlesMinter
 /// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
@@ -175,11 +176,11 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @notice Hash or Merkle root for palette manifest.
     bytes32 public immutable paletteManifestHash;
     /// @notice VRF coordinator contract.
-    VRFCoordinatorV2Interface public immutable vrfCoordinator;
+    VRFCoordinatorV2_5Interface public immutable vrfCoordinator;
     /// @notice VRF key hash for randomness requests.
     bytes32 public immutable vrfKeyHash;
     /// @notice VRF subscription id.
-    uint64 public immutable vrfSubscriptionId;
+    uint256 public immutable vrfSubscriptionId;
     /// @notice VRF request confirmations.
     uint16 public immutable vrfRequestConfirmations;
     /// @notice VRF callback gas limit.
@@ -295,7 +296,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 paletteManifestHash_,
         address vrfCoordinator_,
         bytes32 vrfKeyHash_,
-        uint64 vrfSubscriptionId_,
+        uint256 vrfSubscriptionId_,
         uint16 vrfRequestConfirmations_,
         uint32 vrfCallbackGasLimit_
     )
@@ -323,7 +324,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         baseMintPriceStepWei = baseMintPriceStepWei_;
         paletteImagesCID = paletteImagesCID_;
         paletteManifestHash = paletteManifestHash_;
-        vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator_);
+        vrfCoordinator = VRFCoordinatorV2_5Interface(vrfCoordinator_);
         vrfKeyHash = vrfKeyHash_;
         vrfSubscriptionId = vrfSubscriptionId_;
         vrfRequestConfirmations = vrfRequestConfirmations_;
@@ -394,13 +395,17 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
         }
-        uint256 requestId = vrfCoordinator.requestRandomWords(
-            vrfKeyHash,
-            vrfSubscriptionId,
-            vrfRequestConfirmations,
-            vrfCallbackGasLimit,
-            VRF_NUM_WORDS
-        );
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: vrfKeyHash,
+            subId: vrfSubscriptionId,
+            requestConfirmations: vrfRequestConfirmations,
+            callbackGasLimit: vrfCallbackGasLimit,
+            numWords: VRF_NUM_WORDS,
+            extraArgs: VRFV2PlusClient._argsToBytes(
+                VRFV2PlusClient.ExtraArgsV1({ nativePayment: false })
+            )
+        });
+        uint256 requestId = vrfCoordinator.requestRandomWords(request);
         mintCommitByMinter[msg.sender] = MintCommit({
             commitment: commitment,
             blockNumber: block.number,
@@ -719,7 +724,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 paletteManifestHash_,
         address vrfCoordinator_,
         bytes32 vrfKeyHash_,
-        uint64 vrfSubscriptionId_,
+        uint256 vrfSubscriptionId_,
         uint16 vrfRequestConfirmations_,
         uint32 vrfCallbackGasLimit_
     ) private view {

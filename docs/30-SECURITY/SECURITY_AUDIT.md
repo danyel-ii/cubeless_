@@ -2,7 +2,7 @@
 
 Last updated: 2026-01-10
 Date: 2026-01-10
-Run timestamp (local): 2026-01-10T12:05:36Z (app + contracts verification)
+Run timestamp (local): 2026-01-10T13:31:31Z (app + contracts verification)
 Previous full scan: 2026-01-09T16:39:53Z
 
 ## Scope
@@ -32,11 +32,11 @@ Previous full scan: 2026-01-09T16:39:53Z
 
 ## Test results
 ### Security audit (local)
-Run timestamp (local): 2026-01-10T12:05:36Z
+Run timestamp (local): 2026-01-10T13:31:31Z
 - `npm test` — PASS (31 tests, Vitest).
 - `npm run test:ui` — PASS (3 tests, Playwright).
 - `cd contracts && forge test --fuzz-timeout 120` — PASS (118 tests; fuzz + invariants included).
-- `cd contracts && npx solhint "src/**/*.sol"` — WARN (39 warnings; Natspec + naming/style).
+- `cd contracts && npx solhint "src/**/*.sol"` — WARN (43 warnings; Natspec + naming/style).
 - `cd contracts && slither . --config-file slither.config.json` — PASS (0 findings).
 Notes:
 - Coverage, fork tests, secret scans, and `npm audit` were not re-run in this pass.
@@ -138,7 +138,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 39 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
+  - Result: 0 errors, 43 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
 - Local slither run:
   - Command: `cd contracts && slither . --config-file slither.config.json`
   - Result: 0 findings.

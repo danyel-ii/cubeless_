@@ -76,7 +76,7 @@ contract CubixlesMinterEdgeTest is Test {
     MockVRFCoordinatorV2 private vrfCoordinator;
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
-    uint64 private constant VRF_SUB_ID = 1;
+    uint256 private constant VRF_SUB_ID = 1;
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     uint256 private constant DEFAULT_RANDOMNESS = 123_456;

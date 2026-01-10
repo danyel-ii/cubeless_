@@ -114,7 +114,7 @@ contract DeployCubixles is Script {
         bytes32 paletteManifestHash;
         address vrfCoordinator;
         bytes32 vrfKeyHash;
-        uint64 vrfSubscriptionId;
+        uint256 vrfSubscriptionId;
         uint16 vrfRequestConfirmations;
         uint32 vrfCallbackGasLimit;
     }
@@ -168,7 +168,7 @@ contract DeployCubixles is Script {
         cfg.paletteManifestHash = vm.envBytes32("CUBIXLES_PALETTE_MANIFEST_HASH");
         cfg.vrfCoordinator = vm.envAddress("CUBIXLES_VRF_COORDINATOR");
         cfg.vrfKeyHash = vm.envBytes32("CUBIXLES_VRF_KEY_HASH");
-        cfg.vrfSubscriptionId = uint64(vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID"));
+        cfg.vrfSubscriptionId = vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID");
         cfg.vrfRequestConfirmations = uint16(
             vm.envOr("CUBIXLES_VRF_REQUEST_CONFIRMATIONS", uint256(3))
         );

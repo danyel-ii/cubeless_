@@ -10,7 +10,7 @@ Last updated: 2026-01-10
 
 ## Executive Summary
 
-CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0022 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Minting uses a hash-only commit + reveal with Chainlink VRF randomness; the reveal step consumes the fulfilled VRF word to draw a palette index without replacement. Commit requests require an owner-configurable commit fee that is credited at mint and forfeited on expiry. Token metadata is **pinned per mint**: `tokenURI` is provided at mint time (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token `metadataHash` + `imagePathHash` commitments.
+CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0022 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Minting uses a hash-only commit + reveal with Chainlink VRF v2.5 randomness; the reveal step consumes the fulfilled VRF word to draw a palette index without replacement. Commit requests require an owner-configurable commit fee that is credited at mint and forfeited on expiry. Token metadata is **pinned per mint**: `tokenURI` is provided at mint time (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token `metadataHash` + `imagePathHash` commitments.
 Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps via the v4 PoolManager; on successful swap, 25% of the ETH is forwarded to the owner, 25% is swapped to $LESS (owner), 50% is swapped to $PNKSTR (owner), and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking.
 An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing is either fixed or linear (base + step) depending on `linearPricingEnabled`, and LESS snapshots/deltas remain `0`. Base deployments use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint).
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
@@ -154,7 +154,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_RESALE_BPS` (optional)
     - `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)
     - `CUBIXLES_VRF_KEY_HASH` (required; gas lane key hash)
-    - `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF subscription id, must fit `uint64`)
+    - `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF v2.5 subscription id, `uint256`)
     - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS` (optional; defaults to 3)
     - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT` (optional; defaults to 250000)
     - `CUBIXLES_CHAIN_ID` (optional; defaults to `block.chainid`)

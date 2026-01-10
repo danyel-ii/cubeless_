@@ -115,8 +115,10 @@ are split into smaller modules.
   - ERC-721 minting contract with ownership gating + ERC-2981 + VRF commit-reveal.
 - `contracts/src/chainlink/VRFConsumerBaseV2.sol`
   - Minimal VRF consumer base for randomness fulfillment.
-- `contracts/src/chainlink/VRFCoordinatorV2Interface.sol`
-  - Interface for VRF coordinator requests.
+- `contracts/src/chainlink/VRFV2PlusClient.sol`
+  - VRF v2.5 request structs + extraArgs encoding.
+- `contracts/src/chainlink/VRFCoordinatorV2_5Interface.sol`
+  - Interface for VRF v2.5 coordinator requests.
 - `contracts/src/royalties/RoyaltySplitter.sol`
   - Royalty receiver that can swap for $LESS and forward proceeds (no-swap mode forwards ETH only).
 - `contracts/src/mocks/Counter.sol`

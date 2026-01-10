@@ -32,7 +32,7 @@ contract CubixlesMinterHarness is CubixlesMinter {
         bytes32 paletteManifestHash,
         address vrfCoordinator,
         bytes32 vrfKeyHash,
-        uint64 vrfSubscriptionId,
+        uint256 vrfSubscriptionId,
         uint16 vrfRequestConfirmations,
         uint32 vrfCallbackGasLimit
     )
@@ -76,7 +76,7 @@ contract CubixlesMinterTest is Test {
     uint256 private constant PRICE_STEP = 100_000_000_000_000;
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
-    uint64 private constant VRF_SUB_ID = 1;
+    uint256 private constant VRF_SUB_ID = 1;
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     uint256 private constant DEFAULT_RANDOMNESS = 123_456;
@@ -218,7 +218,7 @@ contract CubixlesMinterTest is Test {
         bytes32 paletteManifestHash,
         address vrfCoordinatorAddr,
         bytes32 vrfKeyHash,
-        uint64 vrfSubscriptionId,
+        uint256 vrfSubscriptionId,
         uint16 vrfRequestConfirmations,
         uint32 vrfCallbackGasLimit
     ) internal returns (CubixlesMinter) {
