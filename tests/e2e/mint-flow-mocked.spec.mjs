@@ -122,6 +122,9 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
         if (method === "eth_chainId") {
           return "0x1";
         }
+        if (method === "wallet_switchEthereumChain" || method === "wallet_addEthereumChain") {
+          return null;
+        }
         if (method === "eth_requestAccounts" || method === "eth_accounts") {
           return ["0x000000000000000000000000000000000000dEaD"];
         }
@@ -149,6 +152,12 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
         }
         if (method === "eth_gasPrice") {
           return "0x3b9aca00";
+        }
+        if (method === "eth_maxPriorityFeePerGas") {
+          return "0x3b9aca00";
+        }
+        if (method === "eth_getBalance") {
+          return "0x3635C9ADC5DEA00000";
         }
         if (method === "eth_getTransactionCount") {
           return "0x1";
