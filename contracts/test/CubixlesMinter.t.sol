@@ -33,6 +33,7 @@ contract CubixlesMinterHarness is CubixlesMinter {
         address vrfCoordinator,
         bytes32 vrfKeyHash,
         uint256 vrfSubscriptionId,
+        bool vrfNativePayment,
         uint16 vrfRequestConfirmations,
         uint32 vrfCallbackGasLimit
     )
@@ -49,6 +50,7 @@ contract CubixlesMinterHarness is CubixlesMinter {
             address(vrfCoordinator),
             vrfKeyHash,
             vrfSubscriptionId,
+            vrfNativePayment,
             vrfRequestConfirmations,
             vrfCallbackGasLimit
         )
@@ -77,6 +79,7 @@ contract CubixlesMinterTest is Test {
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
     uint256 private constant VRF_SUB_ID = 1;
+    bool private constant VRF_NATIVE_PAYMENT = true;
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     uint256 private constant DEFAULT_RANDOMNESS = 123_456;
@@ -103,6 +106,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -219,6 +223,7 @@ contract CubixlesMinterTest is Test {
         address vrfCoordinatorAddr,
         bytes32 vrfKeyHash,
         uint256 vrfSubscriptionId,
+        bool vrfNativePayment,
         uint16 vrfRequestConfirmations,
         uint32 vrfCallbackGasLimit
     ) internal returns (CubixlesMinter) {
@@ -235,6 +240,7 @@ contract CubixlesMinterTest is Test {
             vrfCoordinatorAddr,
             vrfKeyHash,
             vrfSubscriptionId,
+            vrfNativePayment,
             vrfRequestConfirmations,
             vrfCallbackGasLimit
         );
@@ -601,6 +607,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -622,6 +629,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -642,6 +650,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -662,6 +671,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -675,6 +685,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -688,6 +699,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -701,6 +713,7 @@ contract CubixlesMinterTest is Test {
             address(0),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -714,6 +727,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             bytes32(0),
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -727,6 +741,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             0,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -740,6 +755,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             0,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -753,6 +769,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             0
         );
@@ -773,6 +790,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -795,6 +813,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -815,6 +834,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );
@@ -836,6 +856,7 @@ contract CubixlesMinterTest is Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );

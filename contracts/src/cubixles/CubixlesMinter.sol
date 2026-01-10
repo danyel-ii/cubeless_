@@ -181,6 +181,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     bytes32 public immutable vrfKeyHash;
     /// @notice VRF subscription id.
     uint256 public immutable vrfSubscriptionId;
+    /// @notice Whether VRF requests use native token billing.
+    bool public immutable vrfNativePayment;
     /// @notice VRF request confirmations.
     uint16 public immutable vrfRequestConfirmations;
     /// @notice VRF callback gas limit.
@@ -282,6 +284,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param vrfCoordinator_ Chainlink VRF coordinator address.
     /// @param vrfKeyHash_ Chainlink VRF key hash.
     /// @param vrfSubscriptionId_ Chainlink VRF subscription id.
+    /// @param vrfNativePayment_ Whether VRF requests use native token billing.
     /// @param vrfRequestConfirmations_ Chainlink VRF request confirmations.
     /// @param vrfCallbackGasLimit_ Chainlink VRF callback gas limit.
     constructor(
@@ -297,6 +300,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         address vrfCoordinator_,
         bytes32 vrfKeyHash_,
         uint256 vrfSubscriptionId_,
+        bool vrfNativePayment_,
         uint16 vrfRequestConfirmations_,
         uint32 vrfCallbackGasLimit_
     )
@@ -327,6 +331,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         vrfCoordinator = VRFCoordinatorV2_5Interface(vrfCoordinator_);
         vrfKeyHash = vrfKeyHash_;
         vrfSubscriptionId = vrfSubscriptionId_;
+        vrfNativePayment = vrfNativePayment_;
         vrfRequestConfirmations = vrfRequestConfirmations_;
         vrfCallbackGasLimit = vrfCallbackGasLimit_;
         (bool lessEnabled_, uint256 resolvedFixedPrice) = _resolvePricing(
@@ -402,7 +407,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             callbackGasLimit: vrfCallbackGasLimit,
             numWords: VRF_NUM_WORDS,
             extraArgs: VRFV2PlusClient._argsToBytes(
-                VRFV2PlusClient.ExtraArgsV1({ nativePayment: false })
+                VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
             )
         });
         uint256 requestId = vrfCoordinator.requestRandomWords(request);

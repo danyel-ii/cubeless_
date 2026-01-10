@@ -92,6 +92,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
     MockVRFCoordinatorV2 private vrfCoordinator;
     bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
     uint256 private constant VRF_SUB_ID = 1;
+    bool private constant VRF_NATIVE_PAYMENT = true;
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     string private constant PALETTE_IMAGES_CID = "bafyimagescid";
@@ -114,6 +115,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
             address(vrfCoordinator),
             VRF_KEY_HASH,
             VRF_SUB_ID,
+            VRF_NATIVE_PAYMENT,
             VRF_CONFIRMATIONS,
             VRF_CALLBACK_GAS_LIMIT
         );

@@ -140,7 +140,7 @@ npm run check:no-client-secrets
    - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
 6) Set `CUBIXLES_CHAIN_ID=1` for server signature verification and `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1`, then confirm `contracts/deployments/mainnet.json` is current.
-7) Ensure the VRF subscription is funded and the minter is added as a consumer.
+7) Ensure the VRF subscription is funded (ETH if `CUBIXLES_VRF_NATIVE_PAYMENT=true`, LINK otherwise) and the minter is added as a consumer.
 
 ## 5) Mainnet deploy (contracts)
 

@@ -103,6 +103,7 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)
 - `CUBIXLES_VRF_KEY_HASH` (required; gas lane key hash)
 - `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF v2.5 subscription id, `uint256`)
+- `CUBIXLES_VRF_NATIVE_PAYMENT` (optional; defaults to `true` for native billing)
 - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS` (optional, defaults to 3)
 - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT` (optional, defaults to 250000)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)

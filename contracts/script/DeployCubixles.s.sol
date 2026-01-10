@@ -65,6 +65,7 @@ contract DeployCubixles is Script {
             cfg.vrfCoordinator,
             cfg.vrfKeyHash,
             cfg.vrfSubscriptionId,
+            cfg.vrfNativePayment,
             cfg.vrfRequestConfirmations,
             cfg.vrfCallbackGasLimit
         );
@@ -115,6 +116,7 @@ contract DeployCubixles is Script {
         address vrfCoordinator;
         bytes32 vrfKeyHash;
         uint256 vrfSubscriptionId;
+        bool vrfNativePayment;
         uint16 vrfRequestConfirmations;
         uint32 vrfCallbackGasLimit;
     }
@@ -169,6 +171,7 @@ contract DeployCubixles is Script {
         cfg.vrfCoordinator = vm.envAddress("CUBIXLES_VRF_COORDINATOR");
         cfg.vrfKeyHash = vm.envBytes32("CUBIXLES_VRF_KEY_HASH");
         cfg.vrfSubscriptionId = vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID");
+        cfg.vrfNativePayment = vm.envOr("CUBIXLES_VRF_NATIVE_PAYMENT", true);
         cfg.vrfRequestConfirmations = uint16(
             vm.envOr("CUBIXLES_VRF_REQUEST_CONFIRMATIONS", uint256(3))
         );
