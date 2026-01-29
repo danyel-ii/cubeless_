@@ -714,7 +714,7 @@ export default async function TokenPage({
             </div>
           </div>
           <div className="landing-ctas">
-            <Link href={withBasePath("/landing")} className="landing-button secondary">
+            <Link href={withBasePath("/")} className="landing-button secondary">
               Return to provenance cube
             </Link>
           </div>
@@ -786,7 +786,7 @@ export default async function TokenPage({
         titleAs="h1"
         collapsible={false}
         actions={
-          <Link href={withBasePath("/landing")} className="landing-button secondary">
+          <Link href={withBasePath("/")} className="landing-button secondary">
             Return to provenance cube
           </Link>
         }

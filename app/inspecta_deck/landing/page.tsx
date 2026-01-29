@@ -1,4 +1,4 @@
-import LandingExperience from "./LandingExperience";
+import { redirect } from "next/navigation";
 import { getBasePath, withBasePath } from "../_lib/basePath";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -34,5 +34,5 @@ export const metadata = {
 };
 
 export default function LandingPage() {
-  return <LandingExperience />;
+  return redirect(withBasePath("/"));
 }
