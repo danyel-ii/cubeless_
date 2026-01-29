@@ -22,7 +22,7 @@ async function fetchInitialTokenList() {
     chainId: String(DEFAULT_CHAIN_ID),
     mode: "minter",
   });
-  const forwardHeaders = {};
+  const forwardHeaders: Record<string, string> = {};
   const cookieHeader = headerList.get("cookie");
   const bypassHeader = headerList.get("x-vercel-protection-bypass");
   if (cookieHeader) {
