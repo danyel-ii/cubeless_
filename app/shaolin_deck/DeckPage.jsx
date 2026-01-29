@@ -529,7 +529,7 @@ function PaletteSync() {
   return null;
 }
 
-function TokenIndex({ initialTokenList }) {
+function TokenIndex({ initialTokenList, tokensEndpoint, tokenMode }) {
   const initialTokens = Array.isArray(initialTokenList?.tokens)
     ? initialTokenList.tokens
     : [];
@@ -568,14 +568,16 @@ function TokenIndex({ initialTokenList }) {
         const params = new URLSearchParams();
         params.set("limit", String(pageSize));
         params.set("chainId", String(chainId));
-        params.set("mode", "builder");
+        if (tokenMode) {
+          params.set("mode", tokenMode);
+        }
         if (isAllMode) {
           params.set("all", "true");
           params.set("maxPages", String(maxPages));
         } else if (nextPageKey) {
           params.set("pageKey", String(nextPageKey));
         }
-        const response = await fetch(`/api/poc/tokens?${params.toString()}`, {
+        const response = await fetch(`${tokensEndpoint}?${params.toString()}`, {
           cache: "no-store",
         });
         const text = await response.text();
@@ -853,7 +855,11 @@ function TokenIndex({ initialTokenList }) {
   );
 }
 
-export function DeckPage({ initialTokenList }) {
+export function DeckPage({
+  initialTokenList,
+  tokensEndpoint = "/api/poc/tokens",
+  tokenMode = "builder",
+}) {
   const [loaderPhase, setLoaderPhase] = useState("visible");
   const floatingTileRefs = useRef([]);
 
@@ -998,7 +1004,7 @@ export function DeckPage({ initialTokenList }) {
           <LandingCubeIcon />
         </section>
         <section id="token-list" className="landing-token-list">
-          <TokenIndex initialTokenList={initialTokenList} />
+          <TokenIndex initialTokenList={initialTokenList} tokensEndpoint={tokensEndpoint} tokenMode={tokenMode} />
         </section>
         <footer className="landing-watermark">
           hat's off to{" "}
