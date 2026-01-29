@@ -144,7 +144,9 @@ export default function LandingExperience() {
           ref={trackRef}
           className="landing-tour-track"
           style={{
-            transform: `translateX(-${activeIndex * 100}%)`,
+            transform: `translateX(-${(activeIndex * 100) / slides.length}%)`,
+            width: `${slides.length * 100}%`,
+            ["--slide-count" as string]: slides.length,
           }}
         >
           <section className="landing-tour-slide" aria-hidden={activeIndex !== 0}>
