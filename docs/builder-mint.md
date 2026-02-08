@@ -1,5 +1,5 @@
 # Builder Mint Guide
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Purpose
 The builder mint is the primary path for new cubixles_ tokens. It composes a cube from 1 to 6
@@ -10,7 +10,11 @@ those references and their floor snapshots.
 - `/build` — builder mint UI.
 - `/shaolin_deck` — builder deck + token list.
 - `/m2/<tokenId>` — builder token viewer.
-- `/m2/preview` — builder preview grid.
+- `/token/<tokenId>` — builder token viewer alias.
+- `/m2/preview` — builder preview token view.
+- `/m2/preview-ext` — builder preview grid.
+- `/m2/viewer-ext` — builder token grid for the connected wallet.
+- `/royalties` — setting your builder royalty forwarder.
 - `/what-it-do` — toy intro; no minting.
 
 ## Onchain components
@@ -58,6 +62,7 @@ Builder assets:
 - `POST /api/builder/quote`
 - `POST /api/pin/builder-assets`
 - `POST /api/pin/metadata`
+- `GET /api/nonce` (signed nonce for pinning requests)
 - `GET /api/builder/tokens`
 - `GET /api/nfts` (wallet inventory + metadata)
 - `GET /api/ipfs`, `GET /api/image-proxy` (safe fetch helpers)

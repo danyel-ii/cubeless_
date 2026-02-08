@@ -1,5 +1,5 @@
 # Bootlegger Mint (Legacy) Guide
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Purpose
 The bootlegger (legacy) mint is retained for historical cubixles_ tokens. It uses commit-reveal

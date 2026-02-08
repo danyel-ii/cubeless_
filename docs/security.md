@@ -1,5 +1,5 @@
 # cubixles_ Security Overview
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security
 model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
@@ -23,7 +23,7 @@ model assumes untrusted NFT references, untrusted metadata URLs, and untrusted c
 
 ## CSP + route isolation
 - `middleware.js` sets per-request CSP headers.
-- `/what-it-do` (and `/m2/preview`) allow inline scripts and eval to support the Vite build.
+- `/what-it-do` (and `/m2/preview*`) allow inline scripts and eval to support the Vite build.
 - Minting routes default to nonce-based CSP in production.
 - Use top-level navigation (not iframe history) when jumping from the landscape to minting routes
   to ensure the stricter CSP is applied.

@@ -1,5 +1,5 @@
 # Resale Royalty Setter Guide
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 This primer explains how resale royalties are handled onchain and who can configure them. Builder
 royalties are the primary path; legacy royalties apply to earlier tokens. For mint flow context,

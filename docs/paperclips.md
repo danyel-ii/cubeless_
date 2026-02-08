@@ -1,5 +1,5 @@
 # Paperclips Artwork (CubesPaperClip)
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Purpose
 Paperclips are generative PNG artworks embedded in builder mints. They are unique per wallet and

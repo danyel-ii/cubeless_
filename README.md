@@ -1,6 +1,6 @@
 # cubixles_
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danyel-ii/cubixles_)
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked to NFTs the minter
 already owns. The builder mint flow is the primary path; the legacy (bootlegger) flow remains for
@@ -13,7 +13,10 @@ earlier tokens and historical compatibility.
 - Legacy mints use commit-reveal and LESS/linear pricing.
 - Builder mint UI lives at `/build`; the builder deck lives at `/shaolin_deck`.
 - Legacy mint UI lives at `/`; legacy token viewers live at `/m/<tokenId>`.
-- Builder token viewers live at `/m2/<tokenId>`; builder preview grid lives at `/m2/preview`.
+- Builder token viewers live at `/m2/<tokenId>` (alias: `/token/<tokenId>`).
+- Builder preview routes live at `/m2/preview` and `/m2/preview-ext`.
+- Builder external wallet grid lives at `/m2/viewer-ext`.
+- `/royalties` is the in-app royalty forwarder setup guide.
 - `/inspecta_deck` is the landing + legacy token list.
 - `/what-it-do` is a toy intro that drops into the Three.js landscape; it does not touch minting.
 

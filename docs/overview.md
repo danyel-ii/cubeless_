@@ -1,5 +1,5 @@
 # cubixles_ Overview
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 cubixles_ is a Next.js miniapp that mints ERC-721 cubes whose faces are linked to NFTs the minter
 already owns. The builder track is the primary minting path, with the legacy (bootlegger) track
@@ -28,8 +28,12 @@ preserved for earlier tokens.
 - `/shaolin_deck` — builder deck + builder tokens.
 - `/inspecta_deck` — landing + legacy token list.
 - `/m/<tokenId>` — legacy token viewer.
-- `/m2/<tokenId>` — builder token viewer.
-- `/m2/preview` — builder preview grid.
+- `/m2/<tokenId>` — builder token viewer (canonical).
+- `/token/<tokenId>` — builder token viewer (alias of `/m2/<tokenId>`).
+- `/m2/preview` — builder preview token view (local selection preview).
+- `/m2/preview-ext` — builder preview grid (local selection preview).
+- `/m2/viewer-ext` — builder token grid for the connected wallet.
+- `/royalties` — setting your builder royalty forwarder (in-app copy of `docs/setting-your-royalty.md`).
 - `/what-it-do` — toy intro for the landscape (no minting).
 - `/world` — direct landscape entry.
 
@@ -46,4 +50,4 @@ preserved for earlier tokens.
 ## Chain notes
 - Builder deployments are active on mainnet; Base/Sepolia entries exist as placeholders until
   deployed and wired.
-- Legacy deployments are configured for mainnet and Base.
+- Legacy deployments are configured for mainnet, Base, and Sepolia.

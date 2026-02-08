@@ -1,6 +1,6 @@
 # Support
 
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Bug reports
 - Open an issue with a minimal reproduction and environment details.

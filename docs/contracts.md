@@ -1,5 +1,5 @@
 # cubixles_ Contracts
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Contract set
 - `contracts/src/cubixles/CubixlesMinter.sol` (legacy minter)
@@ -26,6 +26,11 @@ Mainnet (legacy): `contracts/deployments/mainnet.json`
 
 Base/Sepolia deployments are tracked in the corresponding JSON files but may be placeholders
 until deployed and wired.
+
+Notes:
+- Builder deployments are active on mainnet only; `contracts/deployments/builder-base.json` and
+  `contracts/deployments/builder-sepolia.json` are placeholders (0x0 addresses) until deployed.
+- Legacy deployments exist on mainnet, Base, and Sepolia via the corresponding JSON files.
 
 ## CubixlesMinter (legacy)
 - ERC-721 with ERC-2981 resale royalties.

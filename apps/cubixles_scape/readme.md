@@ -4,18 +4,18 @@
 
 ## Setup
 
-Create `.env` file based on `.env.example` (repo root env is supported).
+Create `.env` file based on `.env.example` (the repo root `.env` is also supported).
 
 Download and install [Node.js](https://nodejs.org/en/download/) then run:
 
-``` bash
+```bash
 # Install dependencies (from repo root)
 npm install
 
 # Serve with Vite
 npm --workspace apps/cubixles_scape run dev
 
-# Build into /public/what-it-do/cubixles_scape
+# Build into public/what-it-do/cubixles_scape
 npm --workspace apps/cubixles_scape run build
 ```
 

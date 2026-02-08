@@ -1,5 +1,5 @@
 # cubixles_ Operations
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 ## Governance
 - Maintainer: danyel-ii.
@@ -19,7 +19,7 @@ Last updated: 2026-01-28
   `public/what-it-do/cubixles_scape/` before building the Next.js app.
 
 ## Local development
-- `npm run dev` — Next.js app on `localhost:3000`.
+- `npm run dev` — Next.js app on `127.0.0.1:3000` (see `package.json`).
 - `npm run dev:cubixles_scape` — landscape Vite dev server (optional).
 - `npm run build` — full production build (scape + Next.js).
 

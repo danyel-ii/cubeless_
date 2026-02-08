@@ -17,7 +17,8 @@ If you hit npm cache permission issues, use `npm install --cache .npm-cache`.
 
 Copy `.env.example` to `.env.local` and fill in values:
 - `ALCHEMY_KEY` (or `ALCHEMY_API_KEY`)
-- `CUBIXLES_CONTRACT` (or `CUBIXLES_CONTRACT_ADDRESS`, mainnet: `0xA72EBf7F8d9Bc4ec5aDF1fFcDF32dfeD0b06F64C`)
+- `CUBIXLES_CONTRACT_ADDRESS` (preferred) or `CUBIXLES_CONTRACT` (fallback)
+  - Mainnet: `0xA72EBf7F8d9Bc4ec5aDF1fFcDF32dfeD0b06F64C`
 - `NETWORK` (or `CUBIXLES_CHAIN_ID`/`BASE_CHAIN_ID` for auto-mapping)
 - Optional: `CUBIXLES_BASE_CONTRACT_ADDRESS` (Base: `0x4130F69f396f5478CFD1e1792e2970da4299383a`)
 - `NEXT_PUBLIC_BASE_PATH` (default `/inspecta_deck` for subpath deployments)
@@ -59,6 +60,9 @@ Optional helpdesk KB upkeep:
 - `node scripts/kb_embed.mjs` to generate `kb/vectors.json` for semantic search
 
 ## API endpoints
+All API endpoints are served under `NEXT_PUBLIC_BASE_PATH` (default `/inspecta_deck`). For example,
+`GET /api/poc/tokens` is served at `GET /inspecta_deck/api/poc/tokens` in the default config.
+
 - `GET /api/poc/tokens?limit=&pageKey=&all=true&maxPages=`
   - Proof-of-concept list of tokens from CUBIXLES_CONTRACT.
   - Use `pageKey` for pagination; `all=true` aggregates pages (capped by `maxPages`).

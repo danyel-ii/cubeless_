@@ -1,5 +1,5 @@
 # Mint Transaction Flow
-Last updated: 2026-01-28
+Last updated: 2026-02-07
 
 This primer describes how ETH is routed during minting, including swaps and owner payouts.
 The builder flow is the primary minting path; the legacy flow is retained for earlier tokens.

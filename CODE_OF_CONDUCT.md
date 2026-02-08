@@ -1,6 +1,6 @@
 # Code of Conduct
 
-Last updated: 2026-01-26
+Last updated: 2026-02-07
 
 This project follows the Contributor Covenant Code of Conduct.
 
